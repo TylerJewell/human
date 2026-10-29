@@ -1,0 +1,50 @@
+{
+  "overseers": [
+    {
+      "subject": "tyler.jewell@akka.io",
+      "name": "Tyler Jewell",
+      "roles": [
+        "ai-system-owner"
+      ],
+      "groups": [],
+      "reportsTo": null,
+      "authority": [],
+      "attestations": [
+        {
+          "id": "eu-ai-act-oversight",
+          "completedAt": "2026-01-10",
+          "expiresAt": "2027-01-10",
+          "expired": false
+        }
+      ],
+      "qualified": true,
+      "qualifiedReason": null
+    },
+    {
+      "subject": "k.osei@example.com",
+      "name": "K. Osei",
+      "roles": [
+        "risk-officer"
+      ],
+      "groups": [],
+      "reportsTo": null,
+      "authority": [],
+      "attestations": [
+        {
+          "id": "eu-ai-act-oversight",
+          "completedAt": "2025-01-10",
+          "expiresAt": "2026-01-10",
+          "expired": true
+        }
+      ],
+      "qualified": false,
+      "qualifiedReason": "EU AI Act oversight training expired"
+    }
+  ],
+  "owners": [
+    {
+      "control": "pt-0001",
+      "accountable": "ai-system-owner"
+    }
+  ]
+}

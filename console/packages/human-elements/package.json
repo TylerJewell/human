@@ -1,0 +1,38 @@
+{
+  "name": "@akka-human/elements",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Custom elements over @akka-human/kit for consoles that are not React.",
+  "exports": {
+    ".": {
+      "source": "./src/index.tsx",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/human-elements.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@akka-human/kit": "workspace:*",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@types/node": "22.12.0",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "jsdom": "29.1.1",
+    "typescript": "5.8.3",
+    "vite": "7.3.7",
+    "vitest": "4.1.11"
+  }
+}

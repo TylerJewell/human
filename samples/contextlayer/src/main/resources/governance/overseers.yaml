@@ -1,0 +1,62 @@
+# The people who may decide contextlayer's human controls, in Verify's overseer registry format
+# (spec/verify/overseer-registry.schema.yaml). Everyone here is fictional. Each role has at least two people,
+# so two-person restarts and the independence rules always leave someone who may decide.
+schema_version: 1
+overseers:
+  - subject: ada.approver@example.com
+    name: Ada Approver
+    roles: [approver]
+    reports_to: alice.admin@example.com
+    qualified: true
+
+  - subject: ben.approver@example.com
+    name: Ben Approver
+    roles: [approver]
+    reports_to: alice.admin@example.com
+    qualified: true
+
+  - subject: cleo.approver@example.com
+    name: Cleo Approver
+    roles: [approver, operator]
+    reports_to: adam.admin@example.com
+    qualified: true
+
+  - subject: rita.reviewer@example.com
+    name: Rita Reviewer
+    roles: [reviewer]
+    reports_to: adam.admin@example.com
+    qualified: true
+
+  - subject: raj.reviewer@example.com
+    name: Raj Reviewer
+    roles: [reviewer]
+    reports_to: adam.admin@example.com
+    qualified: true
+
+  - subject: omar.operator@example.com
+    name: Omar Operator
+    roles: [operator]
+    reports_to: alice.admin@example.com
+    qualified: true
+
+  - subject: olga.operator@example.com
+    name: Olga Operator
+    roles: [operator, reviewer]
+    reports_to: alice.admin@example.com
+    qualified: true
+
+  - subject: alice.admin@example.com
+    name: Alice Admin
+    roles: [admin]
+    qualified: true
+
+  - subject: adam.admin@example.com
+    name: Adam Admin
+    roles: [admin]
+    qualified: true
+
+  - subject: uma.suspended@example.com
+    name: Uma Suspended
+    roles: [reviewer, approver]
+    qualified: false
+    qualified_reason: Oversight training lapsed

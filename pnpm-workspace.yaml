@@ -1,0 +1,7 @@
+packages:
+  - spec
+  - console/packages/*
+  - console/apps/*
+  - samples/*/ui
+allowBuilds:
+  esbuild: true

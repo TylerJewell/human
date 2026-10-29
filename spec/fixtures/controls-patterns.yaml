@@ -1,0 +1,202 @@
+# One human control per oversight pattern, for the patterns sample service and the conformance
+# suite. Each `human_config` is a Verify v2.8 human_config (verify/human-config.schema.json); a
+# setting left out takes the pattern's default, then the shared default (verify/human-patterns.yaml).
+schema_version: 1
+service: patterns
+controls:
+  - id: pt-0001
+    name: Payments above the limit need the system owner
+    corpus_ref: aws-agentic-scoping.scope2-human-approval
+    flavor: human-system-authorization
+    human_config:
+      pattern: action-approval
+      subject_kind: action
+      trigger: { detector: tool-policy, condition: "pay.amount > 1000" }
+      routing: { roles: [ai-system-owner], attestations: [eu-ai-act-oversight] }
+      accountable_owner: ai-system-owner
+      sla_target: PT30M
+      escalation_chain:
+        - { queue: system-owners, roles: [ai-system-owner] }
+        - { queue: head-of-operations, roles: [head-of-operations], after: PT30M }
+      minimum_review_seconds: 10
+
+  - id: pt-0002
+    name: Adverse notices are reviewed before they are sent
+    corpus_ref: gdpr-art22.art22.3
+    flavor: human-domain-decision
+    human_config:
+      pattern: decision-review
+      subject_kind: output
+      trigger: { detector: workflow }
+      routing: { roles: [case-reviewer], attestations: [eu-ai-act-oversight] }
+      accountable_owner: head-of-operations
+      sla_target: PT4H
+      escalation_chain:
+        - { queue: case-review, roles: [case-reviewer] }
+        - { queue: head-of-operations, roles: [head-of-operations], after: PT4H }
+      minimum_review_seconds: 20
+
+  - id: pt-0003
+    name: Model rollouts need an approver who did not build them
+    corpus_ref: soc2.cc8.1
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request }
+      routing: { roles: [model-risk-owner], review_mode: TWO_PERSON, required: 2 }
+      accountable_owner: model-risk-owner
+      sla_target: P1D
+      escalation_chain:
+        - { queue: ai-change-board, roles: [model-risk-owner] }
+        - { queue: head-of-operations, roles: [head-of-operations], after: P1D }
+
+  - id: pt-0004
+    name: Rule waivers are granted by the second line with an expiry
+    corpus_ref: nist-ai-rmf.govern-1.4
+    flavor: human-system-authorization
+    human_config:
+      pattern: exception
+      subject_kind: exception
+      trigger: { detector: person }
+      routing: { roles: [compliance-lead] }
+      accountable_owner: compliance-lead
+      sla_target: P2D
+
+  - id: pt-0005
+    name: Possible duplicate customers are matched by a data steward
+    corpus_ref: eu-ai-act.art14.5
+    flavor: human-domain-decision
+    human_config:
+      pattern: match-adjudication
+      subject_kind: records
+      trigger: { detector: workflow }
+      routing: { roles: [data-steward] }
+      accountable_owner: data-steward
+      sla_target: P1D
+
+  - id: pt-0006
+    name: Payments with an unknown result are reconciled by a person
+    flavor: human-system-authorization
+    human_config:
+      pattern: outcome-reconciliation
+      subject_kind: action
+      trigger: { detector: workflow }
+      routing: { roles: [ai-system-owner, head-of-operations] }
+      accountable_owner: head-of-operations
+      sla_target: PT2H
+      escalation_chain:
+        - { queue: operations, roles: [ai-system-owner, head-of-operations] }
+        - { queue: head-of-operations, roles: [head-of-operations], after: PT2H }
+
+  - id: pt-0007
+    name: Applicants can appeal an automated decision to a person
+    corpus_ref: colorado-sb26-189.6-1-1705.human-review
+    flavor: human-domain-decision
+    human_config:
+      pattern: contest-appeal
+      subject_kind: appeal
+      trigger: { detector: person }
+      routing: { roles: [appeals-officer] }
+      accountable_owner: compliance-lead
+      sla_target: P5D
+      escalation_chain:
+        - { queue: appeals, roles: [appeals-officer] }
+        - { queue: compliance, roles: [compliance-lead], after: P5D }
+      minimum_review_seconds: 30
+
+  - id: pt-0008
+    name: Oversight persons can override an output, with a reason
+    corpus_ref: eu-ai-act.art14.4.d
+    flavor: human-system-authorization
+    human_config:
+      pattern: override
+      subject_kind: output
+      trigger: { detector: person }
+      routing: { roles: [ai-system-owner, oversight-officer] }
+      accountable_owner: ai-system-owner
+
+  - id: pt-0009
+    name: Flagged replies are triaged into evaluation cases
+    corpus_ref: finos-aigf.mi-11
+    flavor: human-feedback
+    human_config:
+      pattern: flag-feedback
+      subject_kind: output
+      trigger: { detector: person }
+      routing: { roles: [feedback-triager] }
+      accountable_owner: feedback-triager
+      sla_target: P3D
+
+  - id: pt-0010
+    name: Referral drift is triaged by the model risk owner
+    corpus_ref: eu-ai-act.art26.4
+    flavor: human-monitoring
+    human_config:
+      pattern: triage
+      subject_kind: behaviour
+      trigger: { detector: monitor, metric: referral-share, comparison: "<", threshold: 20, window: PT24H, baseline: 35 }
+      routing: { roles: [model-risk-owner] }
+      accountable_owner: model-risk-owner
+      sla_target: PT8H
+      escalation_chain:
+        - { queue: model-risk, roles: [model-risk-owner] }
+        - { queue: compliance, roles: [compliance-lead], after: PT8H }
+
+  - id: pt-0011
+    name: A person takes over a conversation when asked
+    flavor: human-domain-decision
+    human_config:
+      pattern: hand-off
+      subject_kind: conversation
+      trigger: { detector: workflow }
+      routing: { roles: [duty-officer] }
+      accountable_owner: head-of-operations
+      sla_target: PT5M
+      escalation_chain:
+        - { queue: duty, roles: [duty-officer] }
+        - { queue: head-of-operations, roles: [head-of-operations], after: PT5M }
+
+  - id: pt-0012
+    name: Automated eligibility assessment can be halted
+    corpus_ref: eu-ai-act.art14.4.e
+    flavor: human-halt
+    human_config:
+      pattern: halt-restart
+      subject_kind: system
+      trigger: { detector: person }
+      routing: { roles: [safety-officer] }
+      accountable_owner: safety-officer
+      sla_target: PT1H
+    halt_config:
+      scope: capability
+      target: eligibility-assessment
+      exerciser_personae: [safety-officer]
+      exercise_endpoint: "POST /oversight/halts"
+      affected_calls: all-runtime-operations
+      emits_on_exercise: HaltExercised
+      emits_on_lift: HaltLifted
+
+  - id: pt-0013
+    name: The eligibility model is attested every quarter
+    corpus_ref: sr11-7.s4.validation
+    flavor: human-monitoring
+    human_config:
+      pattern: attestation
+      subject_kind: attestation
+      trigger: { detector: schedule }
+      routing: { roles: [model-risk-owner] }
+      accountable_owner: model-risk-owner
+      sla_target: P14D
+
+  - id: pt-0014
+    name: Rushed approvals on payments go to the accountable owner
+    corpus_ref: eu-ai-act.art14.5.rubber-stamp-rate
+    flavor: human-monitoring
+    human_config:
+      pattern: oversight-quality
+      subject_kind: behaviour
+      trigger: { detector: monitor, metric: below-minimum-share, comparison: ">", threshold: 0.2, window: P7D }
+      routing: { roles: [ai-system-owner] }
+      accountable_owner: ai-system-owner
+      sla_target: P2D

@@ -1,0 +1,257 @@
+{
+  "id": "he-20261029-00099",
+  "state": "APPLIED",
+  "pending": false,
+  "shadow": false,
+  "strength": "prevent",
+  "pattern": "halt-restart",
+  "patternName": "Halt and restart",
+  "control": {
+    "rowId": "pt-0012",
+    "name": "Automated eligibility assessment can be halted",
+    "corpusRef": "eu-ai-act.art14.4.e",
+    "revision": 1
+  },
+  "flavor": "human-halt",
+  "mode": "HALT",
+  "blocking": false,
+  "subject": {
+    "kind": "system",
+    "summary": "Restart eligibility assessment",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "scope": "capability",
+      "target": "eligibility-assessment",
+      "affectedCalls": "all-runtime-operations",
+      "callsPerMinute": 14,
+      "safeStateChecks": [
+        {
+          "name": "backlog drained",
+          "passed": true
+        }
+      ],
+      "halted": true,
+      "lift": true
+    }
+  },
+  "trigger": {
+    "detector": "person",
+    "rule": null,
+    "reason": "S. Patel asked to lift the halt once the backlog drained.",
+    "values": [],
+    "conditions": [],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "ask": {
+    "question": "Can eligibility assessment restart?",
+    "checks": []
+  },
+  "environment": "local",
+  "owner": {
+    "kind": "service",
+    "service": "patterns"
+  },
+  "proposedBy": "agent:payments",
+  "builtBy": null,
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "safety-officer"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "TWO_PERSON",
+    "required": 2,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "safety-officer",
+  "holder": null,
+  "claimTtl": "PT30M",
+  "sla": {
+    "target": "PT30M",
+    "startedAt": "2026-10-29T14:00:00Z",
+    "dueAt": "2026-10-29T14:30:00Z",
+    "atRiskAt": 0.75,
+    "state": "running",
+    "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+    "default": "DENY",
+    "lateDecision": "ACCEPT_BREACHED",
+    "clockWhileSentBack": "RUNS"
+  },
+  "escalation": {
+    "level": 0,
+    "chain": [
+      "system-owners",
+      "head-of-operations"
+    ]
+  },
+  "allowedActions": [
+    "HALT",
+    "APPROVE",
+    "DENY"
+  ],
+  "actionLabels": {
+    "HALT": "Halt",
+    "APPROVE": "Approve restart",
+    "DENY": "Keep halted"
+  },
+  "effects": {},
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "slaExtensions": [],
+  "aiRecommendation": null,
+  "context": null,
+  "presentedAt": null,
+  "claimedAt": null,
+  "detectedAt": "2026-10-29T14:00:00Z",
+  "closedAt": "2026-10-29T14:05:00Z",
+  "decisions": [
+    {
+      "reviewer": {
+        "subject": "tyler.jewell@akka.io",
+        "name": "Tyler Jewell",
+        "roles": [
+          "ai-system-owner"
+        ],
+        "identityProvider": "human-companion",
+        "rehearsal": true
+      },
+      "action": "APPROVE",
+      "rationale": "Backlog drained.",
+      "qualified": true,
+      "independent": true,
+      "edits": null,
+      "sticky": null,
+      "presentedAt": "2026-10-29T14:00:00Z",
+      "submittedAt": "2026-10-29T14:02:00Z",
+      "reviewSeconds": 120,
+      "belowMinimum": false,
+      "late": false,
+      "checks": []
+    },
+    {
+      "reviewer": {
+        "subject": "s.patel@example.com",
+        "name": "S. Patel",
+        "roles": [
+          "safety-officer"
+        ],
+        "identityProvider": "human-companion",
+        "rehearsal": true
+      },
+      "action": "APPROVE",
+      "rationale": "Backlog drained.",
+      "qualified": true,
+      "independent": true,
+      "edits": null,
+      "sticky": null,
+      "presentedAt": "2026-10-29T14:00:00Z",
+      "submittedAt": "2026-10-29T14:05:00Z",
+      "reviewSeconds": 120,
+      "belowMinimum": false,
+      "late": false,
+      "checks": []
+    }
+  ],
+  "infoRequests": [],
+  "recused": [],
+  "outcome": {
+    "action": "APPROVE",
+    "sticky": null,
+    "agreedWithAi": null,
+    "edits": null,
+    "conditions": [],
+    "standingDecisionId": null,
+    "slaOutcome": "COMPLETED",
+    "appliedAt": "2026-10-29T14:05:01Z",
+    "applied": "The halt on eligibility-assessment was lifted.",
+    "applyError": null
+  },
+  "verdictId": "vd-he-20261029-00099",
+  "conclusion": "upheld",
+  "verdict": {
+    "id": "vd-he-20261029-00099",
+    "eventId": "he-20261029-00099",
+    "control": {
+      "rowId": "pt-0012",
+      "name": "Automated eligibility assessment can be halted",
+      "corpusRef": "eu-ai-act.art14.4.e",
+      "revision": 1
+    },
+    "pattern": "halt-restart",
+    "subjectKind": "system",
+    "mechanism": "human",
+    "boundary": {
+      "kind": "work-item",
+      "ref": "system-owners · he-20261029-00099"
+    },
+    "conclusion": "upheld",
+    "reasons": [],
+    "source": {
+      "kind": "rehearsal",
+      "service": "patterns"
+    },
+    "action": "APPROVE",
+    "deciders": [
+      "tyler.jewell@akka.io",
+      "s.patel@example.com"
+    ],
+    "appliedAt": "2026-10-29T14:05:01Z",
+    "at": "2026-10-29T14:05:01Z"
+  },
+  "related": [],
+  "history": [
+    {
+      "at": "2026-10-29T14:00:00Z",
+      "state": "OPEN",
+      "actor": "system",
+      "note": "Routed to system-owners"
+    },
+    {
+      "at": "2026-10-29T14:02:00Z",
+      "state": "AWAITING_SECOND",
+      "actor": "tyler.jewell@akka.io",
+      "note": "APPROVE, 1 of 2"
+    },
+    {
+      "at": "2026-10-29T14:05:00Z",
+      "state": "DECIDED",
+      "actor": "s.patel@example.com",
+      "note": "APPROVE, 2 of 2"
+    },
+    {
+      "at": "2026-10-29T14:05:01Z",
+      "state": "APPLIED",
+      "actor": "system",
+      "note": "applied"
+    }
+  ],
+  "evidence": [],
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  },
+  "simulated": false,
+  "now": "2026-10-29T14:05:00Z"
+}

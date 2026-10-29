@@ -1,0 +1,151 @@
+{
+  "id": "he-20261029-00008",
+  "state": "OPEN",
+  "pending": true,
+  "shadow": false,
+  "strength": "prevent",
+  "pattern": "exception",
+  "patternName": "Exception or waiver",
+  "control": {
+    "rowId": "pt-0004",
+    "name": "Rule waivers are granted by the second line with an expiry",
+    "corpusRef": "nist-ai-rmf.govern-1.4",
+    "revision": 1
+  },
+  "flavor": "human-system-authorization",
+  "mode": "HITL",
+  "blocking": true,
+  "subject": {
+    "kind": "exception",
+    "summary": "Waive the Friday deploy freeze for billing",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "rule": {
+        "id": "R-12",
+        "text": "No production deploys on Fridays"
+      },
+      "scope": "service billing",
+      "requestedBy": "r.chen@example.com",
+      "justification": "Security fix",
+      "from": "2026-10-29T14:00:00Z",
+      "until": "2026-10-30T14:00:00Z",
+      "compensating": [
+        "on-call reviewer present"
+      ],
+      "grantor": "second-line"
+    }
+  },
+  "trigger": {
+    "detector": "person",
+    "rule": null,
+    "reason": "R. Chen asked for a waiver until Saturday 14:00.",
+    "values": [],
+    "conditions": [],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "ask": {
+    "question": "Should billing deploy on Friday to ship a security fix?",
+    "checks": []
+  },
+  "environment": "local",
+  "owner": {
+    "kind": "service",
+    "service": "patterns"
+  },
+  "proposedBy": "agent:payments",
+  "builtBy": null,
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "compliance-lead"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "SINGLE",
+    "required": 1,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "compliance-lead",
+  "holder": null,
+  "claimTtl": "PT30M",
+  "sla": {
+    "target": "PT30M",
+    "startedAt": "2026-10-29T14:00:00Z",
+    "dueAt": "2026-10-29T14:30:00Z",
+    "atRiskAt": 0.75,
+    "state": "running",
+    "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+    "default": "DENY",
+    "lateDecision": "ACCEPT_BREACHED",
+    "clockWhileSentBack": "RUNS"
+  },
+  "escalation": {
+    "level": 0,
+    "chain": [
+      "system-owners",
+      "head-of-operations"
+    ]
+  },
+  "allowedActions": [
+    "APPROVE",
+    "DENY"
+  ],
+  "actionLabels": {
+    "APPROVE": "Grant until expiry",
+    "DENY": "Refuse"
+  },
+  "effects": {},
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "slaExtensions": [],
+  "aiRecommendation": null,
+  "context": null,
+  "presentedAt": null,
+  "claimedAt": null,
+  "detectedAt": "2026-10-29T14:00:00Z",
+  "closedAt": null,
+  "decisions": [],
+  "infoRequests": [],
+  "recused": [],
+  "outcome": null,
+  "verdictId": null,
+  "conclusion": null,
+  "verdict": null,
+  "related": [],
+  "history": [
+    {
+      "at": "2026-10-29T14:00:00Z",
+      "state": "OPEN",
+      "actor": "system",
+      "note": "Routed to system-owners"
+    }
+  ],
+  "evidence": [],
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  },
+  "simulated": false,
+  "now": "2026-10-29T14:05:00Z"
+}

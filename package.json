@@ -1,0 +1,11 @@
+{
+  "name": "akka-human",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22", "pnpm": ">=10" },
+  "scripts": {
+    "spec:check": "pnpm --filter @akka-human/spec check",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  }
+}

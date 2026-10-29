@@ -1,0 +1,20 @@
+{
+  "id": "sd-1",
+  "kind": "pattern-approval",
+  "eventId": "he-20261029-00001",
+  "control": {
+    "rowId": "pt-0001",
+    "name": "Payments above the limit need the system owner",
+    "corpusRef": "aws-agentic-scoping.scope2-human-approval",
+    "revision": 1
+  },
+  "matchKey": "pay:S-77",
+  "allows": "pay supplier S-77 up to 4,200 EUR",
+  "grantedBy": "tyler.jewell@akka.io",
+  "grantedAt": "2026-10-29T14:00:00Z",
+  "expiresAt": "2026-11-28T14:00:00Z",
+  "state": "ACTIVE",
+  "uses": 0,
+  "conditions": [],
+  "revoked": null
+}

@@ -1,0 +1,305 @@
+# contextlayer's human controls, bundle v3: the seventeen human rows of the signed bundle (revision 59) with
+# the same row ids and names, each `human_config` a Verify v2.8 block naming its oversight pattern. A setting
+# left out takes the pattern's default, then the shared default (spec/verify/human-patterns.yaml); the
+# settings written here reproduce what the service did before: approver, reviewer, operator and admin roles,
+# its deadlines, timeouts, allowed decisions, minimum review times (recorded, not enforced) and review modes.
+#
+# The other mechanisms of the bundle (sanitizers, guardrails, evals, gates) are not part of this sample.
+schema_version: 1
+service: contextlayer
+bundle: 3
+controls:
+  - id: custom-cl0003
+    name: Risky Action Approval
+    flavor: human-system-authorization
+    human_config:
+      pattern: action-approval
+      subject_kind: action
+      trigger: { detector: workflow, condition: "risk in (MEDIUM, HIGH)" }
+      routing: { roles: [approver], independence: [proposer] }
+      accountable_owner: approver
+      sla_target: PT24H
+      timeout_behaviour: RESUME_WITH_DEFAULT
+      timeout_default: DENY
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: PT24H }
+      allowed_actions: [APPROVE, DENY, ESCALATE, REQUEST_MORE_INFO]
+      minimum_review_seconds: 10
+      minimum_review: WARN
+
+  - id: custom-cl0004
+    name: Link Review
+    flavor: human-domain-decision
+    human_config:
+      pattern: match-adjudication
+      subject_kind: records
+      trigger: { detector: workflow, condition: "identity rule matched records from different sources" }
+      routing: { roles: [reviewer], independence: [proposer, builder] }
+      accountable_owner: reviewer
+      sla_target: P7D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: reviewers, roles: [reviewer] }
+        - { queue: admins, roles: [admin], after: P7D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+      minimum_review_seconds: 5
+      minimum_review: WARN
+
+  - id: custom-cl0005
+    name: Release Approval
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request, condition: "a playbook release is proposed" }
+      routing: { roles: [approver], independence: [] }
+      accountable_owner: approver
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P3D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+
+  - id: custom-cl0040
+    name: Stage Change Approval
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request, condition: "a playbook stage change is proposed" }
+      routing: { roles: [approver], independence: [] }
+      accountable_owner: approver
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P3D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+
+  - id: custom-cl0006
+    name: Four-Eyes Connector Activation
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request, condition: "a connector pack version is to go SHADOW or LIVE" }
+      routing: { roles: [approver], independence: [proposer] }
+      accountable_owner: approver
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P3D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+
+  - id: custom-cl0041
+    name: Connector Deactivation
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request, condition: "a connector pack is to be taken out of service" }
+      routing: { roles: [approver], independence: [] }
+      accountable_owner: approver
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P3D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+
+  - id: custom-cl0011
+    name: Emergency Halt
+    flavor: human-halt
+    human_config:
+      pattern: halt-restart
+      subject_kind: system
+      trigger: { detector: person }
+      routing: { roles: [approver], review_mode: SINGLE, required: 1, independence: [] }
+      accountable_owner: approver
+      sla_target: PT1H
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: PT1H }
+      allowed_actions: [HALT]
+    halt_config:
+      scope: capability
+      target: playbooks
+      exerciser_personae: [approver]
+      exercise_endpoint: "POST /assistants/{id}/halt"
+      affected_calls: all-runtime-operations
+      emits_on_exercise: HaltExercised
+      emits_on_lift: HaltLifted
+
+  - id: custom-cl0012
+    name: Two-Person Restart
+    flavor: human-halt
+    human_config:
+      pattern: halt-restart
+      subject_kind: system
+      trigger: { detector: person }
+      routing: { roles: [approver], review_mode: TWO_PERSON, required: 2, independence: [] }
+      accountable_owner: approver
+      sla_target: P1D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P1D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+    halt_config:
+      scope: capability
+      target: playbooks
+      exerciser_personae: [approver]
+      exercise_endpoint: "POST /assistants/{id}/halt"
+      affected_calls: all-runtime-operations
+      emits_on_exercise: HaltExercised
+      emits_on_lift: HaltLifted
+
+  - id: custom-cl0014
+    name: Domain Join Approval
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request, condition: "a join rule between two data domains is requested" }
+      routing: { roles: [approver], independence: [proposer, builder] }
+      accountable_owner: approver
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P3D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+
+  - id: custom-cl0042
+    name: Domain Administration
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: change-request, condition: "a data domain is set or removed, or a join rule revoked" }
+      routing: { roles: [admin], independence: [] }
+      accountable_owner: admin
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: admins, roles: [admin] }
+      allowed_actions: [APPROVE, DENY]
+
+  - id: custom-cl0043
+    name: Person Runs the Question
+    flavor: human-domain-decision
+    human_config:
+      pattern: action-approval
+      subject_kind: action
+      trigger: { detector: workflow, condition: "a model drafted a question" }
+      routing: { roles: [operator], independence: [] }
+      accountable_owner: operator
+      sla_target: P1D
+      timeout_behaviour: RAISE_TIMEOUT
+      timeout_default: null
+      escalation_chain:
+        - { queue: operators, roles: [operator] }
+        - { queue: admins, roles: [admin], after: P1D }
+      allowed_actions: [APPROVE, DENY]
+      sticky_modes: [APPROVE_ONCE]
+      rationale_required: false
+
+  - id: custom-cl0044
+    name: Unknown Outcome Resolution
+    flavor: human-domain-decision
+    human_config:
+      pattern: outcome-reconciliation
+      subject_kind: action
+      trigger: { detector: workflow, condition: "an action's call did not complete" }
+      routing: { roles: [reviewer], independence: [proposer] }
+      accountable_owner: reviewer
+      sla_target: P1D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: reviewers, roles: [reviewer] }
+        - { queue: admins, roles: [admin], after: P1D }
+      allowed_actions: [APPROVE, DENY, ESCALATE]
+
+  - id: custom-cl0045
+    name: Failed Step Hand-Off
+    flavor: human-monitoring
+    human_config:
+      pattern: triage
+      subject_kind: action
+      trigger: { detector: workflow, condition: "a playbook step failed after its retries" }
+      routing: { roles: [operator], independence: [] }
+      accountable_owner: operator
+      sla_target: P1D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: operators, roles: [operator] }
+        - { queue: admins, roles: [admin], after: P1D }
+      allowed_actions: [APPROVE, ESCALATE]
+
+  - id: custom-cl0046
+    name: Case Resolution
+    flavor: human-domain-decision
+    human_config:
+      pattern: triage
+      subject_kind: behaviour
+      trigger: { detector: monitor, condition: "a watcher's reading crossed its threshold" }
+      routing: { roles: [reviewer], independence: [] }
+      accountable_owner: reviewer
+      sla_target: P7D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: reviewers, roles: [reviewer] }
+        - { queue: admins, roles: [admin], after: P7D }
+      allowed_actions: [APPROVE, DENY]
+
+  - id: custom-cl0047
+    name: Control Waiver
+    flavor: human-system-authorization
+    human_config:
+      pattern: exception
+      subject_kind: exception
+      trigger: { detector: person }
+      routing: { roles: [admin], independence: [] }
+      accountable_owner: admin
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      timeout_default: null
+      escalation_chain:
+        - { queue: admins, roles: [admin] }
+      allowed_actions: [APPROVE, DENY]
+
+  - id: custom-cl0048
+    name: Control Acceptance
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: person }
+      routing: { roles: [approver], independence: [] }
+      accountable_owner: approver
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: approvers, roles: [approver] }
+        - { queue: admins, roles: [admin], after: P3D }
+      allowed_actions: [APPROVE, DENY]
+      sticky_modes: [APPROVE_ONCE, APPROVE_FOR_PATTERN]
+
+  - id: custom-cl0049
+    name: Evidence Assertion
+    flavor: human-system-authorization
+    human_config:
+      pattern: change-authorization
+      subject_kind: change
+      trigger: { detector: person }
+      routing: { roles: [admin], independence: [] }
+      accountable_owner: admin
+      sla_target: P3D
+      timeout_behaviour: RAISE_TIMEOUT
+      escalation_chain:
+        - { queue: admins, roles: [admin] }
+      allowed_actions: [APPROVE, DENY]

@@ -1,0 +1,84 @@
+{
+  "control": {
+    "rowId": "pt-0001",
+    "name": "Payments above the limit need the system owner",
+    "corpusRef": "aws-agentic-scoping.scope2-human-approval",
+    "revision": 1
+  },
+  "pattern": "action-approval",
+  "flavor": "human-system-authorization",
+  "subjectKind": "action",
+  "blocking": true,
+  "mode": "HITL",
+  "allowedActions": [
+    "APPROVE",
+    "DENY",
+    "EDIT",
+    "REQUEST_MORE_INFO",
+    "ESCALATE"
+  ],
+  "actionLabels": {
+    "APPROVE": "Approve",
+    "DENY": "Deny",
+    "EDIT": "Edit, then approve",
+    "REQUEST_MORE_INFO": "Ask for more",
+    "ESCALATE": "Escalate"
+  },
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "ai-system-owner"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "SINGLE",
+    "required": 1,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "ai-system-owner",
+  "slaTarget": "PT30M",
+  "atRiskAt": 0.75,
+  "claimTtl": "PT30M",
+  "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+  "timeoutDefault": "DENY",
+  "escalationChain": [
+    {
+      "queue": "system-owners",
+      "roles": [
+        "ai-system-owner"
+      ],
+      "after": null
+    },
+    {
+      "queue": "head-of-operations",
+      "roles": [
+        "head-of-operations"
+      ],
+      "after": "PT30M"
+    }
+  ],
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "clockWhileSentBack": "RUNS",
+  "lateDecision": "ACCEPT_BREACHED",
+  "aiRecommendation": null,
+  "proofEvent": "HumanOversightDecisionRecordedV2",
+  "shadow": false,
+  "strength": {
+    "pre-production": "warn",
+    "production": "prevent"
+  },
+  "halt": null
+}

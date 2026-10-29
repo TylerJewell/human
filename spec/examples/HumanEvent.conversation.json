@@ -1,0 +1,156 @@
+{
+  "id": "he-20261029-00009",
+  "state": "OPEN",
+  "pending": true,
+  "shadow": false,
+  "strength": "prevent",
+  "pattern": "hand-off",
+  "patternName": "Hand-off to a person",
+  "control": {
+    "rowId": "pt-0011",
+    "name": "A person takes over a conversation when asked",
+    "corpusRef": null,
+    "revision": 1
+  },
+  "flavor": "human-domain-decision",
+  "mode": "HITL",
+  "blocking": true,
+  "subject": {
+    "kind": "conversation",
+    "summary": "A customer asked for a person",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "channel": "chat",
+      "reason": "user-asked",
+      "transcript": [
+        {
+          "at": "2026-10-29T14:00:00Z",
+          "role": "user",
+          "text": "I want to talk to a person."
+        },
+        {
+          "at": "2026-10-29T14:00:00Z",
+          "role": "agent",
+          "text": "I will find someone."
+        }
+      ],
+      "run": null,
+      "takenOverBy": null
+    }
+  },
+  "trigger": {
+    "detector": "workflow",
+    "rule": null,
+    "reason": "The customer asked to talk to a person.",
+    "values": [],
+    "conditions": [],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "ask": {
+    "question": "Will you take over this chat?",
+    "checks": []
+  },
+  "environment": "local",
+  "owner": {
+    "kind": "service",
+    "service": "patterns"
+  },
+  "proposedBy": "agent:payments",
+  "builtBy": null,
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "duty-officer"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "SINGLE",
+    "required": 1,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "head-of-operations",
+  "holder": null,
+  "claimTtl": "PT30M",
+  "sla": {
+    "target": "PT30M",
+    "startedAt": "2026-10-29T14:00:00Z",
+    "dueAt": "2026-10-29T14:30:00Z",
+    "atRiskAt": 0.75,
+    "state": "running",
+    "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+    "default": "DENY",
+    "lateDecision": "ACCEPT_BREACHED",
+    "clockWhileSentBack": "RUNS"
+  },
+  "escalation": {
+    "level": 0,
+    "chain": [
+      "system-owners",
+      "head-of-operations"
+    ]
+  },
+  "allowedActions": [
+    "DECLINE_SYSTEM",
+    "REDIRECT",
+    "APPROVE"
+  ],
+  "actionLabels": {
+    "DECLINE_SYSTEM": "Take over",
+    "REDIRECT": "Return to the agent",
+    "APPROVE": "Close"
+  },
+  "effects": {},
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "slaExtensions": [],
+  "aiRecommendation": null,
+  "context": null,
+  "presentedAt": null,
+  "claimedAt": null,
+  "detectedAt": "2026-10-29T14:00:00Z",
+  "closedAt": null,
+  "decisions": [],
+  "infoRequests": [],
+  "recused": [],
+  "outcome": null,
+  "verdictId": null,
+  "conclusion": null,
+  "verdict": null,
+  "related": [],
+  "history": [
+    {
+      "at": "2026-10-29T14:00:00Z",
+      "state": "OPEN",
+      "actor": "system",
+      "note": "Routed to system-owners"
+    }
+  ],
+  "evidence": [],
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  },
+  "simulated": false,
+  "now": "2026-10-29T14:05:00Z"
+}

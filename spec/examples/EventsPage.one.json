@@ -1,0 +1,164 @@
+{
+  "events": [
+    {
+      "id": "he-20261029-00001",
+      "state": "OPEN",
+      "pending": true,
+      "shadow": false,
+      "strength": "prevent",
+      "pattern": "action-approval",
+      "patternName": "Action approval",
+      "control": {
+        "rowId": "pt-0001",
+        "name": "Payments above the limit need the system owner",
+        "corpusRef": "aws-agentic-scoping.scope2-human-approval",
+        "revision": 1
+      },
+      "flavor": "human-system-authorization",
+      "mode": "HITL",
+      "blocking": true,
+      "subject": {
+        "kind": "action",
+        "summary": "Pay supplier S-77 4,200 EUR",
+        "service": "patterns",
+        "agent": null,
+        "component": null,
+        "sessionId": null,
+        "flowId": null,
+        "traceId": null,
+        "workflowId": null,
+        "ref": null,
+        "detail": {
+          "tool": "pay",
+          "arguments": {
+            "supplier": "S-77",
+            "amount": 4200,
+            "currency": "EUR"
+          },
+          "authority": {
+            "missing": [
+              "amount > 1000"
+            ],
+            "required": {
+              "role": "ai-system-owner"
+            }
+          },
+          "recentSteps": []
+        }
+      },
+      "trigger": {
+        "detector": "tool-policy",
+        "rule": null,
+        "reason": "The agent asked to pay 4,200 EUR; the limit without approval is 1,000.",
+        "values": [],
+        "conditions": [],
+        "detectedAt": "2026-10-29T14:00:00Z",
+        "occurrences": 1
+      },
+      "ask": {
+        "question": "Should the agent pay supplier S-77 4,200 EUR?",
+        "checks": []
+      },
+      "environment": "local",
+      "owner": {
+        "kind": "service",
+        "service": "patterns"
+      },
+      "proposedBy": "agent:payments",
+      "builtBy": null,
+      "routing": {
+        "queue": "system-owners",
+        "roles": [
+          "ai-system-owner"
+        ],
+        "groups": [],
+        "attestations": [],
+        "reviewMode": "SINGLE",
+        "required": 1,
+        "of": null,
+        "splitVote": "DENY",
+        "independence": [
+          "proposer"
+        ],
+        "independentOf": [
+          "agent:payments"
+        ]
+      },
+      "accountableOwner": "ai-system-owner",
+      "holder": null,
+      "claimTtl": "PT30M",
+      "sla": {
+        "target": "PT30M",
+        "startedAt": "2026-10-29T14:00:00Z",
+        "dueAt": "2026-10-29T14:30:00Z",
+        "atRiskAt": 0.75,
+        "state": "running",
+        "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+        "default": "DENY",
+        "lateDecision": "ACCEPT_BREACHED",
+        "clockWhileSentBack": "RUNS"
+      },
+      "escalation": {
+        "level": 0,
+        "chain": [
+          "system-owners",
+          "head-of-operations"
+        ]
+      },
+      "allowedActions": [
+        "APPROVE",
+        "DENY",
+        "EDIT",
+        "REQUEST_MORE_INFO",
+        "ESCALATE"
+      ],
+      "actionLabels": {
+        "APPROVE": "Approve",
+        "DENY": "Deny",
+        "EDIT": "Edit, then approve",
+        "REQUEST_MORE_INFO": "Ask for more",
+        "ESCALATE": "Escalate"
+      },
+      "effects": {},
+      "sticky": [
+        "APPROVE_ONCE",
+        "APPROVE_FOR_PATTERN"
+      ],
+      "rationaleRequired": true,
+      "minimumReviewSeconds": 10,
+      "minimumReview": "ENFORCE",
+      "slaExtensions": [],
+      "aiRecommendation": null,
+      "context": null,
+      "presentedAt": null,
+      "claimedAt": null,
+      "detectedAt": "2026-10-29T14:00:00Z",
+      "closedAt": null,
+      "decisions": [],
+      "infoRequests": [],
+      "recused": [],
+      "outcome": null,
+      "verdictId": null,
+      "conclusion": null,
+      "verdict": null,
+      "related": [],
+      "history": [
+        {
+          "at": "2026-10-29T14:00:00Z",
+          "state": "OPEN",
+          "actor": "system",
+          "note": "Routed to system-owners"
+        }
+      ],
+      "evidence": [],
+      "resumes": {
+        "kind": "workflow",
+        "target": "payment",
+        "id": "pay-3141"
+      },
+      "simulated": false,
+      "now": "2026-10-29T14:05:00Z"
+    }
+  ],
+  "total": 1
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.akka</groupId>
+    <artifactId>akka-javasdk-parent</artifactId>
+    <version>3.7.0</version>
+    <relativePath/>
+  </parent>
+
+  <!-- Stand-ins for SDK and runtime behaviour, each behind the interface the real one would have: the
+       proof ledger (runtime 10), suspend and resume with the person recorded (runtime 11), halt
+       guardrails within one service (runtime 14), the tool-call approval guardrail (SDK 13), and the
+       development clock. Deleted piece by piece as the SDK and runtime ship each one. -->
+  <groupId>io.akka.human</groupId>
+  <artifactId>human-runtime-local</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <non-akka-service>true</non-akka-service>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.akka.human</groupId>
+      <artifactId>human-akka</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+</project>

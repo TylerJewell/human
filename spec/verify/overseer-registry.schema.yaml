@@ -1,0 +1,92 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://akka.io/schemas/policy-platform/overseer-registry/v1"
+title: "Overseer Registry"
+description: |
+  The people who may decide on a governed system's human controls, and why.
+  EU AI Act Art 26(2) assigns oversight to people with "the necessary
+  competence, training and authority"; a control's human_config.routing names
+  the roles and attestations it needs, and this registry records who holds them.
+
+  Routing refuses a decision from anyone who is not qualified for the control:
+  `qualified` is false, a required attestation is missing or expired, or the
+  control or decision falls outside their authority. The registry is
+  deployment data, kept beside the system's bundle; the corpus holds none.
+  See specs/decisions/adr-018-human-patterns.md.
+type: object
+additionalProperties: false
+required: [schema_version, overseers]
+properties:
+  schema_version: { type: integer, const: 1 }
+
+  overseers:
+    type: array
+    items: { $ref: "#/$defs/overseer" }
+
+$defs:
+  overseer:
+    type: object
+    additionalProperties: false
+    required: [subject, roles, qualified]
+    properties:
+      subject:
+        type: string
+        description: The identity the reviewer signs in with, as the identity provider reports it.
+      name:
+        type: string
+        description: The name shown to other reviewers.
+      roles:
+        type: array
+        uniqueItems: true
+        items: { type: string }
+        description: Roles matched against human_config.routing.roles and escalation_chain[*].roles.
+      groups:
+        type: array
+        uniqueItems: true
+        items: { type: string }
+      reports_to:
+        type: string
+        description: The subject of this reviewer's manager; independence rule `first-reviewer-line` follows it.
+      authority:
+        type: array
+        description: |
+          Limits on what this reviewer may decide. Absent means the roles alone
+          decide. Each entry allows the listed decisions on the listed controls.
+        items:
+          type: object
+          additionalProperties: false
+          required: [controls]
+          properties:
+            controls:
+              type: array
+              minItems: 1
+              items: { type: string }
+              description: Control ids, or "*" for every control the roles route to.
+            actions:
+              type: array
+              uniqueItems: true
+              items:
+                type: string
+                enum: [APPROVE, DENY, EDIT, REDIRECT, REPLAN, ESCALATE, HALT, RECUSE, REQUEST_MORE_INFO, SEND_BACK, DECLINE_SYSTEM, OVERRIDE, DISREGARD, REVERSE]
+              description: Decisions allowed (registries/human-decisions.yaml). Absent means all the control allows.
+      attestations:
+        type: array
+        description: Training and checks the reviewer holds, matched against human_config.routing.attestations.
+        items:
+          type: object
+          additionalProperties: false
+          required: [id, completed_at]
+          properties:
+            id:
+              type: string
+            completed_at:
+              type: string
+              format: date
+            expires_at:
+              type: string
+              format: date
+      qualified:
+        type: boolean
+        description: Whether the reviewer may decide at all. False suspends them without removing their roles.
+      qualified_reason:
+        type: string
+        description: Why the reviewer is or is not qualified, for the audit record.

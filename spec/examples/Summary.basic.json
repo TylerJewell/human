@@ -1,0 +1,114 @@
+{
+  "loop": {
+    "in": {
+      "pending": 1,
+      "overdue": 0,
+      "raised7d": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "on": {
+      "pending": 0,
+      "overdue": 0,
+      "raised7d": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "over": {
+      "pending": 0,
+      "overdue": 0,
+      "raised7d": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  "states": {
+    "OPEN": 1
+  },
+  "patterns": {
+    "action-approval": 1
+  },
+  "atRisk": 0,
+  "overdue": 0,
+  "halts": [
+    {
+      "scope": "capability",
+      "target": "eligibility-assessment",
+      "control": {
+        "rowId": "pt-0012",
+        "name": "Eligibility can be halted",
+        "corpusRef": "eu-ai-act.art14.4.e",
+        "revision": 1
+      },
+      "affectedCalls": "all-runtime-operations",
+      "halted": true,
+      "since": "2026-10-29T14:00:00Z",
+      "by": "s.patel@example.com",
+      "eventId": "he-20261029-00012",
+      "liftEventId": null,
+      "callsPerMinute": 0,
+      "safeStateChecks": [
+        {
+          "name": "backlog drained",
+          "passed": false
+        }
+      ],
+      "service": "patterns"
+    }
+  ],
+  "raised30d": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1
+  ],
+  "standing": {
+    "active": 0,
+    "expiring": 0
+  },
+  "unownedControls": 0
+}

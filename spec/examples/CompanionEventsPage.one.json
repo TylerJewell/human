@@ -1,0 +1,53 @@
+{
+  "rows": [
+    {
+      "id": "he-20261029-00001",
+      "state": "OPEN",
+      "pending": true,
+      "pattern": "action-approval",
+      "patternName": "Action approval",
+      "control": {
+        "rowId": "pt-0001",
+        "name": "Payments above the limit need the system owner",
+        "corpusRef": "aws-agentic-scoping.scope2-human-approval",
+        "revision": 1
+      },
+      "flavor": "human-system-authorization",
+      "mode": "HITL",
+      "blocking": true,
+      "subject": {
+        "kind": "action",
+        "summary": "Pay S-77 4,200 EUR",
+        "service": "patterns",
+        "agent": "payments"
+      },
+      "ask": {
+        "question": "Should the agent pay supplier S-77 4,200 EUR?"
+      },
+      "queue": "system-owners",
+      "reviewers": {
+        "required": 1,
+        "voted": 0
+      },
+      "holder": null,
+      "sla": {
+        "state": "running",
+        "dueAt": "2026-10-29T14:30:00Z",
+        "target": "PT30M"
+      },
+      "aiRecommendation": null,
+      "shadow": false,
+      "detectedAt": "2026-10-29T14:00:00Z",
+      "closedAt": null,
+      "outcome": null,
+      "decidedBy": [],
+      "conclusion": null,
+      "simulated": false,
+      "owner": {
+        "service": "patterns"
+      }
+    }
+  ],
+  "total": 1,
+  "next": null
+}

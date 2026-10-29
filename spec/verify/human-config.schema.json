@@ -1,0 +1,398 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verify/human-config.schema.json",
+  "title": "human_config and halt_config, from Verify control.schema.yaml at 641097fa",
+  "$defs": {
+    "human_config": {
+      "type": "object",
+      "description": "Required when the mechanism kind is `human` (all five flavors; a\n`human-halt` control carries `halt_config` beside it). Names the\noversight pattern — one of the fourteen in\nframework/schema/registries/human-patterns.yaml — and the settings\nthat differ from that pattern's defaults. A corpus control states\nwhat its source text requires; a deployment fills in the rest\n(roles, deadlines, escalation queues) when it writes the bundle.\nDecision names come from framework/schema/registries/human-decisions.yaml.\nThe pattern must run under the control's flavor; the\nmechanism-coverage auditor checks this and that every human\ncontrol has the block. See specs/decisions/adr-018-human-patterns.md.\n",
+      "required": [
+        "pattern",
+        "subject_kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "enum": [
+            "action-approval",
+            "decision-review",
+            "change-authorization",
+            "exception",
+            "match-adjudication",
+            "outcome-reconciliation",
+            "contest-appeal",
+            "override",
+            "flag-feedback",
+            "triage",
+            "hand-off",
+            "halt-restart",
+            "attestation",
+            "oversight-quality"
+          ],
+          "description": "The oversight pattern (human-patterns.yaml) this control runs."
+        },
+        "subject_kind": {
+          "type": "string",
+          "enum": [
+            "action",
+            "behaviour",
+            "change",
+            "system",
+            "output",
+            "records",
+            "appeal",
+            "exception",
+            "conversation",
+            "attestation"
+          ],
+          "description": "What the person judges: an action the system would take, a\nbehaviour over time, a change to the system, the system itself\n(halt and restart), an output, two records that may be one thing,\nan appeal against a decision, a rule to be set aside, a\nconversation or run to take over, or the evidence for an\nattestation. Consoles choose how to present an event by it.\n"
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "What raises the event. Monitors also give the metric and threshold.",
+          "properties": {
+            "detector": {
+              "type": "string",
+              "enum": [
+                "tool-policy",
+                "guardrail",
+                "eval",
+                "monitor",
+                "workflow",
+                "change-request",
+                "person",
+                "schedule"
+              ]
+            },
+            "condition": {
+              "type": "string"
+            },
+            "metric": {
+              "type": "string"
+            },
+            "comparison": {
+              "type": "string",
+              "enum": [
+                "<",
+                "<=",
+                ">",
+                ">=",
+                "==",
+                "!="
+              ]
+            },
+            "threshold": {
+              "type": "number"
+            },
+            "window": {
+              "$ref": "#/$defs/duration"
+            },
+            "baseline": {
+              "type": "number"
+            }
+          }
+        },
+        "routing": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Who may decide. A reviewer must hold the roles and attestations listed (specs/platform/humans.md §10).",
+          "properties": {
+            "roles": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "groups": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "attestations": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              },
+              "description": "Qualifications a reviewer must hold, checked against the overseer registry (overseer-registry.schema.yaml)."
+            },
+            "review_mode": {
+              "type": "string",
+              "enum": [
+                "SINGLE",
+                "TWO_PERSON",
+                "N_OF_M",
+                "CONSENSUS"
+              ]
+            },
+            "required": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Votes needed to settle the event."
+            },
+            "of": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "N_OF_M only — the number of reviewers asked."
+            },
+            "independence": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "proposer",
+                  "builder",
+                  "first-reviewer",
+                  "first-reviewer-line"
+                ]
+              },
+              "description": "Who may not decide: whoever proposed the subject, whoever\nbuilt or loaded it, the first decider (appeals), and anyone\nin the first decider's reporting line.\n"
+            },
+            "split_vote": {
+              "type": "string",
+              "enum": [
+                "DENY",
+                "ESCALATE"
+              ],
+              "description": "What settles a TWO_PERSON or N_OF_M event when the votes disagree."
+            }
+          }
+        },
+        "accountable_owner": {
+          "type": "string",
+          "description": "The role accountable for this control's oversight. It answers oversight-quality signals."
+        },
+        "sla_target": {
+          "$ref": "#/$defs/duration",
+          "description": "How long reviewers have before the timeout behaviour applies."
+        },
+        "at_risk_at": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "Fraction of sla_target after which the event shows as at risk."
+        },
+        "claim_ttl": {
+          "$ref": "#/$defs/duration",
+          "description": "How long a claim holds the event for one reviewer."
+        },
+        "timeout_behaviour": {
+          "type": "string",
+          "enum": [
+            "RAISE_TIMEOUT",
+            "RESUME_WITH_DEFAULT",
+            "ESCALATE",
+            "ABANDON"
+          ],
+          "description": "What happens when sla_target passes (specs/platform/humans.md §7.4)."
+        },
+        "timeout_default": {
+          "$ref": "#/$defs/humanAction",
+          "description": "The decision applied by RESUME_WITH_DEFAULT."
+        },
+        "escalation_chain": {
+          "type": "array",
+          "description": "Ordered queues an event moves through on ESCALATE. After an escalation, the next queue's roles decide.",
+          "items": {
+            "type": "object",
+            "required": [
+              "queue"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "queue": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "after": {
+                "$ref": "#/$defs/duration"
+              }
+            }
+          }
+        },
+        "allowed_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/humanAction"
+          }
+        },
+        "sticky_modes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "APPROVE_ONCE",
+              "APPROVE_FOR_SESSION",
+              "APPROVE_FOR_PATTERN",
+              "DENY_FOR_PATTERN"
+            ]
+          }
+        },
+        "rationale_required": {
+          "type": "boolean"
+        },
+        "minimum_review_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimum_review": {
+          "type": "string",
+          "enum": [
+            "WARN",
+            "ENFORCE"
+          ],
+          "description": "Whether a decision under minimum_review_seconds is refused or recorded with a warning."
+        },
+        "clock_while_sent_back": {
+          "type": "string",
+          "enum": [
+            "RUNS",
+            "PAUSED"
+          ]
+        },
+        "late_decision": {
+          "type": "string",
+          "enum": [
+            "ACCEPT_BREACHED",
+            "REFUSE"
+          ],
+          "description": "Whether a decision after sla_target, on an event still open, is accepted (its verdict is breached) or refused."
+        },
+        "ai_recommendation": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The judge agent that reviews the event before a person does, if any."
+        },
+        "proof_event": {
+          "type": "string",
+          "description": "The AUD event that records each decision (specs/corpus/aud-taxonomy.yaml)."
+        },
+        "shadow": {
+          "type": "boolean",
+          "description": "Record \"would have raised\" events without routing them to anyone."
+        },
+        "strength": {
+          "type": "object",
+          "description": "Per environment, whether the control prevents, warns or only records.",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "prevent",
+              "warn",
+              "record"
+            ]
+          }
+        }
+      }
+    },
+    "halt_config": {
+      "type": "object",
+      "description": "Required when the mechanism flavor is `human-halt`. A halt\ncapability is a registered, exercisable system-level intervention point\nthat brings the AI system to a halt in a safe state. It is not a\nper-call guardrail or per-step workflow pause — it sits above the\nruntime call layer and is exercised by oversight personnel.\nRestarting is a decision under the control's human_config\n(pattern `halt-restart`).\n",
+      "required": [
+        "scope",
+        "exerciser_personae",
+        "exercise_endpoint",
+        "affected_calls",
+        "emits_on_exercise"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": [
+            "system",
+            "service",
+            "capability"
+          ],
+          "description": "Scope of the halt: the full AI system, a specific service within\nit, or a single capability/agent. Most regulatory halt\nobligations are scope=system (one switch covers everything).\n"
+        },
+        "exerciser_personae": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "description": "Oversight roles authorized to exercise the halt — e.g.,\n[\"safety-officer\", \"incident-commander\"]. The implementation must\nbind these roles to authenticated identities.\n"
+        },
+        "exercise_endpoint": {
+          "type": "string",
+          "description": "The registered intervention point through which oversight\npersonnel invoke the halt. Typically an HTTP endpoint\n(e.g., \"POST /api/halt\") with strong auth; may be a CLI\ncommand or a UI button — the spec is implementation-agnostic.\n"
+        },
+        "affected_calls": {
+          "type": "string",
+          "enum": [
+            "all-runtime-operations",
+            "tool-calls-only",
+            "llm-calls-only",
+            "write-operations-only"
+          ],
+          "description": "What ceases when the halt is exercised. The strictest\n(and most common) is `all-runtime-operations` — every\ntool call, LLM call, and side effect denies until cleared.\n"
+        },
+        "target": {
+          "type": "string",
+          "description": "The service or capability a `service` or `capability` scope\nstops. Deployment-applied; corpus controls leave it out.\n"
+        },
+        "emits_on_exercise": {
+          "type": "string",
+          "const": "HaltExercised",
+          "description": "The proof event recorded when the halt is exercised\n(specs/corpus/aud-taxonomy.yaml: exerciser identity, scope,\nreason, timestamp).\n"
+        },
+        "emits_on_lift": {
+          "type": "string",
+          "const": "HaltLifted",
+          "description": "The proof event recorded when the halt is lifted after the\nrestart decision (specs/corpus/aud-taxonomy.yaml).\n"
+        },
+        "safe_state_definition": {
+          "type": "string",
+          "description": "Optional plain-English description of what \"safe state\"\nmeans for this system. Some regulations require the halt\nto bring the system to a defined safe state, not merely\nto stop.\n"
+        }
+      }
+    },
+    "duration": {
+      "type": "string",
+      "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?=\\d)(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+      "description": "An ISO 8601 duration, e.g. PT30M or P30D."
+    },
+    "humanAction": {
+      "type": "string",
+      "enum": [
+        "APPROVE",
+        "DENY",
+        "EDIT",
+        "REDIRECT",
+        "REPLAN",
+        "ESCALATE",
+        "HALT",
+        "RECUSE",
+        "REQUEST_MORE_INFO",
+        "SEND_BACK",
+        "DECLINE_SYSTEM",
+        "OVERRIDE",
+        "DISREGARD",
+        "REVERSE"
+      ],
+      "description": "A decision from framework/schema/registries/human-decisions.yaml."
+    }
+  }
+}

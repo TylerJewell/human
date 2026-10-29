@@ -1,0 +1,3337 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://akka.io/schemas/human/oversight/v2",
+  "title": "Oversight contract, version 2",
+  "description": "Types served by /oversight/* and /api/companion/human/*. See CONTRACT.md.",
+  "$defs": {
+    "Instant": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "Duration": {
+      "type": "string",
+      "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(?=\\d)(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$"
+    },
+    "PatternId": {
+      "enum": [
+        "action-approval",
+        "decision-review",
+        "change-authorization",
+        "exception",
+        "match-adjudication",
+        "outcome-reconciliation",
+        "contest-appeal",
+        "override",
+        "flag-feedback",
+        "triage",
+        "hand-off",
+        "halt-restart",
+        "attestation",
+        "oversight-quality"
+      ]
+    },
+    "Action": {
+      "enum": [
+        "APPROVE",
+        "DENY",
+        "EDIT",
+        "REDIRECT",
+        "REPLAN",
+        "ESCALATE",
+        "HALT",
+        "RECUSE",
+        "REQUEST_MORE_INFO",
+        "SEND_BACK",
+        "DECLINE_SYSTEM",
+        "OVERRIDE",
+        "DISREGARD",
+        "REVERSE"
+      ]
+    },
+    "Sticky": {
+      "enum": [
+        "APPROVE_ONCE",
+        "APPROVE_FOR_SESSION",
+        "APPROVE_FOR_PATTERN",
+        "DENY_FOR_PATTERN"
+      ]
+    },
+    "SubjectKind": {
+      "enum": [
+        "action",
+        "behaviour",
+        "change",
+        "system",
+        "output",
+        "records",
+        "appeal",
+        "exception",
+        "conversation",
+        "attestation"
+      ]
+    },
+    "Flavor": {
+      "enum": [
+        "human-domain-decision",
+        "human-system-authorization",
+        "human-monitoring",
+        "human-feedback",
+        "human-halt"
+      ]
+    },
+    "Mode": {
+      "enum": [
+        "HITL",
+        "HOTL",
+        "HALT"
+      ]
+    },
+    "State": {
+      "enum": [
+        "DETECTED",
+        "OPEN",
+        "CLAIMED",
+        "IN_REVIEW",
+        "AWAITING_SECOND",
+        "ESCALATED",
+        "CHANGES_REQUESTED",
+        "DECIDED",
+        "APPLIED",
+        "TIMED_OUT",
+        "ABANDONED",
+        "KILLED",
+        "WITHDRAWN",
+        "CLOSED",
+        "REOPENED"
+      ]
+    },
+    "ReviewMode": {
+      "enum": [
+        "SINGLE",
+        "TWO_PERSON",
+        "N_OF_M",
+        "CONSENSUS"
+      ]
+    },
+    "TimeoutBehaviour": {
+      "enum": [
+        "RAISE_TIMEOUT",
+        "RESUME_WITH_DEFAULT",
+        "ESCALATE",
+        "ABANDON"
+      ]
+    },
+    "SlaState": {
+      "enum": [
+        "running",
+        "at-risk",
+        "overdue",
+        "paused",
+        "met",
+        "missed",
+        "none"
+      ]
+    },
+    "SlaOutcome": {
+      "enum": [
+        "COMPLETED",
+        "TIMED_OUT",
+        "ESCALATED",
+        "ABANDONED",
+        "KILLED"
+      ]
+    },
+    "Conclusion": {
+      "enum": [
+        "upheld",
+        "breached",
+        "inconclusive",
+        "error"
+      ]
+    },
+    "VerdictSource": {
+      "enum": [
+        "runtime",
+        "simulated",
+        "rehearsal"
+      ]
+    },
+    "Strength": {
+      "enum": [
+        "prevent",
+        "warn",
+        "record"
+      ]
+    },
+    "Reviewer": {
+      "type": "object",
+      "required": [
+        "subject",
+        "roles"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "identityProvider": {
+          "type": "string"
+        },
+        "rehearsal": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ControlRef": {
+      "type": "object",
+      "required": [
+        "rowId",
+        "name"
+      ],
+      "properties": {
+        "rowId": {
+          "type": "string",
+          "description": "The control's id in the service's bundle."
+        },
+        "name": {
+          "type": "string"
+        },
+        "corpusRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The Verify corpus control it implements."
+        },
+        "revision": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    },
+    "Subject": {
+      "type": "object",
+      "required": [
+        "kind",
+        "summary",
+        "detail"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/SubjectKind"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "service": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "agent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "component": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sessionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "flowId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "traceId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "workflowId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The record the subject is about, in the service's terms."
+        },
+        "detail": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "action"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/ActionDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "behaviour"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/BehaviourDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "change"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/ChangeDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "system"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/SystemDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "output"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/OutputDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "records"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/RecordsDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "appeal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/AppealDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "exception"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/ExceptionDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "conversation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/ConversationDetail"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "attestation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "detail": {
+                "$ref": "#/$defs/AttestationDetail"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ActionDetail": {
+      "type": "object",
+      "required": [
+        "tool",
+        "arguments"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string"
+        },
+        "arguments": {
+          "type": "object"
+        },
+        "authority": {
+          "type": "object",
+          "properties": {
+            "missing": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "required": {
+              "type": "object"
+            }
+          }
+        },
+        "recentSteps": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "sentAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "requestedBy": {
+          "type": "string"
+        },
+        "lastKnown": {
+          "type": "string"
+        }
+      }
+    },
+    "BehaviourDetail": {
+      "type": "object",
+      "required": [
+        "metric",
+        "value"
+      ],
+      "properties": {
+        "metric": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "window": {
+          "$ref": "#/$defs/Duration"
+        },
+        "comparison": {
+          "enum": [
+            "<",
+            "<=",
+            ">",
+            ">=",
+            "==",
+            "!="
+          ]
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "baseline": {
+          "type": "number"
+        },
+        "value": {
+          "type": "number"
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "at",
+              "value"
+            ],
+            "properties": {
+              "at": {
+                "$ref": "#/$defs/Instant"
+              },
+              "value": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "contributors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "ref"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ChangeDetail": {
+      "type": "object",
+      "required": [
+        "system",
+        "change",
+        "ref",
+        "before",
+        "after"
+      ],
+      "properties": {
+        "system": {
+          "type": "string"
+        },
+        "change": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "proposedBy": {
+          "type": "string"
+        },
+        "builtBy": {
+          "type": "string"
+        },
+        "before": {
+          "type": "object"
+        },
+        "after": {
+          "type": "object"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "ref"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "blastRadius": {
+          "type": "object",
+          "properties": {
+            "useCases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "trafficShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "stage": {
+          "type": "string"
+        }
+      }
+    },
+    "SystemDetail": {
+      "type": "object",
+      "required": [
+        "scope",
+        "target",
+        "affectedCalls",
+        "safeStateChecks",
+        "halted"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "system",
+            "service",
+            "capability"
+          ]
+        },
+        "target": {
+          "type": "string"
+        },
+        "affectedCalls": {
+          "enum": [
+            "all-runtime-operations",
+            "tool-calls-only",
+            "llm-calls-only",
+            "write-operations-only"
+          ]
+        },
+        "callsPerMinute": {
+          "type": "number"
+        },
+        "safeStateChecks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Check"
+          }
+        },
+        "halted": {
+          "type": "boolean"
+        },
+        "lift": {
+          "type": "boolean",
+          "description": "True when the event asks to restart, false when it halts."
+        }
+      }
+    },
+    "OutputDetail": {
+      "type": "object",
+      "required": [
+        "output"
+      ],
+      "properties": {
+        "output": {
+          "type": "string"
+        },
+        "replacement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "flag": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "by": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        },
+        "flowId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "ref": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "affects": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "RecordSide": {
+      "type": "object",
+      "required": [
+        "source",
+        "ref",
+        "fields"
+      ],
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "loadedBy": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "object"
+        }
+      }
+    },
+    "RecordsDetail": {
+      "type": "object",
+      "required": [
+        "entityType",
+        "left",
+        "right"
+      ],
+      "properties": {
+        "entityType": {
+          "type": "string"
+        },
+        "left": {
+          "$ref": "#/$defs/RecordSide"
+        },
+        "right": {
+          "$ref": "#/$defs/RecordSide"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "agree": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "differ": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "score": {
+          "type": "number"
+        },
+        "method": {
+          "type": "string"
+        }
+      }
+    },
+    "AppealDetail": {
+      "type": "object",
+      "required": [
+        "original",
+        "grounds"
+      ],
+      "properties": {
+        "original": {
+          "type": "object",
+          "required": [
+            "ref",
+            "decision",
+            "summary"
+          ],
+          "properties": {
+            "ref": {
+              "type": "string"
+            },
+            "decision": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "decidedBy": {
+              "type": "string"
+            },
+            "decidedAt": {
+              "$ref": "#/$defs/Instant"
+            }
+          }
+        },
+        "appellant": {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "grounds": {
+          "type": "string"
+        },
+        "right": {
+          "type": "string",
+          "description": "The provision that gives the right to a review."
+        },
+        "filedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "People who may not decide."
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "ref"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ExceptionDetail": {
+      "type": "object",
+      "required": [
+        "rule",
+        "scope",
+        "until"
+      ],
+      "properties": {
+        "rule": {
+          "type": "object",
+          "required": [
+            "id",
+            "text"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        },
+        "scope": {
+          "type": "string"
+        },
+        "requestedBy": {
+          "type": "string"
+        },
+        "justification": {
+          "type": "string"
+        },
+        "from": {
+          "$ref": "#/$defs/Instant"
+        },
+        "until": {
+          "$ref": "#/$defs/Instant"
+        },
+        "compensating": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "grantor": {
+          "type": "string"
+        }
+      }
+    },
+    "ConversationDetail": {
+      "type": "object",
+      "required": [
+        "channel",
+        "reason",
+        "transcript"
+      ],
+      "properties": {
+        "channel": {
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "user-asked",
+            "crisis",
+            "step-failed",
+            "policy"
+          ]
+        },
+        "transcript": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "role",
+              "text"
+            ],
+            "properties": {
+              "at": {
+                "$ref": "#/$defs/Instant"
+              },
+              "role": {
+                "enum": [
+                  "user",
+                  "agent",
+                  "person",
+                  "system"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "run": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "workflowId": {
+              "type": "string"
+            },
+            "step": {
+              "type": "string"
+            },
+            "error": {
+              "type": "string"
+            }
+          }
+        },
+        "takenOverBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "AttestationDetail": {
+      "type": "object",
+      "required": [
+        "attests",
+        "target",
+        "evidence"
+      ],
+      "properties": {
+        "attests": {
+          "enum": [
+            "control",
+            "model",
+            "framework"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "required": [
+            "ref",
+            "name"
+          ],
+          "properties": {
+            "ref": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "cadence": {
+          "$ref": "#/$defs/Duration"
+        },
+        "periodEnd": {
+          "$ref": "#/$defs/Instant"
+        },
+        "lastAttestedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "ref"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "asOf": {
+                "$ref": "#/$defs/Instant"
+              },
+              "stale": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Check": {
+      "type": "object",
+      "required": [
+        "name",
+        "passed"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "passed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "Trigger": {
+      "type": "object",
+      "required": [
+        "detector",
+        "detectedAt"
+      ],
+      "properties": {
+        "detector": {
+          "enum": [
+            "tool-policy",
+            "guardrail",
+            "eval",
+            "monitor",
+            "workflow",
+            "change-request",
+            "person",
+            "schedule"
+          ]
+        },
+        "rule": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {},
+              "limit": {}
+            }
+          }
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "met"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "met": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "detectedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "occurrences": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "Ask": {
+      "type": "object",
+      "required": [
+        "question",
+        "checks"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "text"
+            ],
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "section": {
+                "enum": [
+                  "trigger",
+                  "subject",
+                  "evidence",
+                  "blast",
+                  "judge"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "Routing": {
+      "type": "object",
+      "required": [
+        "queue",
+        "roles",
+        "reviewMode",
+        "required"
+      ],
+      "properties": {
+        "queue": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "attestations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reviewMode": {
+          "$ref": "#/$defs/ReviewMode"
+        },
+        "required": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "of": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "splitVote": {
+          "enum": [
+            "DENY",
+            "ESCALATE"
+          ]
+        },
+        "independence": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "proposer",
+              "builder",
+              "first-reviewer",
+              "first-reviewer-line"
+            ]
+          }
+        },
+        "independentOf": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The people independence bars from deciding this event."
+        }
+      }
+    },
+    "Holder": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "subject",
+        "since",
+        "expiresAt"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "since": {
+          "$ref": "#/$defs/Instant"
+        },
+        "expiresAt": {
+          "$ref": "#/$defs/Instant"
+        }
+      }
+    },
+    "Sla": {
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "startedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "dueAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "atRiskAt": {
+          "type": "number"
+        },
+        "state": {
+          "$ref": "#/$defs/SlaState"
+        },
+        "timeoutBehaviour": {
+          "$ref": "#/$defs/TimeoutBehaviour"
+        },
+        "default": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Action"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lateDecision": {
+          "enum": [
+            "ACCEPT_BREACHED",
+            "REFUSE"
+          ]
+        },
+        "clockWhileSentBack": {
+          "enum": [
+            "RUNS",
+            "PAUSED"
+          ]
+        }
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "required": [
+        "reviewer",
+        "action",
+        "submittedAt"
+      ],
+      "properties": {
+        "reviewer": {
+          "$ref": "#/$defs/Reviewer"
+        },
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "qualified": {
+          "type": "boolean"
+        },
+        "independent": {
+          "type": "boolean"
+        },
+        "edits": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "summary": {
+              "type": "string"
+            },
+            "patch": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "op",
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "sticky": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sticky"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "presentedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "submittedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "reviewSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "belowMinimum": {
+          "type": "boolean"
+        },
+        "late": {
+          "type": "boolean"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DecisionRequest": {
+      "type": "object",
+      "required": [
+        "reviewer",
+        "action"
+      ],
+      "properties": {
+        "reviewer": {
+          "$ref": "#/$defs/Reviewer"
+        },
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "edits": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "sticky": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sticky"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "presentedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "replacement": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "OVERRIDE: the output that replaces the system's."
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          },
+          "description": "APPROVE or EDIT: conditions the approval carries; they appear in the outcome."
+        }
+      }
+    },
+    "Outcome": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "action",
+        "slaOutcome"
+      ],
+      "properties": {
+        "action": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Action"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sticky": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Sticky"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "agreedWithAi": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "edits": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          }
+        },
+        "standingDecisionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "slaOutcome": {
+          "$ref": "#/$defs/SlaOutcome"
+        },
+        "appliedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "applied": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "applyError": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "Verdict": {
+      "type": "object",
+      "required": [
+        "id",
+        "eventId",
+        "conclusion",
+        "source",
+        "mechanism",
+        "boundary",
+        "at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "control": {
+          "$ref": "#/$defs/ControlRef"
+        },
+        "pattern": {
+          "$ref": "#/$defs/PatternId"
+        },
+        "subjectKind": {
+          "$ref": "#/$defs/SubjectKind"
+        },
+        "mechanism": {
+          "const": "human"
+        },
+        "boundary": {
+          "type": "object",
+          "required": [
+            "kind",
+            "ref"
+          ],
+          "properties": {
+            "kind": {
+              "const": "work-item"
+            },
+            "ref": {
+              "type": "string"
+            }
+          }
+        },
+        "conclusion": {
+          "$ref": "#/$defs/Conclusion"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/VerdictSource"
+            },
+            "service": {
+              "type": "string"
+            }
+          }
+        },
+        "action": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Action"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "deciders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "appliedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "at": {
+          "$ref": "#/$defs/Instant"
+        }
+      }
+    },
+    "HistoryStep": {
+      "type": "object",
+      "required": [
+        "at",
+        "state",
+        "actor",
+        "note"
+      ],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/Instant"
+        },
+        "state": {
+          "$ref": "#/$defs/State"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "HumanEvent": {
+      "type": "object",
+      "required": [
+        "id",
+        "state",
+        "pending",
+        "pattern",
+        "patternName",
+        "control",
+        "flavor",
+        "mode",
+        "blocking",
+        "subject",
+        "trigger",
+        "ask",
+        "owner",
+        "routing",
+        "sla",
+        "allowedActions",
+        "actionLabels",
+        "decisions",
+        "history"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/State"
+        },
+        "pending": {
+          "type": "boolean"
+        },
+        "shadow": {
+          "type": "boolean"
+        },
+        "strength": {
+          "$ref": "#/$defs/Strength"
+        },
+        "pattern": {
+          "$ref": "#/$defs/PatternId"
+        },
+        "patternName": {
+          "type": "string"
+        },
+        "control": {
+          "$ref": "#/$defs/ControlRef"
+        },
+        "flavor": {
+          "$ref": "#/$defs/Flavor"
+        },
+        "mode": {
+          "$ref": "#/$defs/Mode"
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "trigger": {
+          "$ref": "#/$defs/Trigger"
+        },
+        "ask": {
+          "$ref": "#/$defs/Ask"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "object",
+          "required": [
+            "kind",
+            "service"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "service",
+                "optimize",
+                "runtime",
+                "ledger"
+              ]
+            },
+            "service": {
+              "type": "string"
+            }
+          }
+        },
+        "proposedBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "builtBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "routing": {
+          "$ref": "#/$defs/Routing"
+        },
+        "accountableOwner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "holder": {
+          "$ref": "#/$defs/Holder"
+        },
+        "claimTtl": {
+          "$ref": "#/$defs/Duration"
+        },
+        "sla": {
+          "$ref": "#/$defs/Sla"
+        },
+        "escalation": {
+          "type": "object",
+          "required": [
+            "level",
+            "chain"
+          ],
+          "properties": {
+            "level": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "chain": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "allowedActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "minItems": 1
+        },
+        "actionLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "effects": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "sticky": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Sticky"
+          }
+        },
+        "rationaleRequired": {
+          "type": "boolean"
+        },
+        "minimumReviewSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimumReview": {
+          "enum": [
+            "WARN",
+            "ENFORCE"
+          ]
+        },
+        "slaExtensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "by",
+              "at",
+              "extra",
+              "reason"
+            ],
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "$ref": "#/$defs/Instant"
+              },
+              "extra": {
+                "$ref": "#/$defs/Duration"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "aiRecommendation": {
+          "$ref": "#/$defs/AiRecommendation"
+        },
+        "context": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "intendedUse": {
+              "type": "string"
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "presentedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "claimedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "detectedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "closedAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Decision"
+          }
+        },
+        "infoRequests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "by",
+              "at",
+              "question"
+            ],
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "$ref": "#/$defs/Instant"
+              },
+              "question": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "recused": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "verdictId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "conclusion": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Conclusion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "verdict": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Verdict"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "eventId",
+              "relation"
+            ],
+            "properties": {
+              "eventId": {
+                "type": "string"
+              },
+              "relation": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HistoryStep"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "ref"
+            ]
+          }
+        },
+        "resumes": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "workflow",
+                "task",
+                "handler",
+                "none"
+              ]
+            },
+            "target": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          }
+        },
+        "simulated": {
+          "type": "boolean"
+        },
+        "now": {
+          "$ref": "#/$defs/Instant",
+          "description": "The service's time when it answered. Deadlines, claims and review times count against it, so a console works out time left from it, not from its own clock."
+        }
+      }
+    },
+    "HumanEventRow": {
+      "type": "object",
+      "required": [
+        "id",
+        "state",
+        "pending",
+        "pattern",
+        "control",
+        "flavor",
+        "mode",
+        "blocking",
+        "subject",
+        "ask",
+        "queue",
+        "reviewers",
+        "sla",
+        "detectedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/State"
+        },
+        "pending": {
+          "type": "boolean"
+        },
+        "pattern": {
+          "$ref": "#/$defs/PatternId"
+        },
+        "patternName": {
+          "type": "string"
+        },
+        "control": {
+          "$ref": "#/$defs/ControlRef"
+        },
+        "flavor": {
+          "$ref": "#/$defs/Flavor"
+        },
+        "mode": {
+          "$ref": "#/$defs/Mode"
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "subject": {
+          "type": "object",
+          "required": [
+            "kind",
+            "summary"
+          ],
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/SubjectKind"
+            },
+            "summary": {
+              "type": "string"
+            },
+            "service": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "agent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "ask": {
+          "type": "object",
+          "required": [
+            "question"
+          ],
+          "properties": {
+            "question": {
+              "type": "string"
+            }
+          }
+        },
+        "queue": {
+          "type": "string"
+        },
+        "reviewers": {
+          "type": "object",
+          "required": [
+            "required",
+            "voted"
+          ],
+          "properties": {
+            "required": {
+              "type": "integer"
+            },
+            "voted": {
+              "type": "integer"
+            }
+          }
+        },
+        "holder": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "sla": {
+          "type": "object",
+          "required": [
+            "state"
+          ],
+          "properties": {
+            "state": {
+              "$ref": "#/$defs/SlaState"
+            },
+            "dueAt": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "aiRecommendation": {
+          "$ref": "#/$defs/AiRecommendation"
+        },
+        "shadow": {
+          "type": "boolean"
+        },
+        "detectedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "closedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "outcome": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "decidedBy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conclusion": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Conclusion"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "simulated": {
+          "type": "boolean"
+        },
+        "owner": {
+          "type": "object",
+          "properties": {
+            "service": {
+              "type": "string"
+            }
+          }
+        },
+        "now": {
+          "$ref": "#/$defs/Instant",
+          "description": "The service's time when it answered. Deadlines, claims and review times count against it, so a console works out time left from it, not from its own clock."
+        }
+      }
+    },
+    "EventsPage": {
+      "type": "object",
+      "required": [
+        "events",
+        "total"
+      ],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HumanEvent"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "CompanionEventsPage": {
+      "type": "object",
+      "required": [
+        "rows",
+        "total"
+      ],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HumanEventRow"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "next": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "Summary": {
+      "type": "object",
+      "required": [
+        "loop",
+        "states",
+        "atRisk",
+        "overdue",
+        "halts",
+        "standing",
+        "patterns"
+      ],
+      "properties": {
+        "loop": {
+          "type": "object",
+          "required": [
+            "in",
+            "on",
+            "over"
+          ],
+          "properties": {
+            "in": {
+              "$ref": "#/$defs/LoopFigures"
+            },
+            "on": {
+              "$ref": "#/$defs/LoopFigures"
+            },
+            "over": {
+              "$ref": "#/$defs/LoopFigures"
+            }
+          }
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "patterns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Pending events per pattern."
+        },
+        "atRisk": {
+          "type": "integer"
+        },
+        "overdue": {
+          "type": "integer"
+        },
+        "halts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Halt"
+          }
+        },
+        "raised30d": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "standing": {
+          "type": "object",
+          "required": [
+            "active",
+            "expiring"
+          ],
+          "properties": {
+            "active": {
+              "type": "integer"
+            },
+            "expiring": {
+              "type": "integer"
+            }
+          }
+        },
+        "unownedControls": {
+          "type": "integer"
+        }
+      }
+    },
+    "LoopFigures": {
+      "type": "object",
+      "required": [
+        "pending",
+        "overdue"
+      ],
+      "properties": {
+        "pending": {
+          "type": "integer"
+        },
+        "overdue": {
+          "type": "integer"
+        },
+        "raised7d": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "Quality": {
+      "type": "object",
+      "required": [
+        "window",
+        "reviewTimes",
+        "reviewers",
+        "outcomes"
+      ],
+      "properties": {
+        "window": {
+          "$ref": "#/$defs/Duration"
+        },
+        "reviewTimes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "control",
+              "buckets"
+            ],
+            "properties": {
+              "control": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "minimumSeconds": {
+                "type": "integer"
+              },
+              "buckets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "upTo",
+                    "count"
+                  ],
+                  "properties": {
+                    "upTo": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "belowMinimumShare": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "reviewers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "subject",
+              "decisions"
+            ],
+            "properties": {
+              "subject": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "decisions": {
+                "type": "integer"
+              },
+              "approvalRate": {
+                "type": "number"
+              },
+              "overrideRate": {
+                "type": "number"
+              },
+              "agreementWithAi": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "medianReviewSeconds": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "open": {
+                "type": "integer"
+              },
+              "claimed": {
+                "type": "integer"
+              },
+              "oldestClaimSeconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "share": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "outcomes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "weekly": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "heatmap": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "triggers": {
+              "type": "integer"
+            },
+            "reachedPerson": {
+              "type": "integer"
+            }
+          }
+        },
+        "agreement": {
+          "type": "object",
+          "properties": {
+            "twoPersonEvents": {
+              "type": "integer"
+            },
+            "agreed": {
+              "type": "integer"
+            }
+          }
+        },
+        "signals": {
+          "type": "array",
+          "description": "Oversight-quality findings that raised or would raise an oversight-quality event.",
+          "items": {
+            "type": "object",
+            "required": [
+              "control",
+              "signal",
+              "value"
+            ],
+            "properties": {
+              "control": {
+                "type": "string"
+              },
+              "signal": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "eventId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "Overseer": {
+      "type": "object",
+      "required": [
+        "subject",
+        "roles",
+        "qualified"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reportsTo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "authority": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "controls"
+            ],
+            "properties": {
+              "controls": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "actions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Action"
+                }
+              }
+            }
+          }
+        },
+        "attestations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "completedAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "completedAt": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "expired": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "qualified": {
+          "type": "boolean"
+        },
+        "qualifiedReason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "OverseerRegistry": {
+      "type": "object",
+      "required": [
+        "overseers"
+      ],
+      "properties": {
+        "overseers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Overseer"
+          }
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "control",
+              "accountable"
+            ],
+            "properties": {
+              "control": {
+                "type": "string"
+              },
+              "accountable": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "StandingDecision": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "eventId",
+        "control",
+        "allows",
+        "grantedBy",
+        "grantedAt",
+        "state"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "pattern-approval",
+            "pattern-denial",
+            "session-approval",
+            "conditional-approval",
+            "change",
+            "exception"
+          ]
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "control": {
+          "$ref": "#/$defs/ControlRef"
+        },
+        "matchKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "allows": {
+          "type": "string"
+        },
+        "grantedBy": {
+          "type": "string"
+        },
+        "grantedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "expiresAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "state": {
+          "enum": [
+            "ACTIVE",
+            "EXPIRING",
+            "EXPIRED",
+            "REVOKED"
+          ]
+        },
+        "uses": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "revoked": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "by": {
+              "type": "string"
+            },
+            "at": {
+              "$ref": "#/$defs/Instant"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Halt": {
+      "type": "object",
+      "required": [
+        "scope",
+        "target",
+        "control",
+        "halted",
+        "safeStateChecks"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "system",
+            "service",
+            "capability"
+          ]
+        },
+        "target": {
+          "type": "string"
+        },
+        "control": {
+          "$ref": "#/$defs/ControlRef"
+        },
+        "affectedCalls": {
+          "type": "string"
+        },
+        "halted": {
+          "type": "boolean"
+        },
+        "since": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "eventId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "liftEventId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "callsPerMinute": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "safeStateChecks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Check"
+          }
+        },
+        "service": {
+          "type": "string"
+        }
+      }
+    },
+    "ControlSettings": {
+      "type": "object",
+      "required": [
+        "control",
+        "pattern",
+        "flavor",
+        "subjectKind",
+        "allowedActions",
+        "routing"
+      ],
+      "description": "A human control with its settings resolved: the control's human_config, then the pattern's defaults, then the shared defaults.",
+      "properties": {
+        "control": {
+          "$ref": "#/$defs/ControlRef"
+        },
+        "pattern": {
+          "$ref": "#/$defs/PatternId"
+        },
+        "flavor": {
+          "$ref": "#/$defs/Flavor"
+        },
+        "subjectKind": {
+          "$ref": "#/$defs/SubjectKind"
+        },
+        "blocking": {
+          "type": "boolean"
+        },
+        "mode": {
+          "$ref": "#/$defs/Mode"
+        },
+        "allowedActions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          }
+        },
+        "actionLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "routing": {
+          "$ref": "#/$defs/Routing"
+        },
+        "accountableOwner": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "slaTarget": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "atRiskAt": {
+          "type": "number"
+        },
+        "claimTtl": {
+          "$ref": "#/$defs/Duration"
+        },
+        "timeoutBehaviour": {
+          "$ref": "#/$defs/TimeoutBehaviour"
+        },
+        "timeoutDefault": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/Action"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "escalationChain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "queue"
+            ],
+            "properties": {
+              "queue": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "after": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "sticky": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Sticky"
+          }
+        },
+        "rationaleRequired": {
+          "type": "boolean"
+        },
+        "minimumReviewSeconds": {
+          "type": "integer"
+        },
+        "minimumReview": {
+          "enum": [
+            "WARN",
+            "ENFORCE"
+          ]
+        },
+        "clockWhileSentBack": {
+          "enum": [
+            "RUNS",
+            "PAUSED"
+          ]
+        },
+        "lateDecision": {
+          "enum": [
+            "ACCEPT_BREACHED",
+            "REFUSE"
+          ]
+        },
+        "aiRecommendation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "proofEvent": {
+          "type": "string"
+        },
+        "shadow": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Strength"
+          }
+        },
+        "halt": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "halt_config, for halt-restart controls."
+        }
+      }
+    },
+    "ServiceInfo": {
+      "type": "object",
+      "required": [
+        "service",
+        "contract",
+        "patterns",
+        "devRoutes"
+      ],
+      "properties": {
+        "service": {
+          "type": "string"
+        },
+        "contract": {
+          "const": 2
+        },
+        "library": {
+          "type": "string",
+          "description": "The library and version serving the routes, or the name of a hand-written implementation."
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PatternId"
+          }
+        },
+        "controls": {
+          "type": "integer"
+        },
+        "devRoutes": {
+          "type": "boolean"
+        },
+        "environment": {
+          "type": "string"
+        }
+      }
+    },
+    "RaiseRequest": {
+      "type": "object",
+      "required": [
+        "control",
+        "ask",
+        "subject"
+      ],
+      "description": "What a service raises; the library fills in the rest from the control's settings.",
+      "properties": {
+        "control": {
+          "type": "string"
+        },
+        "ask": {
+          "$ref": "#/$defs/Ask"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "trigger": {
+          "type": "object"
+        },
+        "proposedBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "builtBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "firstReviewer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "contest-appeal: who made the original decision."
+        },
+        "dedupeKey": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Raising twice with one key adds an occurrence to the pending event instead of raising another."
+        },
+        "matchKey": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What a standing decision is matched on."
+        },
+        "aiRecommendation": {
+          "$ref": "#/$defs/AiRecommendation"
+        },
+        "effects": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "related": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "resumes": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "simulated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ProofRecord": {
+      "type": "object",
+      "required": [
+        "type",
+        "recordId",
+        "recordedAt",
+        "payload"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "HumanOversightDecisionRecordedV2",
+            "HaltExercised",
+            "HaltLifted"
+          ]
+        },
+        "recordId": {
+          "type": "string"
+        },
+        "recordedAt": {
+          "$ref": "#/$defs/Instant"
+        },
+        "service": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "HumanOversightDecisionRecordedV2"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "required": [
+                  "event_id",
+                  "control_id",
+                  "pattern",
+                  "reviewer_id",
+                  "action",
+                  "decided_at",
+                  "subject_ref",
+                  "source"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "HaltExercised"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "required": [
+                  "control_id",
+                  "exerciser_id",
+                  "scope",
+                  "affected_calls",
+                  "reason",
+                  "halted_at"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "HaltLifted"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "required": [
+                  "control_id",
+                  "halt_ref",
+                  "lifted_by",
+                  "lifted_at"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AiRecommendation": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "action"
+      ],
+      "description": "A judge agent's recommendation, shown beside the decision panel. Null when the control asks for none.",
+      "properties": {
+        "agent": {
+          "type": "string"
+        },
+        "action": {
+          "$ref": "#/$defs/Action"
+        },
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "at": {
+          "$ref": "#/$defs/Instant"
+        }
+      }
+    },
+    "Condition": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "description": "A condition an approval carries: what must hold, by when, and whether it was met.",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dueAt": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "met": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.akka.human</groupId>
+    <artifactId>human-java-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <relativePath>../parent/pom.xml</relativePath>
+  </parent>
+
+  <!-- Plain Java: settings resolution, the event state machine, verdicts, figures and the contract's JSON
+       views. Reads the pinned Verify registries as classpath resources and never reads a clock. -->
+  <artifactId>human-engine</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.akka.human</groupId>
+      <artifactId>human-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>1.5.6</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>../../spec/verify</directory>
+        <targetPath>io/akka/human/verify</targetPath>
+        <includes>
+          <include>*.yaml</include>
+          <include>*.json</include>
+        </includes>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>../../spec</directory>
+        <targetPath>spec</targetPath>
+        <includes>
+          <include>oversight.schema.json</include>
+          <include>fixtures/*.yaml</include>
+          <include>examples/*.json</include>
+        </includes>
+      </testResource>
+    </testResources>
+  </build>
+</project>

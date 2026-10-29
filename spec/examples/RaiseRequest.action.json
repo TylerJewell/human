@@ -1,0 +1,69 @@
+{
+  "control": "pt-0001",
+  "ask": {
+    "question": "Should the agent pay supplier S-77 4,200 EUR?",
+    "checks": [
+      {
+        "text": "The invoice matches the purchase order.",
+        "section": "subject"
+      }
+    ]
+  },
+  "subject": {
+    "kind": "action",
+    "summary": "Pay supplier S-77 4,200 EUR",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "tool": "pay",
+      "arguments": {
+        "supplier": "S-77",
+        "amount": 4200,
+        "currency": "EUR"
+      },
+      "authority": {
+        "missing": [
+          "amount > 1000"
+        ],
+        "required": {
+          "role": "ai-system-owner"
+        }
+      },
+      "recentSteps": []
+    }
+  },
+  "trigger": {
+    "detector": "tool-policy",
+    "rule": "pay.amount > 1000",
+    "reason": "The agent asked to pay 4,200 EUR.",
+    "values": [
+      {
+        "name": "amount",
+        "value": 4200,
+        "limit": 1000
+      }
+    ],
+    "conditions": [
+      {
+        "name": "amount > 1000",
+        "met": true
+      }
+    ],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "proposedBy": "agent:payments",
+  "dedupeKey": "pay-3141",
+  "matchKey": "pay:S-77",
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  }
+}

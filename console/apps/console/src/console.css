@@ -1,0 +1,331 @@
+/* The console's shell, on the kit's tokens, laid out as the Akka console's pages are. */
+
+html,
+body {
+  margin: 0;
+  background: var(--hk-bg);
+  color: var(--hk-fg);
+  font-family: var(--hk-font);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.cs {
+  min-block-size: 100vh;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.cs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cs-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  min-block-size: 52px;
+  padding: 6px 24px;
+  background: var(--hk-surface);
+  border-block-end: 1px solid var(--hk-border);
+}
+
+.cs-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.cs-brand__mark {
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--hk-accent), var(--hk-brand));
+}
+
+.cs-brand__section {
+  padding-inline-start: 8px;
+  border-inline-start: 1px solid var(--hk-border);
+  font-weight: 500;
+  color: var(--hk-muted);
+}
+
+.cs-reviewer {
+  margin-inline-start: auto;
+}
+
+.cs-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-inline-size: 1440px;
+  margin-inline: auto;
+  padding: 24px;
+}
+
+.cs-page-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cs-title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cs-intro {
+  margin: 0;
+  color: var(--hk-muted);
+  max-inline-size: 80ch;
+}
+
+.cs-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  border-block-end: 1px solid var(--hk-border);
+}
+
+.cs-tabs a {
+  margin-block-end: -1px;
+  padding: 8px 12px;
+  border-block-end: 2px solid transparent;
+  color: var(--hk-muted);
+  font-size: 13px;
+  transition: color var(--hk-duration) var(--hk-ease), border-color var(--hk-duration) var(--hk-ease);
+}
+
+.cs-tabs a:hover {
+  color: var(--hk-fg);
+}
+
+.cs-tabs a[aria-current="page"] {
+  color: var(--hk-fg);
+  font-weight: 500;
+  border-block-end-color: var(--hk-accent);
+}
+
+.cs-tabs a:focus-visible,
+.cs-brand:focus-visible {
+  outline: 2px solid var(--hk-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.cs-view {
+  min-inline-size: 0;
+  padding-block-start: 8px;
+}
+
+.cs-lead {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.cs-empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--hk-muted);
+}
+
+.cs-mono {
+  font-family: var(--hk-font-mono);
+  font-size: 12px;
+}
+
+.cs-attention {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-attention__item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.cs-attention__item + .cs-attention__item {
+  border-block-start: 1px solid var(--hk-rule, var(--hk-border));
+}
+
+.cs-attention__mark {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 999px;
+}
+
+.cs-attention__mark--urgent {
+  background: var(--hk-danger);
+}
+
+.cs-attention__mark--risk {
+  background: var(--hk-warning);
+}
+
+.cs-dot {
+  display: inline-block;
+  inline-size: 8px;
+  block-size: 8px;
+  flex: none;
+  border-radius: 999px;
+  background: var(--hk-muted);
+}
+
+.cs-dot--up {
+  background: var(--hk-success);
+}
+
+.cs-dot--down {
+  background: var(--hk-danger);
+}
+
+.cs-services-mini {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-services-mini li {
+  display: grid;
+  grid-template-columns: 8px minmax(8rem, max-content) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.cs-services-mini li + li {
+  border-block-start: 1px solid var(--hk-border);
+}
+
+.cs-services-mini__name {
+  font-weight: 500;
+}
+
+.cs-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--hk-muted);
+}
+
+.cs-crumbs a {
+  color: var(--hk-accent-text);
+}
+
+.cs-owner {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--hk-fg);
+}
+
+.cs-table td,
+.cs-table th {
+  vertical-align: middle;
+}
+
+.cs-control {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-detail-row > td {
+  background: color-mix(in oklch, var(--hk-fg) 3%, transparent);
+  padding: 12px 16px !important;
+}
+
+.cs-select {
+  inline-size: auto;
+}
+
+.cs-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-scenarios details {
+  padding: 6px 10px;
+  border-radius: var(--hk-radius);
+  background: color-mix(in oklch, var(--hk-fg) 4%, transparent);
+}
+
+.cs-scenarios summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.cs-scenario__name {
+  font-weight: 500;
+}
+
+.cs-scenario__detail {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+.cs-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 2px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+
+.cs-steps li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.cs-step__detail {
+  flex-basis: 100%;
+  padding-inline-start: 16px;
+  color: var(--hk-danger-text);
+}
+
+@media (max-width: 52rem) {
+  .cs-main {
+    padding: 16px;
+  }
+
+  .cs-reviewer {
+    margin-inline-start: 0;
+  }
+}
+
+.cs a.hk-link {
+  color: var(--hk-accent-text);
+}

@@ -1,0 +1,157 @@
+{
+  "id": "he-20261029-00010",
+  "state": "OPEN",
+  "pending": true,
+  "shadow": false,
+  "strength": "prevent",
+  "pattern": "attestation",
+  "patternName": "Scheduled attestation",
+  "control": {
+    "rowId": "pt-0013",
+    "name": "The eligibility model is attested every quarter",
+    "corpusRef": "sr11-7.s4.validation",
+    "revision": 1
+  },
+  "flavor": "human-monitoring",
+  "mode": "HOTL",
+  "blocking": false,
+  "subject": {
+    "kind": "attestation",
+    "summary": "Quarterly attestation of the eligibility model",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "attests": "model",
+      "target": {
+        "ref": "m-5",
+        "name": "Eligibility model"
+      },
+      "cadence": "P90D",
+      "periodEnd": "2026-10-31T00:00:00Z",
+      "lastAttestedAt": null,
+      "evidence": [
+        {
+          "kind": "validation-report",
+          "ref": "vr-3",
+          "summary": "Back-test",
+          "asOf": "2026-10-29T14:00:00Z",
+          "stale": false
+        }
+      ]
+    }
+  },
+  "trigger": {
+    "detector": "schedule",
+    "rule": null,
+    "reason": "The quarter ends on 31 October.",
+    "values": [],
+    "conditions": [],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "ask": {
+    "question": "Is the eligibility model still fit for use this quarter?",
+    "checks": []
+  },
+  "environment": "local",
+  "owner": {
+    "kind": "service",
+    "service": "patterns"
+  },
+  "proposedBy": "agent:payments",
+  "builtBy": null,
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "model-risk-owner"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "SINGLE",
+    "required": 1,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "model-risk-owner",
+  "holder": null,
+  "claimTtl": "PT30M",
+  "sla": {
+    "target": "PT30M",
+    "startedAt": "2026-10-29T14:00:00Z",
+    "dueAt": "2026-10-29T14:30:00Z",
+    "atRiskAt": 0.75,
+    "state": "running",
+    "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+    "default": "DENY",
+    "lateDecision": "ACCEPT_BREACHED",
+    "clockWhileSentBack": "RUNS"
+  },
+  "escalation": {
+    "level": 0,
+    "chain": [
+      "system-owners",
+      "head-of-operations"
+    ]
+  },
+  "allowedActions": [
+    "APPROVE",
+    "EDIT",
+    "DENY"
+  ],
+  "actionLabels": {
+    "APPROVE": "Attest",
+    "EDIT": "Attest with findings",
+    "DENY": "Refuse to attest"
+  },
+  "effects": {},
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "slaExtensions": [],
+  "aiRecommendation": null,
+  "context": null,
+  "presentedAt": null,
+  "claimedAt": null,
+  "detectedAt": "2026-10-29T14:00:00Z",
+  "closedAt": null,
+  "decisions": [],
+  "infoRequests": [],
+  "recused": [],
+  "outcome": null,
+  "verdictId": null,
+  "conclusion": null,
+  "verdict": null,
+  "related": [],
+  "history": [
+    {
+      "at": "2026-10-29T14:00:00Z",
+      "state": "OPEN",
+      "actor": "system",
+      "note": "Routed to system-owners"
+    }
+  ],
+  "evidence": [],
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  },
+  "simulated": false,
+  "now": "2026-10-29T14:05:00Z"
+}

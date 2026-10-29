@@ -1,0 +1,65 @@
+{
+  "window": "P30D",
+  "reviewTimes": [
+    {
+      "control": "pt-0001",
+      "name": "Payments above the limit need the system owner",
+      "minimumSeconds": 10,
+      "buckets": [
+        {
+          "upTo": 5,
+          "count": 1
+        },
+        {
+          "upTo": 10,
+          "count": 2
+        },
+        {
+          "upTo": null,
+          "count": 9
+        }
+      ],
+      "belowMinimumShare": 0.08
+    }
+  ],
+  "reviewers": [
+    {
+      "subject": "tyler.jewell@akka.io",
+      "name": "Tyler Jewell",
+      "decisions": 12,
+      "approvalRate": 0.75,
+      "overrideRate": 0.0,
+      "agreementWithAi": null,
+      "medianReviewSeconds": 42,
+      "open": 1,
+      "claimed": 0,
+      "oldestClaimSeconds": null,
+      "share": 1.0
+    }
+  ],
+  "outcomes": {
+    "triggered": 13,
+    "approved": 9,
+    "denied": 3,
+    "timedOut": 0
+  },
+  "weekly": [],
+  "heatmap": [],
+  "coverage": {
+    "triggers": 13,
+    "reachedPerson": 13
+  },
+  "agreement": {
+    "twoPersonEvents": 1,
+    "agreed": 1
+  },
+  "signals": [
+    {
+      "control": "pt-0001",
+      "signal": "below-minimum-share",
+      "value": 0.08,
+      "limit": 0.2,
+      "eventId": null
+    }
+  ]
+}

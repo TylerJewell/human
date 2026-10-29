@@ -1,0 +1,168 @@
+{
+  "id": "he-20261029-00003",
+  "state": "OPEN",
+  "pending": true,
+  "shadow": false,
+  "strength": "prevent",
+  "pattern": "change-authorization",
+  "patternName": "Change authorization",
+  "control": {
+    "rowId": "pt-0003",
+    "name": "Model rollouts need an approver who did not build them",
+    "corpusRef": "soc2.cc8.1",
+    "revision": 1
+  },
+  "flavor": "human-system-authorization",
+  "mode": "HITL",
+  "blocking": true,
+  "subject": {
+    "kind": "change",
+    "summary": "Roll out model m-5 to 10% of notice writing",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "system": "model-registry",
+      "change": "rollout",
+      "ref": "rollout-12",
+      "proposedBy": "a.devos@example.com",
+      "builtBy": "trainer",
+      "before": {
+        "model": "m-4"
+      },
+      "after": {
+        "model": "m-5"
+      },
+      "labels": {
+        "model": "Model"
+      },
+      "evidence": [
+        {
+          "kind": "offline-eval",
+          "ref": "ev-9",
+          "summary": "quality 0.91 to 0.90"
+        }
+      ],
+      "blastRadius": {
+        "useCases": [
+          "notice-writing"
+        ],
+        "trafficShare": 0.1
+      },
+      "stage": "awaiting-approval"
+    }
+  },
+  "trigger": {
+    "detector": "change-request",
+    "rule": null,
+    "reason": "A rollout to production needs two approvers who did not build it.",
+    "values": [],
+    "conditions": [],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "ask": {
+    "question": "Should model m-5 replace m-4 for notice writing?",
+    "checks": []
+  },
+  "environment": "local",
+  "owner": {
+    "kind": "service",
+    "service": "patterns"
+  },
+  "proposedBy": "agent:payments",
+  "builtBy": null,
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "model-risk-owner"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "SINGLE",
+    "required": 1,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "model-risk-owner",
+  "holder": null,
+  "claimTtl": "PT30M",
+  "sla": {
+    "target": "PT30M",
+    "startedAt": "2026-10-29T14:00:00Z",
+    "dueAt": "2026-10-29T14:30:00Z",
+    "atRiskAt": 0.75,
+    "state": "running",
+    "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+    "default": "DENY",
+    "lateDecision": "ACCEPT_BREACHED",
+    "clockWhileSentBack": "RUNS"
+  },
+  "escalation": {
+    "level": 0,
+    "chain": [
+      "system-owners",
+      "head-of-operations"
+    ]
+  },
+  "allowedActions": [
+    "APPROVE",
+    "DENY",
+    "SEND_BACK"
+  ],
+  "actionLabels": {
+    "APPROVE": "Approve the change",
+    "DENY": "Reject",
+    "SEND_BACK": "Request changes"
+  },
+  "effects": {},
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "slaExtensions": [],
+  "aiRecommendation": null,
+  "context": null,
+  "presentedAt": null,
+  "claimedAt": null,
+  "detectedAt": "2026-10-29T14:00:00Z",
+  "closedAt": null,
+  "decisions": [],
+  "infoRequests": [],
+  "recused": [],
+  "outcome": null,
+  "verdictId": null,
+  "conclusion": null,
+  "verdict": null,
+  "related": [],
+  "history": [
+    {
+      "at": "2026-10-29T14:00:00Z",
+      "state": "OPEN",
+      "actor": "system",
+      "note": "Routed to system-owners"
+    }
+  ],
+  "evidence": [],
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  },
+  "simulated": false,
+  "now": "2026-10-29T14:05:00Z"
+}

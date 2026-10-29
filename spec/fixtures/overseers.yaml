@@ -1,0 +1,66 @@
+# The overseers every sample service and the companion use, in Verify's overseer registry format
+# (verify/overseer-registry.schema.yaml). People at example.com are fictional.
+schema_version: 1
+overseers:
+  - subject: tyler.jewell@akka.io
+    name: Tyler Jewell
+    roles: [ai-system-owner, head-of-operations, safety-officer, model-risk-owner]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-01-10", expires_at: "2027-01-10" }
+    qualified: true
+
+  - subject: a.devos@example.com
+    name: A. Devos
+    roles: [model-risk-owner, data-steward]
+    reports_to: tyler.jewell@akka.io
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-03-02", expires_at: "2027-03-02" }
+    qualified: true
+
+  - subject: r.chen@example.com
+    name: R. Chen
+    roles: [compliance-lead, appeals-officer]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-02-14", expires_at: "2027-02-14" }
+    qualified: true
+
+  - subject: s.patel@example.com
+    name: S. Patel
+    roles: [safety-officer, oversight-officer]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-04-20", expires_at: "2027-04-20" }
+    qualified: true
+
+  - subject: j.lind@example.com
+    name: J. Lind
+    roles: [head-of-operations, case-reviewer, ai-system-owner, appeals-officer]
+    reports_to: tyler.jewell@akka.io
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-05-05", expires_at: "2027-05-05" }
+    qualified: true
+
+  - subject: m.okafor@example.com
+    name: M. Okafor
+    roles: [appeals-officer, case-reviewer]
+    reports_to: r.chen@example.com
+    authority:
+      - controls: ["*"]
+        actions: [APPROVE, DENY, EDIT, REVERSE, REQUEST_MORE_INFO, ESCALATE]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-06-01", expires_at: "2027-06-01" }
+    qualified: true
+
+  - subject: l.moreau@example.com
+    name: L. Moreau
+    roles: [safety-officer, duty-officer, feedback-triager, data-steward]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-02-01", expires_at: "2027-02-01" }
+    qualified: true
+
+  - subject: k.osei@example.com
+    name: K. Osei
+    roles: [case-reviewer, risk-officer]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2025-01-10", expires_at: "2026-01-10" }
+    qualified: false
+    qualified_reason: EU AI Act oversight training expired

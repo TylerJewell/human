@@ -1,0 +1,65 @@
+# The people who oversee the Loan Origination assistant, in Verify's overseer registry format
+# (spec/verify/overseer-registry.schema.yaml). They are the people of ai-console's prototype
+# fixtures with the roles given there, plus the roles that give every control with two-person
+# review or an independence rule at least two qualified people. People at example.com are fictional.
+schema_version: 1
+overseers:
+  - subject: tyler.jewell@akka.io
+    name: Tyler Jewell
+    roles: [ai-system-owner, loan-system-owner, head-of-credit]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-01-10", expires_at: "2027-01-10" }
+    qualified: true
+
+  - subject: a.devos@example.com
+    name: A. Devos
+    roles: [model-risk-owner, risk-officer]
+    reports_to: tyler.jewell@akka.io
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-03-02", expires_at: "2027-03-02" }
+    qualified: true
+
+  - subject: r.chen@example.com
+    name: R. Chen
+    roles: [compliance-lead, oversight-officer, adverse-action-reviewer, underwriting-counsel]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-02-14", expires_at: "2027-02-14" }
+    qualified: true
+
+  - subject: s.patel@example.com
+    name: S. Patel
+    roles: [oversight-officer, safety-officer]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-04-20", expires_at: "2027-04-20" }
+    qualified: true
+
+  - subject: j.lind@example.com
+    name: J. Lind
+    roles: [head-of-credit, loan-system-owner, senior-underwriter, underwriter]
+    reports_to: tyler.jewell@akka.io
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-05-05", expires_at: "2027-05-05" }
+    qualified: true
+
+  - subject: m.okafor@example.com
+    name: M. Okafor
+    roles: [underwriting-counsel, adverse-action-reviewer, senior-underwriter, underwriter]
+    reports_to: r.chen@example.com
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-06-01", expires_at: "2027-06-01" }
+    qualified: true
+
+  - subject: l.moreau@example.com
+    name: L. Moreau
+    roles: [safety-officer, underwriter]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-02-01", expires_at: "2027-02-01" }
+    qualified: true
+
+  - subject: k.osei@example.com
+    name: K. Osei
+    roles: [risk-officer, underwriter]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2025-01-10", expires_at: "2026-01-10" }
+    qualified: false
+    qualified_reason: EU AI Act oversight training expired

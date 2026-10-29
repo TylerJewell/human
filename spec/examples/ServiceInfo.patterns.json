@@ -1,0 +1,24 @@
+{
+  "service": "patterns",
+  "contract": 2,
+  "library": "akka-human 0.1.0",
+  "patterns": [
+    "action-approval",
+    "decision-review",
+    "change-authorization",
+    "exception",
+    "match-adjudication",
+    "outcome-reconciliation",
+    "contest-appeal",
+    "override",
+    "flag-feedback",
+    "triage",
+    "hand-off",
+    "halt-restart",
+    "attestation",
+    "oversight-quality"
+  ],
+  "controls": 14,
+  "devRoutes": true,
+  "environment": "local"
+}

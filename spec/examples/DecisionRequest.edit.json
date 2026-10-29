@@ -1,0 +1,27 @@
+{
+  "reviewer": {
+    "subject": "tyler.jewell@akka.io",
+    "name": "Tyler Jewell",
+    "roles": [
+      "ai-system-owner"
+    ],
+    "identityProvider": "human-companion",
+    "rehearsal": true
+  },
+  "action": "EDIT",
+  "rationale": "Pay 4,000; the rest is disputed.",
+  "edits": {
+    "summary": "amount 4200 to 4000",
+    "patch": [
+      {
+        "op": "replace",
+        "path": "/amount",
+        "value": 4000
+      }
+    ]
+  },
+  "sticky": "APPROVE_ONCE",
+  "checks": [
+    "The invoice matches the purchase order."
+  ]
+}

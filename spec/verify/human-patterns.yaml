@@ -1,0 +1,253 @@
+# Canonical Human Oversight Pattern Registry
+#
+# The fourteen recurring shapes of human oversight. Every `human` control names
+# one in `akka_runtime.human_config.pattern`; the pattern supplies a default for
+# every setting the control leaves out.
+#
+# Patterns sit under the five human flavors (ADR-016): the flavor says who
+# decides and how tightly the person is coupled to the system, the pattern says
+# what situation they decide and how. A pattern lists the flavors it runs under.
+#
+# Each pattern:
+#   name, description
+#   flavors       the human flavors the pattern runs under
+#   blocking      true    the work waits for the decision
+#                 false   the work does not wait (the decision applies afterwards)
+#                 system  the decision stops or restarts the system itself
+#   subject_kind  what the person judges, by default
+#   actions       the decisions allowed by default (human-decisions.yaml), each
+#                 with the label a reviewer sees
+#   defaults      human_config settings that differ from the shared defaults
+#
+# Precedence: a control's human_config, then the pattern's defaults, then the
+# shared defaults below. A deployment may override any of them.
+#
+# Cross-reference: framework/schema/control.schema.yaml (human_config),
+#   framework/schema/registries/human-decisions.yaml,
+#   specs/decisions/adr-018-human-patterns.md
+# Last updated: 2026-10-29
+
+schema_version: "1.0"
+
+# Shared defaults for every pattern.
+defaults:
+  routing:
+    review_mode: SINGLE
+    required: 1
+    independence: [proposer]
+    split_vote: DENY            # TWO_PERSON / N_OF_M: any vote other than approve settles the event
+  at_risk_at: 0.75              # fraction of the deadline after which the event shows as at risk
+  claim_ttl: PT30M              # a claim lapses after this; the reviewer may claim again
+  minimum_review: ENFORCE       # applies only when minimum_review_seconds is set
+  clock_while_sent_back: RUNS
+  late_decision: ACCEPT_BREACHED
+  rationale_required: true
+  sticky_modes: [APPROVE_ONCE]
+  shadow: false
+  strength:
+    pre-production: warn
+    production: prevent
+  proof_event: HumanOversightDecisionRecordedV2
+
+patterns:
+
+  action-approval:
+    name: Action approval
+    description: "An agent or playbook wants to take an action with an effect. Someone other than whoever, or whatever, asked approves it first."
+    flavors: [human-system-authorization, human-domain-decision]
+    blocking: true
+    subject_kind: action
+    actions:
+      APPROVE: Approve
+      DENY: Deny
+      EDIT: Edit, then approve
+      REQUEST_MORE_INFO: Ask for more
+      ESCALATE: Escalate
+    defaults:
+      timeout_behaviour: RESUME_WITH_DEFAULT
+      timeout_default: DENY
+      sticky_modes: [APPROVE_ONCE, APPROVE_FOR_PATTERN]
+
+  decision-review:
+    name: Decision review before effect
+    description: "An automated decision about a person, such as a denial, a termination or an adverse notice, is held until a qualified person inside the domain reviews it."
+    flavors: [human-domain-decision]
+    blocking: true
+    subject_kind: output
+    actions:
+      APPROVE: Confirm
+      DENY: Do not issue
+      EDIT: Amend
+      REQUEST_MORE_INFO: Ask for more
+      ESCALATE: Escalate
+    defaults:
+      timeout_behaviour: ESCALATE
+
+  change-authorization:
+    name: Change authorization
+    description: "A release, stage change, connector, policy, model or new use case needs approval from someone other than its author, at a level set by its risk."
+    flavors: [human-system-authorization]
+    blocking: true
+    subject_kind: change
+    actions:
+      APPROVE: Approve the change
+      DENY: Reject
+      SEND_BACK: Request changes
+    defaults:
+      routing:
+        independence: [proposer, builder]
+      timeout_behaviour: ESCALATE
+
+  exception:
+    name: Exception or waiver
+    description: "A rule is set aside for a stated time. A second line, sometimes an outside authority, grants it with an expiry."
+    flavors: [human-system-authorization, human-domain-decision]
+    blocking: true
+    subject_kind: exception
+    actions:
+      APPROVE: Grant until expiry
+      DENY: Refuse
+    defaults:
+      timeout_behaviour: RESUME_WITH_DEFAULT
+      timeout_default: DENY
+
+  match-adjudication:
+    name: Match and adjudication
+    description: "The system cannot tell whether two records are one thing, or which label is right. A reviewer who did not load the records decides; nothing uses the match until then."
+    flavors: [human-domain-decision]
+    blocking: true
+    subject_kind: records
+    actions:
+      APPROVE: Same
+      DENY: Different
+      EDIT: Relabel
+    defaults:
+      routing:
+        independence: [builder]
+      timeout_behaviour: RESUME_WITH_DEFAULT
+      timeout_default: DENY
+
+  outcome-reconciliation:
+    name: Outcome reconciliation
+    description: "An action was sent but its result is unknown. A reviewer other than the requester records what happened; nothing retries it automatically."
+    flavors: [human-system-authorization, human-domain-decision]
+    blocking: true
+    subject_kind: action
+    actions:
+      APPROVE: It happened
+      DENY: It did not happen
+      REPLAN: Retry
+    defaults:
+      timeout_behaviour: ESCALATE
+
+  contest-appeal:
+    name: Contest and appeal
+    description: "The person affected by a decision asks for a human review, or exercises a right that needs one. The decision already stands; a reviewer who is free to overturn it decides."
+    flavors: [human-domain-decision]
+    blocking: false
+    subject_kind: appeal
+    actions:
+      APPROVE: Uphold
+      EDIT: Modify
+      REVERSE: Overturn
+      REQUEST_MORE_INFO: Ask for more
+    defaults:
+      routing:
+        independence: [first-reviewer, first-reviewer-line]
+      timeout_behaviour: ESCALATE
+
+  override:
+    name: Override with justification
+    description: "A person disregards, replaces or reverses a system output, and records why."
+    flavors: [human-system-authorization, human-domain-decision]
+    blocking: false
+    subject_kind: output
+    actions:
+      OVERRIDE: Override
+      DISREGARD: Disregard
+      REVERSE: Reverse
+
+  flag-feedback:
+    name: Flag and feedback
+    description: "Someone marks an output as wrong or challenges how the system is used. A triager accepts it as an evaluation case or dismisses it."
+    flavors: [human-feedback]
+    blocking: false
+    subject_kind: output
+    actions:
+      APPROVE: Accept as an eval case
+      DISREGARD: Dismiss
+    defaults:
+      timeout_behaviour: ABANDON
+      rationale_required: false
+
+  triage:
+    name: Triage of alerts, cases and incidents
+    description: "A monitor, watcher or anomaly detector finds something. The team it is routed to resolves, dismisses or reports it, sometimes against a regulatory clock."
+    flavors: [human-monitoring, human-domain-decision]
+    blocking: false
+    subject_kind: behaviour
+    actions:
+      APPROVE: Resolve
+      DISREGARD: Dismiss
+      ESCALATE: Report
+    defaults:
+      timeout_behaviour: ESCALATE
+
+  hand-off:
+    name: Hand-off to a person
+    description: "A user asks for a person, a crisis signal appears, or a step fails. The person on duty takes the conversation or run over."
+    flavors: [human-domain-decision]
+    blocking: true
+    subject_kind: conversation
+    actions:
+      DECLINE_SYSTEM: Take over
+      REDIRECT: Return to the agent
+      APPROVE: Close
+    defaults:
+      minimum_review: WARN
+      timeout_behaviour: ESCALATE
+
+  halt-restart:
+    name: Halt and restart
+    description: "Something must stop now. One authorised person halts; restarting needs two reviewers once the safe-state checks pass. The halt itself is described by halt_config."
+    flavors: [human-halt]
+    blocking: system
+    subject_kind: system
+    actions:
+      HALT: Halt
+      APPROVE: Approve restart
+      DENY: Keep halted
+    defaults:
+      routing:
+        review_mode: TWO_PERSON
+        required: 2
+      timeout_behaviour: RESUME_WITH_DEFAULT
+      timeout_default: DENY
+
+  attestation:
+    name: Scheduled attestation
+    description: "On a cadence, an owner, a board or an independent validator attests that a control, model or framework is still fit. Nothing waits, but the evidence goes stale."
+    flavors: [human-monitoring, human-feedback, human-domain-decision]
+    blocking: false
+    subject_kind: attestation
+    actions:
+      APPROVE: Attest
+      EDIT: Attest with findings
+      DENY: Refuse to attest
+    defaults:
+      routing:
+        independence: [builder]
+      timeout_behaviour: RAISE_TIMEOUT
+
+  oversight-quality:
+    name: Oversight quality
+    description: "Review times, approval rates and override rates across many decisions show the oversight is not working. The control's accountable owner acts; new high-risk decisions can be blocked until they reset it."
+    flavors: [human-monitoring]
+    blocking: false
+    subject_kind: behaviour
+    actions:
+      APPROVE: Reset
+      REPLAN: Retrain
+      REDIRECT: Reassign
+    defaults:
+      timeout_behaviour: ESCALATE

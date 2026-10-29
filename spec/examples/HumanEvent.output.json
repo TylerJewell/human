@@ -1,0 +1,153 @@
+{
+  "id": "he-20261029-00005",
+  "state": "OPEN",
+  "pending": true,
+  "shadow": false,
+  "strength": "prevent",
+  "pattern": "decision-review",
+  "patternName": "Decision review before effect",
+  "control": {
+    "rowId": "pt-0002",
+    "name": "Adverse notices are reviewed before they are sent",
+    "corpusRef": "gdpr-art22.art22.3",
+    "revision": 1
+  },
+  "flavor": "human-domain-decision",
+  "mode": "HITL",
+  "blocking": true,
+  "subject": {
+    "kind": "output",
+    "summary": "Decline letter for application app-77",
+    "service": "patterns",
+    "agent": null,
+    "component": null,
+    "sessionId": null,
+    "flowId": null,
+    "traceId": null,
+    "workflowId": null,
+    "ref": null,
+    "detail": {
+      "output": "Your application is declined.",
+      "replacement": null,
+      "flag": null,
+      "flowId": "f-2",
+      "decision": {
+        "ref": "app-77",
+        "summary": "Decline loan application",
+        "affects": "applicant A-77"
+      }
+    }
+  },
+  "trigger": {
+    "detector": "workflow",
+    "rule": null,
+    "reason": "Adverse decisions are held for a case reviewer before they are sent.",
+    "values": [],
+    "conditions": [],
+    "detectedAt": "2026-10-29T14:00:00Z",
+    "occurrences": 1
+  },
+  "ask": {
+    "question": "Should this decline letter be sent to applicant A-77?",
+    "checks": []
+  },
+  "environment": "local",
+  "owner": {
+    "kind": "service",
+    "service": "patterns"
+  },
+  "proposedBy": "agent:payments",
+  "builtBy": null,
+  "routing": {
+    "queue": "system-owners",
+    "roles": [
+      "case-reviewer"
+    ],
+    "groups": [],
+    "attestations": [],
+    "reviewMode": "SINGLE",
+    "required": 1,
+    "of": null,
+    "splitVote": "DENY",
+    "independence": [
+      "proposer"
+    ],
+    "independentOf": [
+      "agent:payments"
+    ]
+  },
+  "accountableOwner": "head-of-operations",
+  "holder": null,
+  "claimTtl": "PT30M",
+  "sla": {
+    "target": "PT30M",
+    "startedAt": "2026-10-29T14:00:00Z",
+    "dueAt": "2026-10-29T14:30:00Z",
+    "atRiskAt": 0.75,
+    "state": "running",
+    "timeoutBehaviour": "RESUME_WITH_DEFAULT",
+    "default": "DENY",
+    "lateDecision": "ACCEPT_BREACHED",
+    "clockWhileSentBack": "RUNS"
+  },
+  "escalation": {
+    "level": 0,
+    "chain": [
+      "system-owners",
+      "head-of-operations"
+    ]
+  },
+  "allowedActions": [
+    "APPROVE",
+    "DENY",
+    "EDIT",
+    "REQUEST_MORE_INFO",
+    "ESCALATE"
+  ],
+  "actionLabels": {
+    "APPROVE": "Confirm",
+    "DENY": "Do not issue",
+    "EDIT": "Amend",
+    "REQUEST_MORE_INFO": "Ask for more",
+    "ESCALATE": "Escalate"
+  },
+  "effects": {},
+  "sticky": [
+    "APPROVE_ONCE",
+    "APPROVE_FOR_PATTERN"
+  ],
+  "rationaleRequired": true,
+  "minimumReviewSeconds": 10,
+  "minimumReview": "ENFORCE",
+  "slaExtensions": [],
+  "aiRecommendation": null,
+  "context": null,
+  "presentedAt": null,
+  "claimedAt": null,
+  "detectedAt": "2026-10-29T14:00:00Z",
+  "closedAt": null,
+  "decisions": [],
+  "infoRequests": [],
+  "recused": [],
+  "outcome": null,
+  "verdictId": null,
+  "conclusion": null,
+  "verdict": null,
+  "related": [],
+  "history": [
+    {
+      "at": "2026-10-29T14:00:00Z",
+      "state": "OPEN",
+      "actor": "system",
+      "note": "Routed to system-owners"
+    }
+  ],
+  "evidence": [],
+  "resumes": {
+    "kind": "workflow",
+    "target": "payment",
+    "id": "pay-3141"
+  },
+  "simulated": false,
+  "now": "2026-10-29T14:05:00Z"
+}

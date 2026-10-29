@@ -127,6 +127,17 @@ describe("service client", () => {
     expect(list.rows[0]).toMatchObject({ id: "he-20261029-00001", queue: "system-owners", reviewers: { required: 1, voted: 0 } });
   });
 
+  it("gives each row the record its subject is about, so a service can match it to its own", async () => {
+    const page = example<{ events: { subject: Record<string, unknown> }[] }>("EventsPage.one");
+    page.events[0].subject.ref = "AP-7730";
+    const service = createServiceClient({ baseUrl: "", reviewer: tyler, fetch: fakeFetch(() => ({ json: page })).fetch });
+    expect((await service.events({ state: "pending" })).rows[0].subject.ref).toBe("AP-7730");
+    const rows = example<{ rows: { subject: Record<string, unknown> }[] }>("CompanionEventsPage.one");
+    rows.rows[0].subject.ref = "AP-7731";
+    const companion = createCompanionClient({ fetch: fakeFetch(() => ({ json: rows })).fetch });
+    expect((await companion.events()).rows[0].subject.ref).toBe("AP-7731");
+  });
+
   it("posts dev raises and reads info", async () => {
     const { fetch, calls } = fakeFetch((_, url) => ({ json: url.endsWith("/info") ? example("ServiceInfo.patterns") : event }));
     const client = createServiceClient({ baseUrl: "http://localhost:9164", reviewer: tyler, fetch });

@@ -1,9 +1,9 @@
-import type { HumanEvent } from "@akka-human/kit";
+import type { HumanEvent, HumanEventRow } from "@akka-human/kit";
 
 // The desk's view of the loan service: applications and their status, and the
-// three domain reviews an underwriting desk decides, each found from the event
-// that asks for it (`subject.ref` is the application id). Kept free of React
-// so it can be tested on its own.
+// three domain reviews an underwriting desk decides, each found from the queue
+// row that asks for it (`subject.ref` is the application id). Kept free of
+// React so it can be tested on its own.
 
 /** Referred applications are decided by an underwriter. */
 export const UNDERWRITING = "custom-5a1e00000009";
@@ -94,32 +94,32 @@ export const percent = (n: number | undefined | null) => (n == null ? "—" : `$
 
 // ---------------------------------------------------------------- the reviews
 
-/** Each event under `control`, by the application it is about; the newest raise wins. */
-export function byApplication(events: readonly HumanEvent[], control: string): Map<string, HumanEvent> {
-  const map = new Map<string, HumanEvent>();
-  const sorted = [...events].filter((e) => e.control.rowId === control && e.subject.ref);
-  sorted.sort((a, b) => Date.parse(a.trigger.detectedAt) - Date.parse(b.trigger.detectedAt));
-  for (const e of sorted) map.set(e.subject.ref!, e);
+/** Each review under `control`, by the application it is about; the newest raise wins. */
+export function byApplication(rows: readonly HumanEventRow[], control: string): Map<string, HumanEventRow> {
+  const map = new Map<string, HumanEventRow>();
+  const sorted = [...rows].filter((r) => r.control.rowId === control && r.subject.ref);
+  sorted.sort((a, b) => Date.parse(a.detectedAt) - Date.parse(b.detectedAt));
+  for (const r of sorted) map.set(r.subject.ref!, r);
   return map;
 }
 
 export interface QueueItem {
   application: ApplicationRow;
-  event?: HumanEvent;
+  review?: HumanEventRow;
 }
 
 /**
  * The applications waiting for an underwriter, each with its review event,
  * most urgent first: the soonest deadline, then the oldest raise.
  */
-export function underwritingQueue(waiting: readonly ApplicationRow[], events: readonly HumanEvent[]): QueueItem[] {
-  const byId = new Map(events.map((e) => [e.id, e]));
+export function underwritingQueue(waiting: readonly ApplicationRow[], reviews: readonly HumanEventRow[]): QueueItem[] {
+  const byId = new Map(reviews.map((r) => [r.id, r]));
   const items = waiting.map((application) => ({
     application,
-    event: application.reviewEventId ? byId.get(application.reviewEventId) : undefined
+    review: application.reviewEventId ? byId.get(application.reviewEventId) : undefined
   }));
-  const due = (i: QueueItem) => (i.event?.sla.dueAt ? Date.parse(i.event.sla.dueAt) : Number.POSITIVE_INFINITY);
-  const raised = (i: QueueItem) => (i.event ? Date.parse(i.event.trigger.detectedAt) : Number.POSITIVE_INFINITY);
+  const due = (i: QueueItem) => (i.review?.sla.dueAt ? Date.parse(i.review.sla.dueAt) : Number.POSITIVE_INFINITY);
+  const raised = (i: QueueItem) => (i.review ? Date.parse(i.review.detectedAt) : Number.POSITIVE_INFINITY);
   return items.sort((a, b) => due(a) - due(b) || raised(a) - raised(b));
 }
 
@@ -161,10 +161,10 @@ export function barredReviewers(event: Pick<HumanEvent, "routing" | "proposedBy"
 }
 
 /** Pending first, most urgent first; then the answered, newest first. */
-export function deskOrder(events: readonly HumanEvent[]): HumanEvent[] {
-  const due = (e: HumanEvent) => (e.sla.dueAt ? Date.parse(e.sla.dueAt) : Number.POSITIVE_INFINITY);
-  const closed = (e: HumanEvent) => Date.parse(e.closedAt ?? e.trigger.detectedAt) || 0;
-  const pending = events.filter((e) => e.pending).sort((a, b) => due(a) - due(b));
-  const answered = events.filter((e) => !e.pending).sort((a, b) => closed(b) - closed(a));
+export function deskOrder(rows: readonly HumanEventRow[]): HumanEventRow[] {
+  const due = (r: HumanEventRow) => (r.sla.dueAt ? Date.parse(r.sla.dueAt) : Number.POSITIVE_INFINITY);
+  const closed = (r: HumanEventRow) => Date.parse(r.closedAt ?? r.detectedAt) || 0;
+  const pending = rows.filter((r) => r.pending).sort((a, b) => due(a) - due(b));
+  const answered = rows.filter((r) => !r.pending).sort((a, b) => closed(b) - closed(a));
   return [...pending, ...answered];
 }

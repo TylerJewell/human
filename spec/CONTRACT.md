@@ -220,6 +220,7 @@ pinned commit. This export stands in for runtime request 10 (oversight records i
 - `decision` takes every action; `RECUSE` and `REQUEST_MORE_INFO` are new.
 - `conditions` on a decision (APPROVE or EDIT), carried into `outcome.conditions`.
 - `now` on every event and row; typed `aiRecommendation`, `slaExtensions` and `context`.
+- `subject.ref` on rows, so a service can match a queued event to its own record.
 - New routes: `quality`, `verdicts`, `controls`, `proof`, `info`, `registry`, `contests`,
   `overrides`, and the development routes.
 - A rehearsal decision takes effect; only its verdict's source differs.

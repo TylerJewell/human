@@ -1,5 +1,5 @@
-import { formatMoment, readable, SubjectView, useNow, useReviewer, type HumanEvent } from "@akka-human/kit";
-import { useApplication, useApplications, useControlEvents } from "../api";
+import { formatMoment, readable, serviceNow, SubjectView, useEvent, useNow, useOnSettled, useReviewer, type HumanEvent } from "@akka-human/kit";
+import { useApplication, useApplications, useControlRows } from "../api";
 import { byApplication, deskOrder, HELD_NOTICE, money } from "../model";
 import { Facts, Panel, Pill, Problem, Reading, StatusPill } from "../parts";
 import { ReviewLayout, ReviewList, useNameOf } from "./common";
@@ -9,20 +9,22 @@ import { ReviewLayout, ReviewList, useNameOf } from "./common";
 // it as shown, amends it, or sends the standard letter instead.
 
 export function Notices({ id }: { id?: string }) {
-  const events = useControlEvents(HELD_NOTICE);
+  const reviews = useControlRows(HELD_NOTICE);
   const applications = useApplications();
-  const ordered = deskOrder(events.data ?? []);
+  const ordered = deskOrder(reviews.data ?? []);
   const rows = new Map((applications.data ?? []).map((a) => [a.id, a]));
   const selected = id ?? ordered[0]?.subject.ref ?? undefined;
-  const event = selected ? byApplication(events.data ?? [], HELD_NOTICE).get(selected) : undefined;
+  const review = selected ? byApplication(reviews.data ?? [], HELD_NOTICE).get(selected) : undefined;
+  const event = useEvent(review?.id).data;
+  useOnSettled(review?.id, () => void applications.refresh());
 
   return (
     <div className="d-split">
       <div className="d-split__list">
-        <Problem error={events.error} />
+        <Problem error={reviews.error} />
         <ReviewList
           title="Held adverse-action notices"
-          events={events.data ? ordered : undefined}
+          reviews={reviews.data ? ordered : undefined}
           applications={rows}
           selected={selected}
           base="/notices"
@@ -35,10 +37,6 @@ export function Notices({ id }: { id?: string }) {
             key={selected}
             applicationId={selected}
             event={event}
-            onWrite={() => {
-              void events.refresh();
-              void applications.refresh();
-            }}
           />
         ) : (
           <p className="d-empty">No notice has been held.</p>
@@ -48,20 +46,15 @@ export function Notices({ id }: { id?: string }) {
   );
 }
 
-function NoticeDetail({ applicationId, event, onWrite }: { applicationId: string; event?: HumanEvent; onWrite: () => void }) {
+function NoticeDetail({ applicationId, event }: { applicationId: string; event?: HumanEvent }) {
   const read = useApplication(applicationId);
+  useOnSettled(event?.id, () => void read.refresh());
   const me = useReviewer().data;
   const now = useNow(1000);
   const nameOf = useNameOf();
   const app = read.data;
   return (
-    <ReviewLayout
-      event={event}
-      onWrite={() => {
-        onWrite();
-        void read.refresh();
-      }}
-    >
+    <ReviewLayout event={event}>
       <Problem error={read.error} />
       {!app ? (
         <Reading what="the application" />
@@ -82,7 +75,7 @@ function NoticeDetail({ applicationId, event, onWrite }: { applicationId: string
       {event ? (
         <Panel title="The held draft" aside={<Pill tone="pending">Withheld sentences removed</Pill>} testId="held-draft">
           <div className="hk">
-            <SubjectView event={event} now={now + (event.clockOffset ?? 0)} reviewer={me} />
+            <SubjectView event={event} now={serviceNow(event, now)} reviewer={me} />
           </div>
         </Panel>
       ) : null}

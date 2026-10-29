@@ -31,6 +31,7 @@ type event struct {
 		Agent     *string `json:"agent"`
 		FlowID    *string `json:"flowId"`
 		SessionID *string `json:"sessionId"`
+		Ref       *string `json:"ref"`
 	} `json:"subject"`
 	Ask struct {
 		Question string `json:"question"`
@@ -80,6 +81,7 @@ type row struct {
 		Summary string  `json:"summary"`
 		Service *string `json:"service"`
 		Agent   *string `json:"agent"`
+		Ref     *string `json:"ref"`
 	} `json:"subject"`
 	Ask struct {
 		Question string `json:"question"`
@@ -114,7 +116,7 @@ func (e *event) row(owner string) row {
 	r.ID, r.State, r.Pending, r.Pattern, r.PatternName = e.ID, e.State, e.Pending, e.Pattern, e.PatternName
 	r.Control, r.Flavor, r.Mode, r.Blocking = e.Control, e.Flavor, e.Mode, e.Blocking
 	r.Subject.Kind, r.Subject.Summary = e.Subject.Kind, e.Subject.Summary
-	r.Subject.Service, r.Subject.Agent = e.Subject.Service, e.Subject.Agent
+	r.Subject.Service, r.Subject.Agent, r.Subject.Ref = e.Subject.Service, e.Subject.Agent, e.Subject.Ref
 	r.Ask.Question = e.Ask.Question
 	r.Queue = e.Routing.Queue
 	r.Reviewers.Required, r.Reviewers.Voted = e.required(), e.voted()

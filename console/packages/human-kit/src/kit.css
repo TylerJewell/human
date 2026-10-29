@@ -2679,3 +2679,178 @@ button.hk-row--selected:hover {
   flex-wrap: wrap;
   gap: 4px 12px;
 }
+
+/* ------------------------------------------------------------------ the decision clock */
+
+/* The ring beside the people, the people under the ring when there is no room. */
+.hk-dclock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 24px 28px;
+}
+
+.hk-dclock__people {
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.hk-dclock__ring {
+  flex: none;
+  position: relative;
+  inline-size: 220px;
+  block-size: 220px;
+}
+
+.hk-dclock__ring svg {
+  inline-size: 100%;
+  block-size: 100%;
+  transform: rotate(-90deg);
+}
+
+.hk-dclock__ring circle {
+  transition:
+    stroke-dasharray 300ms linear,
+    stroke var(--hk-duration) var(--hk-ease);
+}
+
+.hk-dclock__track {
+  stroke: color-mix(in oklch, var(--hk-fg) 10%, transparent);
+}
+
+.hk-dclock__track--inner {
+  stroke: color-mix(in oklch, var(--hk-fg) 6%, transparent);
+}
+
+.hk-dclock__deadline {
+  stroke: color-mix(in oklch, var(--hk-fg) 35%, transparent);
+}
+
+.hk-dclock__deadline--running {
+  stroke: var(--hk-accent);
+}
+
+.hk-dclock__deadline--at-risk {
+  stroke: var(--hk-warning);
+}
+
+.hk-dclock__deadline--overdue,
+.hk-dclock__deadline--missed {
+  stroke: var(--hk-danger);
+}
+
+.hk-dclock__deadline--met {
+  stroke: var(--hk-success);
+}
+
+.hk-dclock__review {
+  stroke: var(--hk-accent);
+}
+
+.hk-dclock__review--met {
+  stroke: var(--hk-success);
+}
+
+.hk-dclock__centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 34px;
+  text-align: center;
+}
+
+.hk-dclock__count {
+  font-family: var(--hk-font-mono);
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hk-dclock__count--word {
+  font-family: var(--hk-font);
+  font-size: 22px;
+}
+
+.hk-dclock__small {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--hk-muted);
+}
+
+.hk-dclock__minimum {
+  margin-block-start: 10px;
+}
+
+.hk-dclock__met {
+  color: var(--hk-success-text);
+}
+
+.hk-dclock__sum {
+  margin-block-end: 12px;
+  font-size: 13.5px;
+  color: var(--hk-muted);
+}
+
+.hk-dclock__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hk-person-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--hk-surface-2);
+}
+
+.hk-person-row__avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 30px;
+  block-size: 30px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: color-mix(in oklch, var(--hk-fg) 10%, transparent);
+}
+
+.hk-person-row__who {
+  min-inline-size: 0;
+}
+
+.hk-person-row__note {
+  font-size: 12px;
+  color: var(--hk-muted);
+}
+
+.hk-person-row__mark {
+  margin-inline-start: auto;
+}
+
+.hk-person-row--no {
+  opacity: 0.6;
+}
+
+.hk-person-row--no .hk-person-row__name {
+  text-decoration: line-through;
+  text-decoration-color: var(--hk-danger);
+}
+
+.hk-person-row--me {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--hk-accent) 50%, transparent);
+}
+
+.hk-person-row--me .hk-person-row__avatar {
+  color: var(--hk-accent-text);
+  background: color-mix(in oklab, var(--hk-accent) 18%, transparent);
+}

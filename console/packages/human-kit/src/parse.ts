@@ -140,7 +140,7 @@ const RowSchema = v.looseObject({
   flavor: v.optional(str, "human-domain-decision"),
   mode: v.optional(str, "HITL"),
   blocking: v.optional(v.boolean(), false),
-  subject: v.looseObject({ kind: str, summary: v.optional(str, ""), service: optStr, agent: optStr }),
+  subject: v.looseObject({ kind: str, summary: v.optional(str, ""), service: optStr, agent: optStr, ref: optStr }),
   ask: v.optional(v.looseObject({ question: v.optional(str, "") }), { question: "" }),
   queue: v.optional(str, ""),
   reviewers: v.optional(v.looseObject({ required: v.optional(num, 1), voted: v.optional(num, 0) }), {}),
@@ -265,7 +265,8 @@ export function rowOf(event: HumanEvent): HumanEventRow {
       kind: event.subject.kind,
       summary: event.subject.summary,
       service: event.subject.service,
-      agent: event.subject.agent
+      agent: event.subject.agent,
+      ref: event.subject.ref ?? null
     },
     ask: { question: event.ask.question },
     queue: event.routing.queue,

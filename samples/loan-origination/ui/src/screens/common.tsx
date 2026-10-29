@@ -3,10 +3,12 @@ import {
   History,
   OutcomeChip,
   readClock,
+  serviceNow,
   StateChip,
   useNow,
   useRegistry,
-  type HumanEvent
+  type HumanEvent,
+  type HumanEventRow
 } from "@akka-human/kit";
 import type { ReactNode } from "react";
 import { money, type ApplicationRow } from "../model";
@@ -22,22 +24,22 @@ export function useNameOf() {
   return (subject: string) => registry?.overseers.find((o) => o.subject === subject)?.name ?? subject;
 }
 
-/** Time left on a pending review, by the service's clock. */
-export function DueText({ event, now }: { event: HumanEvent; now: number }) {
-  const clock = readClock(event.sla, event.trigger.detectedAt, now + (event.clockOffset ?? 0));
+/** Time left on a pending review, by its service's clock. */
+export function DueText({ review, now }: { review: HumanEventRow; now: number }) {
+  const clock = readClock(review.sla, review.detectedAt, serviceNow(review, now));
   return <span className={`d-due d-due--${clock.tone}`}>{clock.label}</span>;
 }
 
 export function ReviewList({
   title,
-  events,
+  reviews,
   applications,
   selected,
   base,
   empty
 }: {
   title: string;
-  events: HumanEvent[] | undefined;
+  reviews: HumanEventRow[] | undefined;
   applications: Map<string, ApplicationRow>;
   selected?: string;
   base: string;
@@ -45,7 +47,7 @@ export function ReviewList({
 }) {
   const now = useNow(5000);
   const nameOf = useNameOf();
-  if (!events) return <Reading what={title.toLowerCase()} />;
+  if (!reviews) return <Reading what={title.toLowerCase()} />;
   return (
     <div className="d-list">
       <table className="d-table d-table--list">
@@ -59,19 +61,19 @@ export function ReviewList({
           </tr>
         </thead>
         <tbody>
-          {events.length === 0 ? (
+          {reviews.length === 0 ? (
             <tr>
               <td colSpan={4} className="d-empty">
                 {empty}
               </td>
             </tr>
           ) : null}
-          {events.map((e) => {
-            const ref = e.subject.ref ?? "";
+          {reviews.map((r) => {
+            const ref = r.subject.ref ?? "";
             const app = applications.get(ref);
             return (
               <tr
-                key={e.id}
+                key={r.id}
                 className={ref === selected ? "d-row d-row--on" : "d-row"}
                 onClick={() => (window.location.hash = `${base}/${ref}`)}
                 data-testid="review-row"
@@ -83,8 +85,8 @@ export function ReviewList({
                   {app?.applicant ?? "—"}
                   {app ? <div className="d-sub">{money(app.amount)}</div> : null}
                 </td>
-                <td className="hk">{e.pending ? <StateChip state={e.state} /> : <OutcomeChip row={e} />}</td>
-                <td>{e.pending ? <DueText event={e} now={now} /> : <span className="d-sub">{[...new Set(e.decisions.map((d) => d.reviewer.subject))].map(nameOf).join(", ") || "—"}</span>}</td>
+                <td className="hk">{r.pending ? <StateChip state={r.state} /> : <OutcomeChip row={r} />}</td>
+                <td>{r.pending ? <DueText review={r} now={now} /> : <span className="d-sub">{[...new Set(r.decidedBy ?? [])].map(nameOf).join(", ") || "—"}</span>}</td>
               </tr>
             );
           })}
@@ -95,14 +97,14 @@ export function ReviewList({
 }
 
 /** One review: what the decision is about on the left, the decision panel on the right, the history beneath. */
-export function ReviewLayout({ event, onWrite, children }: { event?: HumanEvent; onWrite: () => void; children: ReactNode }) {
+export function ReviewLayout({ event, children }: { event?: HumanEvent; children: ReactNode }) {
   const nameOf = useNameOf();
   return (
     <div className="d-review">
       <div className="d-review__grid">
         <div className="d-review__main">{children}</div>
         <div className="d-review__decide">
-          {event ? <DecisionPanel event={event} onWrite={onWrite} /> : <p className="d-empty">No review is open for this application.</p>}
+          {event ? <DecisionPanel event={event} /> : <p className="d-empty">No review is open for this application.</p>}
         </div>
       </div>
       {event ? (

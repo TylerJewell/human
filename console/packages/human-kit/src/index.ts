@@ -49,6 +49,7 @@ export {
   useSetReviewer,
   useStanding,
   useSummary,
+  useOnSettled,
   type Read,
   type Write
 } from "./hooks";
@@ -70,10 +71,25 @@ export {
   serviceNow,
   stateLabel,
   subjectKindLabel,
+  timeoutSentence,
   type ClockReading,
   type ClockTone
 } from "./words";
 
+export {
+  afterDeadline,
+  barredWord,
+  deciders,
+  decisionClock,
+  formatCountdown,
+  initialsOf,
+  settleStage,
+  type Decider,
+  type DeciderWords,
+  type DecisionClockReading
+} from "./clock";
+
+export { DecisionClock, type DecisionClockProps } from "./components/DecisionClock";
 export { DecisionPanel, patchOf, rulesOf, votesText, type DecisionPanelProps, type Rules } from "./components/DecisionPanel";
 export { EventPage, TriggerFacts, UnreadableEvent, type EventPageProps } from "./components/EventPage";
 export { History, journeyOf, JourneyLine, JourneyView, type Journey, type JourneyStep } from "./components/History";

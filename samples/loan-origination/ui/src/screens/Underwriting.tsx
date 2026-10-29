@@ -1,33 +1,35 @@
-import { actionLabel, formatMoment, readable, useNow, type HumanEvent } from "@akka-human/kit";
-import { useApplication, useApplications, useControlEvents, useUnderwritingQueue } from "../api";
+import { actionLabel, formatMoment, readable, useEvent, useNow, useOnSettled, type HumanEvent } from "@akka-human/kit";
+import { useApplication, useApplications, useControlRows, useUnderwritingQueue } from "../api";
 import { byApplication, debtToIncome, deskOrder, factsOf, money, percent, underwritingQueue, UNDERWRITING } from "../model";
 import { Facts, Panel, Pill, Problem, Reading, StatusPill } from "../parts";
 import { DueText, ReviewLayout, ReviewList, useNameOf } from "./common";
 
 // The underwriting queue: applications the rule did not approve alone, waiting
-// for an underwriter. The open one shows the application and the eligibility
-// assessment beside the decision panel of its review.
+// for an underwriter, each matched to its review by the review's queue row.
+// The open one shows the application and the eligibility assessment beside
+// the decision panel of its review, read whole.
 
 export function Underwriting({ id }: { id?: string }) {
   const queue = useUnderwritingQueue();
-  const events = useControlEvents(UNDERWRITING);
+  const reviews = useControlRows(UNDERWRITING);
   const applications = useApplications();
   const now = useNow(5000);
-  const items = underwritingQueue(queue.data ?? [], events.data ?? []);
-  const decided = deskOrder(events.data ?? []).filter((e) => !e.pending);
+  const items = underwritingQueue(queue.data ?? [], reviews.data ?? []);
+  const decided = deskOrder(reviews.data ?? []).filter((r) => !r.pending);
   const rows = new Map((applications.data ?? []).map((a) => [a.id, a]));
   const selected = id ?? items[0]?.application.id ?? decided[0]?.subject.ref ?? undefined;
-  const event = selected ? byApplication(events.data ?? [], UNDERWRITING).get(selected) : undefined;
-  const refresh = () => {
+  const review = selected ? byApplication(reviews.data ?? [], UNDERWRITING).get(selected) : undefined;
+  const event = useEvent(review?.id).data;
+  // The application leaves the queue once its review is decided, here or anywhere else.
+  useOnSettled(review?.id, () => {
     void queue.refresh();
-    void events.refresh();
     void applications.refresh();
-  };
+  });
 
   return (
     <div className="d-split">
       <div className="d-split__list">
-        <Problem error={queue.error ?? events.error} />
+        <Problem error={queue.error ?? reviews.error} />
         {queue.data === undefined && !queue.error ? (
           <Reading what="the queue" />
         ) : (
@@ -50,7 +52,7 @@ export function Underwriting({ id }: { id?: string }) {
                     </td>
                   </tr>
                 ) : null}
-                {items.map(({ application: a, event: e }) => (
+                {items.map(({ application: a, review: r }) => (
                   <tr
                     key={a.id}
                     className={a.id === selected ? "d-row d-row--on" : "d-row"}
@@ -62,24 +64,25 @@ export function Underwriting({ id }: { id?: string }) {
                     </td>
                     <td>{a.applicant}</td>
                     <td className="d-r d-num">{money(a.amount)}</td>
-                    <td>{e ? <DueText event={e} now={now} /> : <span className="d-sub">—</span>}</td>
+                    <td>{r ? <DueText review={r} now={now} /> : <span className="d-sub">—</span>}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        <ReviewList title="Decided by underwriters" events={decided.slice(0, 20)} applications={rows} selected={selected} base="/underwriting" empty="Nothing decided yet." />
+        <ReviewList title="Decided by underwriters" reviews={decided.slice(0, 20)} applications={rows} selected={selected} base="/underwriting" empty="Nothing decided yet." />
       </div>
       <div className="d-split__detail">
-        {selected ? <ReviewDetail key={selected} applicationId={selected} event={event} onWrite={refresh} /> : <p className="d-empty">Choose an application.</p>}
+        {selected ? <ReviewDetail key={selected} applicationId={selected} event={event} /> : <p className="d-empty">Choose an application.</p>}
       </div>
     </div>
   );
 }
 
-function ReviewDetail({ applicationId, event, onWrite }: { applicationId: string; event: HumanEvent | undefined; onWrite: () => void }) {
+function ReviewDetail({ applicationId, event }: { applicationId: string; event: HumanEvent | undefined }) {
   const read = useApplication(applicationId);
+  useOnSettled(event?.id, () => void read.refresh());
   const nameOf = useNameOf();
   const app = read.data;
   const facts = event ? factsOf(event) : undefined;
@@ -88,13 +91,7 @@ function ReviewDetail({ applicationId, event, onWrite }: { applicationId: string
   const ai = event?.aiRecommendation;
 
   return (
-    <ReviewLayout
-      event={event}
-      onWrite={() => {
-        onWrite();
-        void read.refresh();
-      }}
-    >
+    <ReviewLayout event={event}>
       <Problem error={read.error} />
       {!app ? (
         <Reading what="the application" />

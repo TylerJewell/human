@@ -2141,6 +2141,13 @@
                 "string",
                 "null"
               ]
+            },
+            "ref": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The record the subject is about, in the service's terms, so a service can match a row to its own record."
             }
           }
         },

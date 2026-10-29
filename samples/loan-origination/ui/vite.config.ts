@@ -9,6 +9,8 @@ const service = "http://localhost:9166";
 export default defineConfig({
   plugins: [react()],
   resolve: { conditions: ["source", "module", "browser", "development|production"] },
+  // Tests run in Node, which resolves through the SSR conditions; the kit is read from its source there too.
+  ssr: { resolve: { conditions: ["source", "module", "node", "development|production"] } },
   server: {
     port: 5184,
     strictPort: true,

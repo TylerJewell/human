@@ -1,10 +1,10 @@
-import { parseEvent, useRead, type HumanEvent } from "@akka-human/kit";
+import { useRead, type HumanEventRow } from "@akka-human/kit";
 import type { Application, ApplicationRow } from "./model";
 
 // The service's own routes and its oversight events, read same-origin through
-// the oversight provider's cache so they poll with everything else. Events are
-// read whole, not as queue rows, since the desk finds each review's application
-// by `subject.ref`, which a row does not carry.
+// the oversight provider's cache so they poll with everything else. The
+// reviews are listed as queue rows, which carry the application each is about
+// in `subject.ref`; the one review open on the desk is read whole.
 
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(path, { headers: { Accept: "application/json" } });
@@ -23,16 +23,15 @@ export const useApplication = (id: string | undefined) =>
     enabled: Boolean(id)
   });
 
-/** Every event of one control, pending and answered, whole. */
-export const useControlEvents = (control: string) =>
-  useRead<HumanEvent[]>(`domain:events:${control}`, async () => {
-    const read = async (state: string) =>
-      (await getJson<{ events: unknown[] }>(`/oversight/events?control=${encodeURIComponent(control)}&state=${state}&limit=200`)).events;
-    const raw = [...(await read("pending")), ...(await read("resolved"))];
-    const events: HumanEvent[] = [];
-    for (const item of raw) {
-      const parsed = parseEvent(item);
-      if (parsed.ok) events.push(parsed.value);
-    }
-    return events;
+/**
+ * Every review under one control, waiting and answered, as queue rows. Kept
+ * under the kit's `events:` reads, so a decision made here reads them again.
+ */
+export const useControlRows = (control: string) =>
+  useRead<HumanEventRow[]>(`events:control:${control}`, async (client) => {
+    const [pending, resolved] = await Promise.all([
+      client.events({ control, state: "pending", limit: 200 }),
+      client.events({ control, state: "resolved", limit: 200 })
+    ]);
+    return [...pending.rows, ...resolved.rows];
   });

@@ -500,7 +500,8 @@ export interface HumanEventRow extends ServiceClock {
   flavor: Flavor;
   mode: Mode;
   blocking: boolean;
-  subject: { kind: SubjectKind; summary: string; service?: string | null; agent?: string | null };
+  /** `ref` is the record the subject is about, in the service's terms, so a service can match a row to its own record. */
+  subject: { kind: SubjectKind; summary: string; service?: string | null; agent?: string | null; ref?: string | null };
   ask: { question: string };
   queue: string;
   reviewers: { required: number; voted: number };

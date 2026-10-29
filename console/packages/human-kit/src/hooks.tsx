@@ -9,6 +9,7 @@ import {
   type ReactNode
 } from "react";
 import type { EventsList, EventsQuery, EventWrite, OversightClient } from "./client";
+import { settleStage } from "./clock";
 import type {
   ControlSettings,
   Duration,
@@ -318,4 +319,26 @@ export function useNow(ms = 1000, fixed?: number): number {
     return () => clearInterval(id);
   }, [ms, fixed]);
   return fixed ?? now;
+}
+
+/**
+ * Calls `onSettled` each time `id`'s event moves on towards closed: when it is
+ * decided, and again when it is applied or otherwise closed. It fires for a
+ * decision made here, whose answer the write puts in the cache, and for one
+ * made elsewhere, which the event's polling reads. An event already settled
+ * when first read does not fire. Meant for a service's own data that changes
+ * when its events are decided: give it that data's `refresh`.
+ */
+export function useOnSettled(id: string | undefined, onSettled: (event: HumanEvent) => void) {
+  const event = useEvent(id).data;
+  const callback = useRef(onSettled);
+  callback.current = onSettled;
+  const seen = useRef<{ id?: string; stage?: number }>({});
+  useEffect(() => {
+    if (!event || event.id !== id) return;
+    const stage = settleStage(event);
+    const before = seen.current.id === id ? seen.current.stage : undefined;
+    seen.current = { id, stage };
+    if (before !== undefined && stage > before) callback.current(event);
+  }, [event, id]);
 }

@@ -1,4 +1,4 @@
-import type { HumanEvent } from "@akka-human/kit";
+import { rowOf, type HumanEvent, type HumanEventRow } from "@akka-human/kit";
 import { describe, expect, it } from "vitest";
 import example from "../../../../spec/examples/HumanEvent.output.json";
 import {
@@ -58,13 +58,20 @@ describe("applications", () => {
   });
 });
 
+/** The queue row the service lists for one of those events. */
+const review = (...args: Parameters<typeof event>): HumanEventRow => rowOf(event(...args));
+
 describe("the reviews of an application", () => {
+  it("reads the application a review is about from its queue row", () => {
+    expect(review("he-1", UNDERWRITING, "app-1", "2026-10-29T10:00:00Z", null).subject.ref).toBe("app-1");
+  });
+
   it("finds each review by the application it is about, the latest raise winning", () => {
     const events = [
-      event("he-1", UNDERWRITING, "app-1", "2026-10-29T10:00:00Z", "2026-10-31T10:00:00Z"),
-      event("he-2", HELD_NOTICE, "app-1", "2026-10-29T11:00:00Z", "2026-10-29T15:00:00Z"),
-      event("he-3", UNDERWRITING, "app-1", "2026-10-29T12:00:00Z", "2026-10-31T12:00:00Z"),
-      event("he-4", UNDERWRITING, "app-2", "2026-10-29T12:30:00Z", "2026-10-31T12:30:00Z")
+      review("he-1", UNDERWRITING, "app-1", "2026-10-29T10:00:00Z", "2026-10-31T10:00:00Z"),
+      review("he-2", HELD_NOTICE, "app-1", "2026-10-29T11:00:00Z", "2026-10-29T15:00:00Z"),
+      review("he-3", UNDERWRITING, "app-1", "2026-10-29T12:00:00Z", "2026-10-31T12:00:00Z"),
+      review("he-4", UNDERWRITING, "app-2", "2026-10-29T12:30:00Z", "2026-10-31T12:30:00Z")
     ];
     const reviews = byApplication(events, UNDERWRITING);
     expect(reviews.get("app-1")?.id).toBe("he-3");
@@ -76,11 +83,11 @@ describe("the reviews of an application", () => {
   it("orders the underwriting queue by the review's deadline, joined by the review's event id", () => {
     const waiting = [row("app-2", "AWAITING_HUMAN_REVIEW", "he-late"), row("app-4", "AWAITING_HUMAN_REVIEW", "he-soon"), row("app-5", "AWAITING_HUMAN_REVIEW")];
     const events = [
-      event("he-late", UNDERWRITING, "app-2", "2026-10-29T09:00:00Z", "2026-10-31T09:00:00Z"),
-      event("he-soon", UNDERWRITING, "app-4", "2026-10-29T08:00:00Z", "2026-10-30T08:00:00Z")
+      review("he-late", UNDERWRITING, "app-2", "2026-10-29T09:00:00Z", "2026-10-31T09:00:00Z"),
+      review("he-soon", UNDERWRITING, "app-4", "2026-10-29T08:00:00Z", "2026-10-30T08:00:00Z")
     ];
     const queue = underwritingQueue(waiting, events);
-    expect(queue.map((i) => [i.application.id, i.event?.id])).toEqual([
+    expect(queue.map((i) => [i.application.id, i.review?.id])).toEqual([
       ["app-4", "he-soon"],
       ["app-2", "he-late"],
       ["app-5", undefined]
@@ -88,8 +95,8 @@ describe("the reviews of an application", () => {
   });
 
   it("puts waiting reviews first, most urgent first, then the answered, newest first", () => {
-    const open = (id: string, due: string) => event(id, HELD_NOTICE, id, "2026-10-29T08:00:00Z", due, { pending: true });
-    const closed = (id: string, at: string) => event(id, HELD_NOTICE, id, "2026-10-29T08:00:00Z", null, { pending: false, state: "APPLIED", closedAt: at });
+    const open = (id: string, due: string) => review(id, HELD_NOTICE, id, "2026-10-29T08:00:00Z", due, { pending: true });
+    const closed = (id: string, at: string) => review(id, HELD_NOTICE, id, "2026-10-29T08:00:00Z", null, { pending: false, state: "APPLIED", closedAt: at });
     const ordered = deskOrder([closed("c-old", "2026-10-29T09:00:00Z"), open("o-late", "2026-10-29T14:00:00Z"), closed("c-new", "2026-10-29T10:00:00Z"), open("o-soon", "2026-10-29T12:00:00Z")]);
     expect(ordered.map((e) => e.id)).toEqual(["o-soon", "o-late", "c-new", "c-old"]);
   });

@@ -1,5 +1,6 @@
 import {
   ContractError,
+  DecisionClock,
   DecisionPanel,
   ErrorLine,
   History,
@@ -7,6 +8,7 @@ import {
   patternName,
   Queue,
   readable,
+  serviceNow,
   StateChip,
   SubjectView,
   subjectTitle,
@@ -19,9 +21,16 @@ import {
   type HumanEvent
 } from "@akka-human/kit";
 import type { ReactNode } from "react";
-import { recordOf, serviceNow } from "../model";
-import { DecisionClockView } from "../parts/DecisionClock";
+import { LINK_REVIEW, recordOf } from "../model";
 import { Head, Icon, Kv, Loading } from "../parts/ui";
+
+/** How contextlayer names the people a link review keeps from deciding: they loaded the records. */
+const LOADED = {
+  proposer: "loaded one of the records",
+  builder: "loaded one of the records",
+  proposerChip: "Loaded it",
+  builderChip: "Loaded it"
+};
 
 // Decisions: everything of contextlayer's that waits for a person, and what
 // they answered. One decision on its own page: the clock, the control and who
@@ -107,7 +116,7 @@ function DecisionPage({ id }: { id: string }) {
       <div className="cl-decide">
         <div className="cl-decide__main">
           <div className="cl-card">
-            <DecisionClockView event={event} registry={registry} me={me?.subject} now={now} />
+            <DecisionClock event={event} registry={registry} me={me?.subject} words={event.control.rowId === LINK_REVIEW ? LOADED : undefined} />
           </div>
           <div className="cl-card">
             <Kv rows={rows} />

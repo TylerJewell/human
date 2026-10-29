@@ -1,6 +1,6 @@
 import { createServiceClient, OversightProvider } from "@akka-human/kit";
 import { useEffect, useMemo, useState } from "react";
-import { useApplications, useControlEvents } from "./api";
+import { useApplications, useControlRows } from "./api";
 import { AKKA_CONSOLE, CONTEST, HELD_NOTICE } from "./model";
 import { ActingAs, storedReviewer } from "./parts";
 import { Applications } from "./screens/Applications";
@@ -53,12 +53,12 @@ function Desk() {
   const tab = TABS.some((t) => t.id === route[0]) ? route[0] : "underwriting";
   const id = route[1];
   const applications = useApplications().data;
-  const notices = useControlEvents(HELD_NOTICE).data;
-  const contests = useControlEvents(CONTEST).data;
+  const notices = useControlRows(HELD_NOTICE).data;
+  const contests = useControlRows(CONTEST).data;
   const counts: Record<string, number | undefined> = {
     underwriting: applications?.filter((a) => a.status === "AWAITING_HUMAN_REVIEW").length,
-    notices: notices?.filter((e) => e.pending).length,
-    contests: contests?.filter((e) => e.pending).length
+    notices: notices?.filter((r) => r.pending).length,
+    contests: contests?.filter((r) => r.pending).length
   };
 
   return (

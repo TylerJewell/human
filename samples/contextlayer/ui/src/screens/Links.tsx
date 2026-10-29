@@ -1,4 +1,4 @@
-import { DecisionPanel, ErrorLine, useEvent, useRegistry } from "@akka-human/kit";
+import { DecisionPanel, ErrorLine, useEvent, useOnSettled, useRegistry } from "@akka-human/kit";
 import { useLinks } from "../api";
 import { fieldRows, linkTitle, loadersOf, sortLinks, type LinkView, type Member } from "../model";
 import { Chip, Head, Icon, Loading } from "../parts/ui";
@@ -100,6 +100,8 @@ function RecordCard({ member, side, rows, nameOf }: { member: Member; side: "lef
 
 function LinkDetail({ link, nameOf, refresh }: { link: LinkView; nameOf: (s: string) => string; refresh: () => Promise<void> }) {
   const event = useEvent(link.eventId ?? undefined).data;
+  // The link is confirmed or rejected when its review is decided, here or anywhere else.
+  useOnSettled(link.eventId ?? undefined, () => void refresh());
   const rows = fieldRows(link);
   const differ = rows.filter((r) => !r.same).map((r) => r.field);
   const loaders = loadersOf(link).map(nameOf);
@@ -137,7 +139,7 @@ function LinkDetail({ link, nameOf, refresh }: { link: LinkView; nameOf: (s: str
             {loaders.join(" and ")} loaded these records, so {loaders.length > 1 ? "neither" : "they"} may decide. Link Review ({event?.control.rowId ?? "custom-cl0004"}).
           </span>
         </p>
-        {event ? <DecisionPanel event={event} onWrite={() => void refresh()} /> : <Loading what="the review" />}
+        {event ? <DecisionPanel event={event} /> : <Loading what="the review" />}
       </div>
     </>
   );

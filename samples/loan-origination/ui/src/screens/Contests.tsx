@@ -1,5 +1,5 @@
-import { formatMoment, readable, SubjectView, useNow, useReviewer, type HumanEvent } from "@akka-human/kit";
-import { useApplication, useApplications, useControlEvents } from "../api";
+import { formatMoment, readable, serviceNow, SubjectView, useEvent, useNow, useOnSettled, useReviewer, type HumanEvent } from "@akka-human/kit";
+import { useApplication, useApplications, useControlRows } from "../api";
 import { barredReviewers, byApplication, CONTEST, deskOrder, money } from "../model";
 import { Facts, Panel, Pill, Problem, Reading, StatusPill } from "../parts";
 import { ReviewLayout, ReviewList, useNameOf } from "./common";
@@ -9,18 +9,20 @@ import { ReviewLayout, ReviewList, useNameOf } from "./common";
 // decision and the appeal beside the decision panel, and says who is barred.
 
 export function Contests({ id }: { id?: string }) {
-  const events = useControlEvents(CONTEST);
+  const reviews = useControlRows(CONTEST);
   const applications = useApplications();
-  const ordered = deskOrder(events.data ?? []);
+  const ordered = deskOrder(reviews.data ?? []);
   const rows = new Map((applications.data ?? []).map((a) => [a.id, a]));
   const selected = id ?? ordered[0]?.subject.ref ?? undefined;
-  const event = selected ? byApplication(events.data ?? [], CONTEST).get(selected) : undefined;
+  const review = selected ? byApplication(reviews.data ?? [], CONTEST).get(selected) : undefined;
+  const event = useEvent(review?.id).data;
+  useOnSettled(review?.id, () => void applications.refresh());
 
   return (
     <div className="d-split">
       <div className="d-split__list">
-        <Problem error={events.error} />
-        <ReviewList title="Contested declines" events={events.data ? ordered : undefined} applications={rows} selected={selected} base="/contests" empty="No decline is contested." />
+        <Problem error={reviews.error} />
+        <ReviewList title="Contested declines" reviews={reviews.data ? ordered : undefined} applications={rows} selected={selected} base="/contests" empty="No decline is contested." />
       </div>
       <div className="d-split__detail">
         {selected ? (
@@ -28,10 +30,6 @@ export function Contests({ id }: { id?: string }) {
             key={selected}
             applicationId={selected}
             event={event}
-            onWrite={() => {
-              void events.refresh();
-              void applications.refresh();
-            }}
           />
         ) : (
           <p className="d-empty">No decline has been contested.</p>
@@ -41,8 +39,9 @@ export function Contests({ id }: { id?: string }) {
   );
 }
 
-function ContestDetail({ applicationId, event, onWrite }: { applicationId: string; event?: HumanEvent; onWrite: () => void }) {
+function ContestDetail({ applicationId, event }: { applicationId: string; event?: HumanEvent }) {
   const read = useApplication(applicationId);
+  useOnSettled(event?.id, () => void read.refresh());
   const me = useReviewer().data;
   const now = useNow(1000);
   const nameOf = useNameOf();
@@ -51,13 +50,7 @@ function ContestDetail({ applicationId, event, onWrite }: { applicationId: strin
   const decider = barred.find((s) => s === app?.outcome?.by);
   const managers = barred.filter((s) => s !== decider);
   return (
-    <ReviewLayout
-      event={event}
-      onWrite={() => {
-        onWrite();
-        void read.refresh();
-      }}
-    >
+    <ReviewLayout event={event}>
       <Problem error={read.error} />
       {barred.length ? (
         <p className="d-barred" data-testid="barred">
@@ -87,7 +80,7 @@ function ContestDetail({ applicationId, event, onWrite }: { applicationId: strin
       {event ? (
         <Panel title="The appeal" aside={event.pending ? <Pill tone="pending">Open</Pill> : <Pill tone="neutral">Closed</Pill>} testId="appeal">
           <div className="hk">
-            <SubjectView event={event} now={now + (event.clockOffset ?? 0)} reviewer={me} />
+            <SubjectView event={event} now={serviceNow(event, now)} reviewer={me} />
           </div>
         </Panel>
       ) : null}

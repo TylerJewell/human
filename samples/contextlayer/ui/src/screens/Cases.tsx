@@ -1,7 +1,21 @@
-import { DecisionPanel, ErrorLine, formatMoment, formatSpan, History, readable, SubjectView, useEvent, useNow, useRegistry, useReviewer } from "@akka-human/kit";
+import {
+  DecisionPanel,
+  ErrorLine,
+  formatMoment,
+  formatSpan,
+  History,
+  readable,
+  serviceNow,
+  SubjectView,
+  useEvent,
+  useNow,
+  useOnSettled,
+  useRegistry,
+  useReviewer
+} from "@akka-human/kit";
 import { useState, type ReactNode } from "react";
 import { useCases } from "../api";
-import { CASE_FILTERS, caseCounts, casesWith, headlineColumns, serviceNow, type Case, type CaseFilter } from "../model";
+import { CASE_FILTERS, caseCounts, casesWith, headlineColumns, type Case, type CaseFilter } from "../model";
 import { Chip, Head, Kv, Loading, type Tone } from "../parts/ui";
 
 // Cases: what a watcher found for a person to look into. Nothing waits on a
@@ -95,6 +109,8 @@ export function Cases({ id, go }: { id?: string; go: (path: string) => void }) {
 function CaseDetail({ id, all, error, refresh }: { id: string; all?: Case[]; error?: Error; refresh: () => Promise<void> }) {
   const found = all?.find((c) => c.id === id);
   const event = useEvent(found?.eventId ?? undefined).data;
+  // The case closes when its event is decided, here or anywhere else.
+  useOnSettled(found?.eventId ?? undefined, () => void refresh());
   const registry = useRegistry().data;
   const me = useReviewer().data;
   const now = useNow(1000);
@@ -146,7 +162,7 @@ function CaseDetail({ id, all, error, refresh }: { id: string; all?: Case[]; err
           <h2>What the watcher saw</h2>
           <div className="cl-card hk">{event ? <SubjectView event={event} now={serviceNow(event, now)} reviewer={me} /> : <Loading what="the reading" />}</div>
         </div>
-        <div className="cl-decide__aside">{event ? <DecisionPanel event={event} onWrite={() => void refresh()} /> : null}</div>
+        <div className="cl-decide__aside">{event ? <DecisionPanel event={event} /> : null}</div>
       </div>
       {event ? (
         <div className="cl-history hk">

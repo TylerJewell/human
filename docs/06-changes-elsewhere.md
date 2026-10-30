@@ -10,7 +10,8 @@ working before it is made in the real repository.
 Done: schema v2.8, merged as `641097fa` ([Specification](02-spec.md)). It answered the local
 console's explainability asks 3 to 9.
 
-Proposed follow-up, after discussion ([For discussion](08-discussion.md)):
+Follow-up merged as #33 and #34 (`96ea36b6`); this repository still pins `641097fa`, whose
+registries the library reads and which the follow-up did not change in substance. What it covered:
 - State in ADR-018, the `human_config` description and the pattern registry header that only human
   controls carry a pattern, and that a person reviewing a gate's or an evaluation's result is a
   second, human control. ADR-018 says tagging gates and evaluations "is not part of this change",

@@ -6,7 +6,7 @@
 |---|---|
 | 1. Mixed controls | Split each of the twelve into two controls: the human control keeps its id, the gate, guardrail or eval gets a new one. In the Verify follow-up |
 | 2. Decisions covered only by gates | Add a human control beside each gate where the source requires a run-time decision. In the Verify follow-up |
-| 3. Verify follow-up | One pull request on `akka/governance-explainability` with items 1, 2 and 6 and the rule's wording |
+| 3. Verify follow-up | Merged in two pull requests on `akka/governance-explainability`: #33 (the rule, the twelve controls split, eighteen new human controls, evidence names, the auditor gating CI) and #34 (one config block per control for every mechanism, 138 controls) |
 | 4. Defaults | Keep both: late decisions accepted and breached; the clock runs while sent back |
 | 5. One decision event | `HumanOversightDecisionRecordedV2` carrying `pattern`, as merged |
 | 6. Evidence names | Reviewed per control in the Verify follow-up |

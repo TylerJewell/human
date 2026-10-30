@@ -18,6 +18,18 @@ curl localhost:9164/oversight/info
 
 `mvn verify` runs the TestKit integration tests in-process.
 
+## The pattern tour
+
+The service serves the pattern tour at http://localhost:9164/. Each of the fourteen patterns runs
+end to end through this service's own routes in four steps (what happens, who decides, what changes,
+what is kept), with the code behind each step beside it. The tour draws the screens of the people
+around a decision; the overseer's screens are the human-kit components; the code is cut from this
+repository's files when the tour is built (`ui/src/code/sources.ts`), so it is the code the service
+runs. "Reset the tour" closes every open event through `POST /oversight/dev/reset`.
+
+The tour is `ui/`. `pnpm build` there writes it into `src/main/resources/static-resources`, and
+`pnpm dev` serves it on port 5185 against the running service.
+
 ## How the library is wired
 
 - `PatternsSetup` builds the `HumanPlugins`: the fixture catalog and overseer registry, a resumer

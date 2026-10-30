@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { OversightError } from "../client";
-import type { HumanEvent, Reviewer } from "../types";
+import type { Halt, HumanEvent, Reviewer } from "../types";
 import { parseEvent } from "../parse";
 import { event, eventExamples, example, NOW, registry, renderWith, stubClient, tyler } from "../test/fixtures";
 import { DecisionPanel, patchOf, rulesOf } from "./DecisionPanel";
@@ -302,6 +302,13 @@ describe("DecisionPanel: refusals and server errors", () => {
     show(held(event("HumanEvent.system")));
     expect(screen.getByRole("radio", { name: /Approve restart/ })).toBeDisabled();
     expect(screen.getByTestId("choice-APPROVE")).toHaveTextContent("A restart can be approved only once every safe-state check passes; 1 of 1 has not.");
+  });
+
+  it("takes a restart once the service reports every safe-state check passing, though the event was raised while one failed", async () => {
+    const e = held(event("HumanEvent.system"));
+    const halt = { ...example<Halt>("Halt.halted"), target: String(e.subject.detail.target), safeStateChecks: [{ name: "backlog drained", passed: true }] };
+    show(e, { client: stubClient({ halts: vi.fn(() => Promise.resolve([halt])) }) });
+    await waitFor(() => expect(screen.getByRole("radio", { name: /Approve restart/ })).toBeEnabled());
   });
 
   it("refuses answers the reviewer's authority does not cover", () => {

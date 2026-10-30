@@ -2785,6 +2785,8 @@ button.hk-row--selected:hover {
 
 .hk-dclock__minimum {
   margin-block-start: 10px;
+  /* Lower in the ring, where its chord is narrower than the centre. */
+  max-inline-size: 124px;
 }
 
 .hk-dclock__met {

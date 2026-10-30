@@ -1,9 +1,10 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import type { EventWrite } from "../client";
-import { useEvent, useEventWrite, useNow, useRegistry, useReviewer } from "../hooks";
+import { useEvent, useEventWrite, useHalts, useNow, useRegistry, useReviewer } from "../hooks";
 import { readSubject, votesOf } from "../parse";
 import type {
   Action,
+  Check,
   Decision,
   DecisionInput,
   Edits,
@@ -106,7 +107,9 @@ export function rulesOf(
   event: HumanEvent,
   reviewer: Reviewer | null | undefined,
   registry?: OverseerRegistry,
-  now?: number
+  now?: number,
+  /** The safe-state checks as the service reports them now; the event holds them as they were when it was raised. */
+  liveChecks?: Check[]
 ): Rules {
   const me = reviewer?.subject;
   const overseer = me ? registry?.overseers.find((o) => o.subject === me) : undefined;
@@ -158,9 +161,10 @@ export function rulesOf(
   }
   const subject = readSubject(event.subject);
   if (subject.kind === "system" && subject.detail.lift === true && event.allowedActions.includes("APPROVE")) {
-    const open = subject.detail.safeStateChecks.filter((c) => c.passed !== true).length;
+    const checks = liveChecks ?? subject.detail.safeStateChecks;
+    const open = checks.filter((c) => c.passed !== true).length;
     if (open > 0)
-      actionRefusal.APPROVE = `A restart can be approved only once every safe-state check passes; ${open} of ${subject.detail.safeStateChecks.length} ${open === 1 ? "has" : "have"} not.`;
+      actionRefusal.APPROVE = `A restart can be approved only once every safe-state check passes; ${open} of ${checks.length} ${open === 1 ? "has" : "have"} not.`;
   }
 
   const mayDecide = event.pending && refusal === undefined;
@@ -360,6 +364,10 @@ export function DecisionPanel(props: DecisionPanelProps) {
   const reviewer = props.reviewer !== undefined ? props.reviewer : readReviewer.data;
   const registry = props.registry ?? readRegistry.data;
   const event = useEvent(props.event.id, { initialData: props.event, pollMs: 0 }).data ?? props.event;
+  const restart = event.pending && event.subject.kind === "system" && event.subject.detail.lift === true;
+  const halts = useHalts({ enabled: restart }).data;
+  const target = restart ? event.subject.detail.target : undefined;
+  const liveChecks = halts?.find((h) => h.target === target)?.safeStateChecks;
   return (
     <DecisionPanelFor
       // A new reviewer starts a fresh answer.
@@ -368,15 +376,16 @@ export function DecisionPanel(props: DecisionPanelProps) {
       event={event}
       reviewer={reviewer}
       registry={registry}
+      liveChecks={liveChecks}
     />
   );
 }
 
-function DecisionPanelFor({ event, reviewer, registry, now: fixedNow, requested, onWrite }: DecisionPanelProps) {
+function DecisionPanelFor({ event, reviewer, registry, now: fixedNow, requested, onWrite, liveChecks }: DecisionPanelProps & { liveChecks?: Check[] }) {
   // Every time below is the service's: deadlines, claims and review times count against its clock.
   const now = serviceNow(event, useNow(1000, fixedNow));
   const write = useEventWrite(event.id);
-  const rules = rulesOf(event, reviewer, registry, now);
+  const rules = rulesOf(event, reviewer, registry, now, liveChecks);
   const nameOf = (subject: string) => registry?.overseers.find((o) => o.subject === subject)?.name ?? subject;
   const labels = event.actionLabels ?? {};
   const label = (a: string) => actionLabel(a, labels);

@@ -87,15 +87,15 @@ public class PaymentWorkflow extends Workflow<PaymentWorkflow.Payment> {
   private StepEffect askApproval() {
     var p = currentState();
     var raised = human.raise(Patterns.actionApproval(
-            "Should the agent pay supplier " + p.supplier() + " " + p.amount() + " " + p.currency() + "?")
+            "Should the agent pay supplier " + p.supplier() + " " + money(p) + "?")
         .control("pt-0001")
-        .subject(Subject.action("Pay " + p.supplier() + " " + p.amount() + " " + p.currency(), "pay",
+        .subject(Subject.action("Pay " + p.supplier() + " " + money(p), "pay",
                 Map.of("supplier", p.supplier(), "amount", p.amount(), "currency", p.currency()))
             .with("authority", Map.of("missing", List.of("amount > " + LIMIT), "required", Map.of("role", "ai-system-owner")))
             .with("recentSteps", List.of())
             .withAgent("payments").withWorkflow(id).withRef(id))
         .check("The invoice matches the purchase order.", "subject")
-        .trigger(new Trigger("tool-policy", "pay.amount > " + LIMIT, "The agent asked to pay " + p.amount() + " " + p.currency(),
+        .trigger(new Trigger("tool-policy", "pay.amount > " + LIMIT, "The agent asked to pay " + money(p),
             List.of(new Trigger.Value("amount", p.amount(), LIMIT)), List.of(new Trigger.Condition("amount > " + LIMIT, true))))
         .proposedBy("agent:payments")
         .dedupeKey("approve-" + id)
@@ -119,9 +119,9 @@ public class PaymentWorkflow extends Workflow<PaymentWorkflow.Payment> {
           p.approvalEventId(), p.reconciliationEventId(), attempt, "sent")).thenEnd();
     }
     var raised = human.raise(Patterns.outcomeReconciliation(
-            "Did the payment of " + p.amount() + " " + p.currency() + " to " + p.supplier() + " go through?")
+            "Did the payment of " + money(p) + " to " + p.supplier() + " go through?")
         .control("pt-0006")
-        .subject(Subject.action("Unknown result: pay " + p.supplier() + " " + p.amount() + " " + p.currency(), "pay",
+        .subject(Subject.action("Unknown result: pay " + p.supplier() + " " + money(p), "pay",
                 Map.of("supplier", p.supplier(), "amount", p.amount(), "currency", p.currency()))
             .with("sentAt", Instant.now().toString())
             .with("requestedBy", "agent:payments")
@@ -172,6 +172,11 @@ public class PaymentWorkflow extends Workflow<PaymentWorkflow.Payment> {
   public ReadOnlyEffect<Payment> get() {
     if (currentState() == null) return effects().error("no such payment");
     return effects().reply(currentState());
+  }
+
+  /** The amount as people read it: 4,200 EUR. */
+  private static String money(Payment p) {
+    return String.format(java.util.Locale.ROOT, "%,d %s", p.amount(), p.currency());
   }
 
   private static String why(Decision d) {

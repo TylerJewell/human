@@ -36,6 +36,7 @@ contextlayer's and loan-origination's parts.
 | 5182 | `console/apps/console` dev server |
 | 5183 | `samples/contextlayer/ui` dev server |
 | 5184 | `samples/loan-origination/ui` dev server |
+| 5185 | `samples/patterns/ui` dev server: the pattern tour |
 
 ## Modules and owners
 

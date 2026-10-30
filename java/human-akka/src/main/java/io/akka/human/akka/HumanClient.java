@@ -267,11 +267,13 @@ public final class HumanClient implements Human {
       original.put("summary", ref);
     }
     var who = appellant == null ? reviewer.subject() : appellant;
-    var subject = Subject.appeal("Appeal against " + ref, original, grounds)
+    // The person hearing the appeal reads what was decided; the ref stays on the subject.
+    var about = "“" + original.get("summary") + "”";
+    var subject = Subject.appeal("Appeal against " + about, original, grounds)
         .with("appellant", Subject.fields("ref", who))
         .with("filedAt", library.now().toString())
         .withRef(ref);
-    return open(RaiseRequest.of(Pattern.CONTEST_APPEAL, "Should the decision on " + ref + " stand?").control(control)
+    return open(RaiseRequest.of(Pattern.CONTEST_APPEAL, "Should the decision on " + about + " stand?").control(control)
         .subject(subject).trigger(new Trigger("person", null, grounds, List.of(), List.of()))
         .proposedBy(who).firstReviewer(firstReviewer).build());
   }

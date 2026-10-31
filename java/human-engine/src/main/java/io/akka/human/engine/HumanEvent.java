@@ -2,6 +2,7 @@ package io.akka.human.engine;
 
 import io.akka.human.api.Action;
 import io.akka.human.api.Ask;
+import io.akka.human.api.Relations;
 import io.akka.human.api.Resume;
 import io.akka.human.api.Reviewer;
 import io.akka.human.api.Sticky;
@@ -430,7 +431,7 @@ public record HumanEvent(
       }
       case HumanEventEvent.Reopened e -> {
         d.state = State.REOPENED;
-        d.related.add(new Related(e.newEventId(), "reopened-as"));
+        d.related.add(new Related(e.newEventId(), Relations.REOPENED_AS));
         d.step(e.at(), State.REOPENED, e.reviewer().subject(), "Reopened as " + e.newEventId() + ": " + e.reason());
       }
       case HumanEventEvent.Applied e -> {

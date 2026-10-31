@@ -219,7 +219,7 @@ class LifecycleTest {
   void aRaiseKeepsWhatTheServiceSaid() {
     var s = control("pt-0001");
     var e = raise(s, request(s).dedupeKey("pay-3141").matchKey("pay:S-77").resumes(Resume.workflow("payment", "pay-3141"))
-        .effect(Action.APPROVE, "The payment is sent").evidence("invoice", "inv-9").related("he-0", "follows")
+        .effect(Action.APPROVE, "The payment is sent").evidence("invoice", "inv-9").related("he-0", "x-follows")
         .simulated(true).trigger(new Trigger(null, null, "The agent asked to pay 4,200 EUR.",
             List.of(new Trigger.Value("amount", 4200, 1000)), List.of(new Trigger.Condition("amount > 1000", true))))
         .build());
@@ -228,7 +228,7 @@ class LifecycleTest {
     assertEquals(Resume.workflow("payment", "pay-3141"), e.resumes());
     assertEquals("The payment is sent", e.effects().get(Action.APPROVE));
     assertEquals("inv-9", e.evidence().getFirst().get("ref"));
-    assertEquals(List.of(new HumanEvent.Related("he-0", "follows")), e.related());
+    assertEquals(List.of(new HumanEvent.Related("he-0", "x-follows")), e.related());
     assertTrue(e.simulated());
     assertEquals("tool-policy", e.trigger().detector());
     assertEquals("pay.amount > 1000", e.trigger().rule());

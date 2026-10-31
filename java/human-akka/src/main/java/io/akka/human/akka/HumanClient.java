@@ -7,6 +7,7 @@ import io.akka.human.api.Human;
 import io.akka.human.api.Pattern;
 import io.akka.human.api.RaiseRequest;
 import io.akka.human.api.Raised;
+import io.akka.human.api.Relations;
 import io.akka.human.api.Reviewer;
 import io.akka.human.api.Subject;
 import io.akka.human.api.Trigger;
@@ -325,7 +326,7 @@ public final class HumanClient implements Human {
         new Trigger("person", null, reviewer.subject() + " reopened " + eventId + ": " + reason, List.of(), List.of()),
         old.proposedBy(), old.builtBy(), old.firstReviewer(), null, old.matchKey(), old.aiRecommendation(), old.effects(),
         old.evidence().stream().map(HumanClient::strings).toList(),
-        List.of(Map.of("eventId", eventId, "relation", "reopens")), null, old.simulated());
+        List.of(Map.of("eventId", eventId, "relation", Relations.REOPENS)), null, old.simulated());
     var now = library.now();
     client.forEventSourcedEntity(newId).method(HumanEventEntity::raise)
         .invoke(new HumanEventEntity.Raise(Raise.event(newId, settings, request, library.context(), now), null, null));

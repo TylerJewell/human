@@ -40,6 +40,12 @@ public record RaiseRequest(
     effects = effects == null ? Map.of() : Map.copyOf(effects);
     evidence = evidence == null ? List.of() : List.copyOf(evidence);
     related = related == null ? List.of() : List.copyOf(related);
+    for (var r : related) {
+      if (!Relations.valid(r.get("relation"))) {
+        throw new IllegalArgumentException("a relation is one of " + Relations.KNOWN + " or starts with "
+            + Relations.CUSTOM_PREFIX + ": " + r.get("relation"));
+      }
+    }
     resumes = resumes == null ? Resume.none() : resumes;
   }
 

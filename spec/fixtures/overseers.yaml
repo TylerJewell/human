@@ -64,3 +64,17 @@ overseers:
       - { id: eu-ai-act-oversight, completed_at: "2025-01-10", expires_at: "2026-01-10" }
     qualified: false
     qualified_reason: EU AI Act oversight training expired
+
+  - subject: n.haddad@example.com
+    name: N. Haddad
+    roles: [model-risk-owner]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-07-15", expires_at: "2027-07-15" }
+    qualified: true
+
+  - subject: e.novak@example.com
+    name: E. Novak
+    roles: [safety-officer]
+    attestations:
+      - { id: eu-ai-act-oversight, completed_at: "2026-08-03", expires_at: "2027-08-03" }
+    qualified: true

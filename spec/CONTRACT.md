@@ -4,8 +4,7 @@ The JSON every implementation of `/oversight/*` serves and every console reads. 
 [`oversight.schema.json`](oversight.schema.json); each one has a valid example in
 [`examples/`](examples). Settings come from Verify v2.8 ([`verify/`](verify)).
 
-Version 2 extends the ai-console contract (`ai-console/docs/handoff/contracts/human.md`). What
-changed is listed at the end. A console written for version 1 still reads version 2: every
+Version 2 extends version 1 of this contract. What changed is listed at the end. A console written for version 1 still reads version 2: every
 version 1 field keeps its name and meaning.
 
 ## Roles in the contract
@@ -28,8 +27,8 @@ All bodies and answers are JSON. Times are ISO 8601 UTC strings; durations are I
 | `GET /oversight/events/{id}` | `HumanEvent`; 404 when not owned |
 | `GET /oversight/summary[?control=]` | `Summary` |
 | `GET /oversight/quality?window=P30D` | `Quality` |
-| `GET /oversight/verdicts?since=&eventId=&limit=` | `{ "verdicts": [Verdict] }`, newest first; `eventId` keeps one event's |
-| `GET /oversight/standing` | `{ "standing": [StandingDecision] }` |
+| `GET /oversight/verdicts?since=&until=&eventId=&limit=&offset=` | `VerdictsPage` (query below) |
+| `GET /oversight/standing` | `{ "standing": [StandingDecision] }`; each carries `service`, the name `GET /oversight/info` reports |
 | `GET /oversight/halts` | `{ "halts": [Halt] }` |
 | `GET /oversight/registry` | `OverseerRegistry` |
 | `GET /oversight/controls` | `{ "controls": [ControlSettings] }`: each human control the service declares, settings resolved |
@@ -43,6 +42,19 @@ events that reviewer can act on now ("routable"), `sla` (`at-risk` \| `overdue`)
 (`true` adds shadow events), `since`, `q` (substring of the question or summary), `limit` 1–200
 (default 50), `offset`. Pending events are ordered most urgent first: overdue, then least time
 left, then oldest. Resolved events are ordered by `closedAt`, newest first.
+
+Query for `GET /oversight/verdicts`: `since` and `until`, inclusive, bound the verdicts by `at`;
+`eventId` keeps one event's; `limit` 1–200 (default 50); `offset` (default 0). Verdicts are newest
+first, equal times in event id order. The answer is a `VerdictsPage`:
+
+```json
+{ "verdicts": [ Verdict ], "total": 130, "hasMore": true, "nextOffset": 50 }
+```
+
+`total` counts every verdict the query matches, not only the page. `hasMore` is true when verdicts
+follow the page, and `nextOffset` is the `offset` that reads them (null when none follow). To read a
+set whole, send `until` with the first request, set to the time of the request, and follow
+`nextOffset`: a verdict reached afterwards falls after `until`, so it cannot shift the pages.
 
 Routable means: the reviewer holds a role the current queue needs, is qualified, is not barred by
 independence, has not recused, the event is not with its proposer (`CHANGES_REQUESTED`), is not
@@ -120,7 +132,8 @@ response unchanged.
 | `GET /api/companion/human/events?…` | The same query as the service, over every service, merged and paged with one opaque cursor: the answer's `next`, sent back as `cursor=`; `routable=me` uses the local reviewer; `service=` keeps one service. Answers `{ "rows": [HumanEventRow], "total", "next" }` |
 | `GET /api/companion/human/events/{id}` | The event, from the service that owns it |
 | `POST /api/companion/human/events/{id}/{claim\|release\|decision\|escalate\|send-back\|resubmit\|withdraw\|extend\|reopen}` | Forwarded with the stamped reviewer |
-| `GET /api/companion/human/summary`, `…/quality`, `…/verdicts`, `…/standing`, `…/halts`, `…/controls` | Merged across services |
+| `GET /api/companion/human/summary`, `…/quality`, `…/standing`, `…/halts`, `…/controls` | Merged across services; each list item keeps the `service` it carries, or gains the name of the service it came from |
+| `GET /api/companion/human/verdicts?since=&until=&eventId=&limit=&offset=` | Every service's verdicts merged newest first and paged like a service's: a `VerdictsPage` whose `total` sums the services' |
 | `POST /api/companion/human/flags`, `…/halts`, `…/contests`, `…/overrides` | Sent to the service that declares the control (or that owns the flow) |
 | `POST /api/companion/human/standing/{id}/revoke` | Sent to the service that lists the id |
 | `GET /api/companion/human/registry` | The overseer registry the companion stamps reviewers from |
@@ -144,7 +157,7 @@ it starts:
 ```
 
 The companion lists the directory, and calls `GET {url}/oversight/info` to tell a running service
-from a stale file. This file stands in for runtime request 15 (a local API for pending decisions).
+from a stale file. It stands in for a runtime API that lists the pending decisions of the services running on the machine; until the runtime has one, the companion reads these files.
 
 ## The event
 
@@ -185,6 +198,24 @@ A console that does not know a pattern or a subject kind shows `subject.summary`
 `REOPENED` is the state of a closed event a person has reopened; the reopening raises a new event
 in `related`.
 
+### Related events
+
+`related[]` holds `{ eventId, relation }`: another event, and how it stands to this one. The
+relation is one of these names, or a name of the service's own that starts with `x-` (lower-case
+words joined by hyphens, such as `x-supersedes`). No other name is valid: the library refuses to
+raise an event with one, and the schema rejects it.
+
+| Relation | Meaning | Set by |
+|---|---|---|
+| `reopens` | On the new event of a reopening: the closed event it reopens | The library, on `reopen` |
+| `reopened-as` | On a closed event that was reopened: the new event the reopening raised | The library, on `reopen` |
+| `reraised-after` | On an event raised because the event it names closed without a decision: the review or contest is raised again so the item is not stranded | A service, when it raises again |
+| `held-again-after` | On an event raised again for an item that an earlier event held: the earlier event | A service, when it raises again |
+| `proposed-by` | On an event raised on the proposal of a decision, such as a halt a reviewer proposed when deciding: the event holding that decision | A service, when it raises the proposed event |
+
+A service names a relation with the constants of `Relations` in `human-api`; the library sets
+`reopens` and `reopened-as` through the same constants.
+
 ### Settling and verdicts
 
 | Outcome | `slaOutcome` | Verdict |
@@ -206,7 +237,7 @@ event denied, `ESCALATE` moves it to the next queue.
 `GET /oversight/proof` answers the records the service appended, as Verify's audit taxonomy names
 them: `HumanOversightDecisionRecordedV2` for every settling decision (and every vote, in `votes`),
 `HaltExercised` and `HaltLifted`. The payloads follow `specs/corpus/aud-taxonomy.yaml` at the
-pinned commit. This export stands in for runtime request 10 (oversight records in the ledger).
+pinned commit. It stands in for the runtime writing oversight records to its own ledger; until it does, each service serves the records it appended.
 
 ## What changed from version 1
 
@@ -224,3 +255,11 @@ pinned commit. This export stands in for runtime request 10 (oversight records i
 - New routes: `quality`, `verdicts`, `controls`, `proof`, `info`, `registry`, `contests`,
   `overrides`, and the development routes.
 - A rehearsal decision takes effect; only its verdict's source differs.
+
+Added to version 2 afterwards, without changing a field's meaning:
+
+- `GET /oversight/verdicts` takes `until` and `offset` and answers `total`, `hasMore` and
+  `nextOffset` (`VerdictsPage`).
+- `service` on every `StandingDecision`.
+- The names `related[].relation` can carry (Related events); a name of a service's own starts
+  with `x-`.

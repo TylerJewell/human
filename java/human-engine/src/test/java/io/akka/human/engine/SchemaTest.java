@@ -120,7 +120,7 @@ class SchemaTest {
     var payment = raise(pay, request(pay).proposedBy("agent:payments").dedupeKey("pay-1").matchKey("pay:S-77")
         .check("The invoice matches the purchase order.", "subject").check("No section", null)
         .resumes(Resume.workflow("payment", "pay-1")).effect(Action.APPROVE, "The payment is sent")
-        .evidence("invoice", "inv-9").related("he-0", "follows")
+        .evidence("invoice", "inv-9").related("he-0", "x-follows")
         .aiRecommendation("judge", Action.APPROVE, 0.8, "Matches the PO")
         .trigger(new Trigger("tool-policy", "pay.amount > 1000", "The agent asked to pay 4,200 EUR.",
             List.of(new Trigger.Value("amount", 4200, 1000)), List.of(new Trigger.Condition("amount > 1000", true))))
@@ -224,8 +224,9 @@ class SchemaTest {
     var decided = ok(e, Rules.decide(e, actor(TYLER), new Rules.DecisionRequest(reviewer(TYLER), Action.APPROVE, "ok",
         null, Sticky.APPROVE_FOR_PATTERN, null, List.of(), null), Map.of(), seconds(15)));
     var standing = StandingDecision.from(decided);
-    assertConforms("StandingDecision", Json.standing(standing, minutes(1)));
-    assertConforms("StandingDecision", Json.standing(standing.usedFor("he-2").revokedBy(TYLER, minutes(2), "no"),
+    assertConforms("StandingDecision", Json.standing(standing, "payments", minutes(1)));
+    assertEquals("payments", Json.standing(standing, "payments", minutes(1)).get("service"));
+    assertConforms("StandingDecision", Json.standing(standing.usedFor("he-2").revokedBy(TYLER, minutes(2), "no"), "payments",
         minutes(3)));
 
     var halt = control("pt-0012");

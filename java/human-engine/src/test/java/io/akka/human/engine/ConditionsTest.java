@@ -37,7 +37,7 @@ class ConditionsTest {
     assertEquals(seconds(16).toString(), json.get("now"));
     SchemaTest.assertConforms("HumanEvent", json);
     SchemaTest.assertConforms("HumanEventRow", Json.row(decided, seconds(16)));
-    SchemaTest.assertConforms("StandingDecision", Json.standing(StandingDecision.from(decided), seconds(16)));
+    SchemaTest.assertConforms("StandingDecision", Json.standing(StandingDecision.from(decided), "payments", seconds(16)));
   }
 
   @Test

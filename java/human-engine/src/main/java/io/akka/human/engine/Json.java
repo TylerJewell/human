@@ -174,9 +174,11 @@ public final class Json {
     return m;
   }
 
-  public static Map<String, Object> standing(StandingDecision d, Instant now) {
+  /** A standing decision as the service named {@code service} lists it. */
+  public static Map<String, Object> standing(StandingDecision d, String service, Instant now) {
     var m = new LinkedHashMap<String, Object>();
     m.put("id", d.id());
+    m.put("service", service);
     m.put("kind", d.kind());
     m.put("eventId", d.eventId());
     m.put("control", control(d.control()));

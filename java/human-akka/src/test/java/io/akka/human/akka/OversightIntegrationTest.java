@@ -277,7 +277,11 @@ public class OversightIntegrationTest extends TestKitSupport {
     assertEquals(200, decided.status(), decided.body()::toString);
     var standingId = "sd-" + first.eventId();
     Awaitility.await().atMost(WAIT).until(() -> has(get("/oversight/standing").body().get("standing"), standingId));
-    for (var d : get("/oversight/standing").body().get("standing")) assertConforms("StandingDecision", d);
+    var service = get("/oversight/info").body().get("service").asText();
+    for (var d : get("/oversight/standing").body().get("standing")) {
+      assertConforms("StandingDecision", d);
+      assertEquals(service, d.get("service").asText());
+    }
 
     var second = human.raise(payment("Pay S-55 900 EUR again?").matchKey(key).build()).toCompletableFuture().join();
     assertEquals("DECIDED", second.state());
@@ -287,6 +291,7 @@ public class OversightIntegrationTest extends TestKitSupport {
     var revoked = post("/oversight/standing/" + standingId + "/revoke", Map.of("reviewer", TYLER, "reason", "Supplier changed"));
     assertEquals(200, revoked.status(), revoked.body()::toString);
     assertEquals("REVOKED", revoked.body().get("state").asText());
+    assertEquals(service, revoked.body().get("service").asText());
     var third = human.raise(payment("Pay S-55 900 EUR a third time?").matchKey(key).build()).toCompletableFuture().join();
     assertEquals("OPEN", third.state());
   }

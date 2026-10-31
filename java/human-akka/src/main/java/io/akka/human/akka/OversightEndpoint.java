@@ -178,7 +178,8 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
   public HttpResponse standingDecisions() {
     return read("GET /oversight/standing", () -> {
       var now = library.now();
-      return ok(map("standing", standing().stream().map(d -> (Object) Json.standing(d, now)).toList()));
+      var service = library.plugins().service();
+      return ok(map("standing", standing().stream().map(d -> (Object) Json.standing(d, service, now)).toList()));
     });
   }
 
@@ -341,7 +342,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       var revoked = client.forKeyValueEntity(StandingDecisionsEntity.ID).method(StandingDecisionsEntity::revoke)
           .invoke(new StandingDecisionsEntity.Revoke(id, reviewer.subject(), Wire.text(json, "reason"), library.now()));
       if (revoked.refusal() != null) return error(revoked.refusal());
-      return ok(Json.standing(revoked.decision(), library.now()));
+      return ok(Json.standing(revoked.decision(), library.plugins().service(), library.now()));
     } catch (IllegalArgumentException e) {
       return error(Refusal.invalid(e.getMessage()));
     }

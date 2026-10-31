@@ -1,5 +1,6 @@
 {
   "id": "sd-1",
+  "service": "payments",
   "kind": "pattern-approval",
   "eventId": "he-20261029-00001",
   "control": {

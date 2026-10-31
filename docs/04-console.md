@@ -19,7 +19,7 @@ panel.
 
 The same everywhere: header, question, deadline ring, claim, history, confirmation of every write,
 proof. These exist today in the local console's Human page
-(`ai-console/kalix-console/apps/local-console/src/features/human/`: `DecisionPanel`, `Journey`, the
+(`DecisionPanel`, `Journey`, the
 queue).
 
 Chosen by the pattern, from the registry: which decisions the panel offers and their labels,

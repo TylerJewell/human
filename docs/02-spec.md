@@ -1,8 +1,8 @@
 # Specification
 
 Verify defines what a human control declares. Schema v2.8 merged to
-`akka/governance-explainability` main as `641097fa` on 2026-10-29 (PR #32); the decisions are in
-its `specs/decisions/adr-018-human-patterns.md`. This repository reads these files and defines
+Verify's main branch as `641097fa` on 2026-10-29; the decisions are in
+Verify's ADR-018, human patterns. This repository reads these files and defines
 none of its own.
 
 | File in Verify | Holds |

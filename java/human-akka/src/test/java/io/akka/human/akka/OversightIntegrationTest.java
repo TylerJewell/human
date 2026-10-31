@@ -277,7 +277,11 @@ public class OversightIntegrationTest extends TestKitSupport {
     assertEquals(200, decided.status(), decided.body()::toString);
     var standingId = "sd-" + first.eventId();
     Awaitility.await().atMost(WAIT).until(() -> has(get("/oversight/standing").body().get("standing"), standingId));
-    for (var d : get("/oversight/standing").body().get("standing")) assertConforms("StandingDecision", d);
+    var service = get("/oversight/info").body().get("service").asText();
+    for (var d : get("/oversight/standing").body().get("standing")) {
+      assertConforms("StandingDecision", d);
+      assertEquals(service, d.get("service").asText());
+    }
 
     var second = human.raise(payment("Pay S-55 900 EUR again?").matchKey(key).build()).toCompletableFuture().join();
     assertEquals("DECIDED", second.state());
@@ -287,6 +291,7 @@ public class OversightIntegrationTest extends TestKitSupport {
     var revoked = post("/oversight/standing/" + standingId + "/revoke", Map.of("reviewer", TYLER, "reason", "Supplier changed"));
     assertEquals(200, revoked.status(), revoked.body()::toString);
     assertEquals("REVOKED", revoked.body().get("state").asText());
+    assertEquals(service, revoked.body().get("service").asText());
     var third = human.raise(payment("Pay S-55 900 EUR a third time?").matchKey(key).build()).toCompletableFuture().join();
     assertEquals("OPEN", third.state());
   }
@@ -319,6 +324,99 @@ public class OversightIntegrationTest extends TestKitSupport {
         "action", "DISREGARD", "rationale", "no")).status());
   }
 
+  @Test
+  public void verdictsPageByOffsetAndRange() {
+    var human = new HumanClient(componentClient, TestPlugins.PLUGINS);
+    var ids = new java.util.ArrayList<String>();
+    for (int i = 0; i < 3; i++) {
+      var raised = human.raise(payment("Pay S-" + i + " 10 EUR?").build()).toCompletableFuture().join();
+      assertEquals(200, post("/oversight/events/" + raised.eventId() + "/claim", Map.of("reviewer", TYLER)).status());
+      TestPlugins.CLOCK.advance(Duration.ofSeconds(11));
+      assertEquals(200, post("/oversight/events/" + raised.eventId() + "/decision", decision(TYLER, "APPROVE", "Regular.")).status());
+      ids.add(raised.eventId());
+    }
+    Awaitility.await().atMost(WAIT).until(() -> ids.stream()
+        .allMatch(id -> get("/oversight/verdicts?eventId=" + id).body().get("verdicts").size() == 1));
+
+    var whole = get("/oversight/verdicts?limit=200").body();
+    long total = whole.get("total").asLong();
+    assertEquals(total, whole.get("verdicts").size());
+    assertTrue(!whole.get("hasMore").asBoolean() && whole.get("nextOffset").isNull());
+
+    // One verdict at a time reads the same list, newest first, and ends when hasMore turns false.
+    var walked = new java.util.ArrayList<String>();
+    int offset = 0;
+    while (true) {
+      var page = get("/oversight/verdicts?limit=1&offset=" + offset).body();
+      assertEquals(total, page.get("total").asLong());
+      for (var v : page.get("verdicts")) {
+        assertConforms("Verdict", v);
+        walked.add(v.get("eventId").asText());
+      }
+      if (!page.get("hasMore").asBoolean()) break;
+      offset = page.get("nextOffset").asInt();
+    }
+    var listed = new java.util.ArrayList<String>();
+    for (var v : whole.get("verdicts")) listed.add(v.get("eventId").asText());
+    assertEquals(listed, walked);
+    assertTrue(walked.containsAll(ids));
+
+    // until keeps the verdicts at or before it, and since the ones at or after it.
+    var oldest = get("/oversight/verdicts?eventId=" + ids.get(0)).body().at("/verdicts/0/at").asText();
+    var upTo = get("/oversight/verdicts?until=" + oldest + "&limit=200").body();
+    assertTrue(has(upTo.get("verdicts"), "eventId", ids.get(0)));
+    assertTrue(!has(upTo.get("verdicts"), "eventId", ids.get(2)));
+    var from = get("/oversight/verdicts?since=" + oldest + "&limit=200").body();
+    assertTrue(has(from.get("verdicts"), "eventId", ids.get(0)) && has(from.get("verdicts"), "eventId", ids.get(2)));
+    assertEquals(422, get("/oversight/verdicts?until=yesterday").status());
+  }
+
+  @Test
+  public void eventsPageThroughTheViewAcrossPendingAndClosed() {
+    var human = new HumanClient(componentClient, TestPlugins.PLUGINS);
+    var ids = new java.util.ArrayList<String>();
+    for (int i = 0; i < 4; i++) {
+      var raised = human.raise(payment("Pay S-9" + i + " 20 EUR?").build()).toCompletableFuture().join();
+      ids.add(raised.eventId());
+      awaitInView(raised.eventId());
+    }
+    var withdrawn = ids.get(0);
+    assertEquals(200, post("/oversight/events/" + withdrawn + "/claim", Map.of("reviewer", TYLER)).status());
+    TestPlugins.CLOCK.advance(Duration.ofSeconds(11));
+    assertEquals(200, post("/oversight/events/" + withdrawn + "/decision", decision(TYLER, "DENY", "No.")).status());
+    Awaitility.await().atMost(WAIT).until(() -> has(get("/oversight/events?state=resolved&limit=200").body().get("events"),
+        "id", withdrawn));
+
+    // Two at a time, pending first and then closed, the pages join without a gap or a repeat.
+    var seen = new java.util.ArrayList<String>();
+    long total = -1;
+    boolean closedSeen = false;
+    for (int offset = 0; total < 0 || offset < total; offset += 2) {
+      var page = get("/oversight/events?pattern=action-approval&limit=2&offset=" + offset).body();
+      if (total >= 0) assertEquals(total, page.get("total").asLong());
+      total = page.get("total").asLong();
+      for (var e : page.get("events")) {
+        boolean pending = e.get("state").asText().matches("DETECTED|OPEN|CLAIMED|IN_REVIEW|AWAITING_SECOND|ESCALATED|CHANGES_REQUESTED");
+        if (pending) assertTrue(!closedSeen, "no pending event after a closed one");
+        else closedSeen = true;
+        seen.add(e.get("id").asText());
+      }
+    }
+    assertEquals(total, seen.size());
+    assertEquals(seen.size(), new java.util.HashSet<>(seen).size());
+    assertTrue(seen.containsAll(ids));
+
+    var pendingOnly = get("/oversight/events?state=pending&pattern=action-approval&limit=200").body();
+    assertTrue(has(pendingOnly.get("events"), "id", ids.get(1)) && !has(pendingOnly.get("events"), "id", withdrawn));
+    var resolvedOnly = get("/oversight/events?state=resolved&control=pt-0001&limit=200").body();
+    assertTrue(has(resolvedOnly.get("events"), "id", withdrawn) && !has(resolvedOnly.get("events"), "id", ids.get(1)));
+    assertEquals(0, get("/oversight/events?control=no-such-control").body().get("total").asInt());
+    // A filter on the service's clock reads the same events through the in-memory path.
+    var routable = get("/oversight/events?state=pending&control=pt-0001&sla=running&limit=200").body();
+    assertTrue(routable.get("events").size() <= get("/oversight/events?state=pending&control=pt-0001&limit=200")
+        .body().get("total").asInt());
+  }
+
   // ---- helpers
 
   private String raiseChange(String proposer) {
@@ -346,7 +444,11 @@ public class OversightIntegrationTest extends TestKitSupport {
   }
 
   private static boolean has(JsonNode list, String id) {
-    for (var item : list) if (item.get("id").asText().equals(id)) return true;
+    return has(list, "id", id);
+  }
+
+  private static boolean has(JsonNode list, String field, String value) {
+    for (var item : list) if (item.get(field).asText().equals(value)) return true;
     return false;
   }
 

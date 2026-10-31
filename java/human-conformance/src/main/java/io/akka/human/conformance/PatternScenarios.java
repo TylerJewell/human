@@ -751,6 +751,9 @@ final class PatternScenarios {
         "state " + granted.path("state"));
     run.check("the standing decision names the event", id.equals(granted.path("eventId").asText()),
         "eventId " + granted.path("eventId"));
+    String service = run.get("service info", "/oversight/info", "ServiceInfo").path("service").asText();
+    run.check("the standing decision names the service that holds it", service.equals(granted.path("service").asText()),
+        "service " + granted.path("service") + ", the service is " + service);
 
     Raised again = Flows.raise(run, t, RaiseSpec.plain().withMatchKey(key));
     JsonNode settled = run.await("a matching raise settles at once", eventPath(again.id()), "HumanEvent",
@@ -883,10 +886,19 @@ final class PatternScenarios {
     added.remove(id);
     run.check("related names the new event", !added.isEmpty(), "related " + reopened.path("related"));
     String newId = added.getFirst();
+    run.check("the closed event relates to the new one as reopened-as",
+        hasRelation(reopened, newId, "reopened-as"), "related " + reopened.path("related"));
     JsonNode fresh = run.await("the new event is pending", eventPath(newId), "HumanEvent",
         e -> e.path("pending").asBoolean(false), newId + " pending");
+    run.check("the new event relates to the closed one as reopens", hasRelation(fresh, id, "reopens"),
+        "related " + fresh.path("related"));
     run.check("the new event is of the same control", c.id().equals(fresh.path("control").path("rowId").asText()),
         "control " + fresh.path("control"));
+  }
+
+  private static boolean hasRelation(JsonNode event, String eventId, String relation) {
+    return Json.find(event.path("related"),
+        r -> eventId.equals(r.path("eventId").asText()) && relation.equals(r.path("relation").asText())).isPresent();
   }
 
   private static List<String> relatedIds(JsonNode event) {

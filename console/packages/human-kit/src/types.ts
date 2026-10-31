@@ -483,7 +483,7 @@ export interface HumanEvent extends ServiceClock {
   verdictId?: string | null;
   conclusion?: Conclusion | null;
   verdict?: Verdict | null;
-  related?: { eventId: string; relation: string }[];
+  related?: { eventId: string; relation: Relation }[];
   history: HistoryStep[];
   evidence?: { kind: string; ref: string; [key: string]: unknown }[];
   resumes?: { kind?: "workflow" | "task" | "handler" | "none"; target?: string; id?: string } | null;
@@ -623,8 +623,13 @@ export interface OverseerRegistry {
   owners?: { control: string; accountable: string }[];
 }
 
+/** How a related event stands to this one: a name from the contract, or a service's own that starts with x-. */
+export type Relation = "reopens" | "reopened-as" | "reraised-after" | "held-again-after" | "proposed-by" | `x-${string}`;
+
 export interface StandingDecision {
   id: string;
+  /** The name of the service that holds the decision, as GET /oversight/info reports it. */
+  service: string;
   kind: "pattern-approval" | "pattern-denial" | "session-approval" | "conditional-approval" | "change" | "exception";
   eventId: string;
   control: ControlRef;

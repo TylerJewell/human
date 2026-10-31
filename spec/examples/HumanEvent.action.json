@@ -139,7 +139,16 @@
   "verdictId": null,
   "conclusion": null,
   "verdict": null,
-  "related": [],
+  "related": [
+    {
+      "eventId": "he-20261029-00000",
+      "relation": "reraised-after"
+    },
+    {
+      "eventId": "he-20261029-00009",
+      "relation": "x-supersedes"
+    }
+  ],
   "history": [
     {
       "at": "2026-10-29T14:00:00Z",

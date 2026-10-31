@@ -1,6 +1,7 @@
 package companion
 
 import (
+	"cmp"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -80,6 +82,14 @@ type fake struct {
 	standing []string
 	conflict string
 	quality  []byte
+
+	// verdictTimes are the times of the verdicts the service holds; by default it holds one.
+	verdictTimes []string
+	// unnamedStanding leaves service off the standing decisions, as a service that predates the field does.
+	unnamedStanding bool
+	// standingService is the name the standing decisions carry when it is not the service's registered name.
+	standingService string
+	verdictQueries  []url.Values
 
 	mu      sync.Mutex
 	queries []url.Values
@@ -178,15 +188,49 @@ func newFake(t *testing.T, name string, events [][]byte, controls, standing []st
 		reply(w, 200, q)
 	})
 	mux.HandleFunc("GET /oversight/verdicts", func(w http.ResponseWriter, r *http.Request) {
-		v := object(t, example(t, "Verdict.upheld"))
-		v["id"], v["at"] = "vd-"+name, map[string]string{"alpha": at("14:05"), "beta": at("14:10")}[name]
-		reply(w, 200, marshal(t, map[string]any{"verdicts": []any{v}}))
+		q := r.URL.Query()
+		f.mu.Lock()
+		f.verdictQueries = append(f.verdictQueries, q)
+		f.mu.Unlock()
+		times := f.verdictTimes
+		if times == nil {
+			times = []string{map[string]string{"alpha": at("14:05"), "beta": at("14:10")}[name]}
+		}
+		var matching []any
+		for i, when := range times {
+			if (q.Get("since") != "" && when < q.Get("since")) || (q.Get("until") != "" && when > q.Get("until")) {
+				continue
+			}
+			v := object(t, example(t, "Verdict.upheld"))
+			v["id"], v["at"] = fmt.Sprintf("vd-%s-%d", name, i), when
+			matching = append(matching, v)
+		}
+		slices.SortStableFunc(matching, func(a, b any) int { return strings.Compare(b.(map[string]any)["at"].(string), a.(map[string]any)["at"].(string)) })
+		offset, _ := strconv.Atoi(q.Get("offset"))
+		limit, err := strconv.Atoi(q.Get("limit"))
+		if err != nil {
+			limit = 50
+		}
+		page := []any{}
+		if offset < len(matching) {
+			page = matching[offset:min(offset+limit, len(matching))]
+		}
+		var next any
+		if offset+len(page) < len(matching) {
+			next = offset + len(page)
+		}
+		reply(w, 200, marshal(t, map[string]any{"verdicts": page, "total": len(matching), "hasMore": next != nil, "nextOffset": next}))
 	})
 	mux.HandleFunc("GET /oversight/standing", func(w http.ResponseWriter, r *http.Request) {
 		var list []any
 		for _, id := range f.standing {
 			d := object(t, example(t, "StandingDecision.pattern"))
 			d["id"] = id
+			if f.unnamedStanding {
+				delete(d, "service")
+			} else {
+				d["service"] = cmp.Or(f.standingService, name)
+			}
 			list = append(list, d)
 		}
 		reply(w, 200, marshal(t, map[string]any{"standing": list}))
@@ -509,10 +553,83 @@ func TestStandingRevokeAndLists(t *testing.T) {
 		}
 	}
 
-	var verdicts map[string][]map[string]any
+	var verdicts struct {
+		Verdicts []map[string]any `json:"verdicts"`
+	}
 	w.get(t, "/api/companion/human/verdicts?limit=1", &verdicts)
-	if v := verdicts["verdicts"]; len(v) != 1 || v[0]["id"] != "vd-beta" || v[0]["service"] != "beta" {
+	if v := verdicts.Verdicts; len(v) != 1 || v[0]["id"] != "vd-beta-0" || v[0]["service"] != "beta" {
 		t.Fatalf("verdicts %v", v)
+	}
+}
+
+func TestStandingKeepsOrGainsTheService(t *testing.T) {
+	w := newWorld(t, Options{})
+	w.alpha.standingService = "alpha-as-reported"
+	w.beta.unnamedStanding = true
+	var list map[string][]map[string]any
+	w.get(t, "/api/companion/human/standing", &list)
+	got := map[any]any{}
+	for _, d := range list["standing"] {
+		got[d["id"]] = d["service"]
+	}
+	if !reflect.DeepEqual(got, map[any]any{"sd-a": "alpha-as-reported", "sd-b": "beta"}) {
+		t.Fatalf("standing decisions name %v", got)
+	}
+}
+
+func TestVerdictsPageAcrossServices(t *testing.T) {
+	w := newWorld(t, Options{})
+	w.alpha.verdictTimes = []string{at("10:00"), at("12:00"), at("14:00")}
+	w.beta.verdictTimes = []string{at("11:00"), at("13:00")}
+	type page struct {
+		Verdicts   []map[string]any `json:"verdicts"`
+		Total      float64          `json:"total"`
+		HasMore    bool             `json:"hasMore"`
+		NextOffset *float64         `json:"nextOffset"`
+	}
+	ids := func(p page) []string {
+		var out []string
+		for _, v := range p.Verdicts {
+			out = append(out, v["id"].(string))
+		}
+		return out
+	}
+
+	var first page
+	w.get(t, "/api/companion/human/verdicts?limit=2", &first)
+	if !reflect.DeepEqual(ids(first), []string{"vd-alpha-2", "vd-beta-1"}) || first.Total != 5 || !first.HasMore ||
+		first.NextOffset == nil || *first.NextOffset != 2 {
+		t.Fatalf("first page %+v", first)
+	}
+	var second page
+	w.get(t, "/api/companion/human/verdicts?limit=2&offset=2", &second)
+	if !reflect.DeepEqual(ids(second), []string{"vd-alpha-1", "vd-beta-0"}) || !second.HasMore || *second.NextOffset != 4 {
+		t.Fatalf("second page %+v", second)
+	}
+	var last page
+	w.get(t, "/api/companion/human/verdicts?limit=2&offset=4", &last)
+	if !reflect.DeepEqual(ids(last), []string{"vd-alpha-0"}) || last.HasMore || last.NextOffset != nil || last.Total != 5 {
+		t.Fatalf("last page %+v", last)
+	}
+
+	var bounded page
+	w.get(t, "/api/companion/human/verdicts?since="+at("11:00")+"&until="+at("13:00"), &bounded)
+	if !reflect.DeepEqual(ids(bounded), []string{"vd-beta-1", "vd-alpha-1", "vd-beta-0"}) || bounded.Total != 3 {
+		t.Fatalf("bounded %+v", bounded)
+	}
+	if got := w.alpha.verdictQueries[len(w.alpha.verdictQueries)-1]; got.Get("until") != at("13:00") {
+		t.Fatalf("alpha was asked %v", got)
+	}
+
+	// A page deeper than a service's largest page is read from the service a page at a time.
+	w.alpha.verdictTimes = nil
+	for i := 0; i < 250; i++ {
+		w.alpha.verdictTimes = append(w.alpha.verdictTimes, fmt.Sprintf("2026-10-29T%02d:%02d:00Z", i/60, i%60))
+	}
+	var deep page
+	w.get(t, "/api/companion/human/verdicts?limit=1&offset=240", &deep)
+	if len(deep.Verdicts) != 1 || deep.Total != 252 {
+		t.Fatalf("deep page %+v", deep)
 	}
 }
 

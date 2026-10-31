@@ -167,6 +167,7 @@ export function createMemoryClient(data: MemoryData, reviewer: Reviewer): Oversi
       e.outcome.standingDecisionId = id;
       standing.unshift({
         id,
+        service: e.owner.service,
         kind: body.sticky === "APPROVE_FOR_PATTERN" ? "pattern-approval" : "pattern-denial",
         eventId: e.id,
         control: e.control,

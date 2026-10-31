@@ -163,6 +163,24 @@
         "record"
       ]
     },
+    "Relation": {
+      "description": "How a related event stands to this one. A known name (see CONTRACT.md, Related events), or a name of the service's own that starts with x-.",
+      "anyOf": [
+        {
+          "enum": [
+            "reopens",
+            "reopened-as",
+            "reraised-after",
+            "held-again-after",
+            "proposed-by"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^x-[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      ]
+    },
     "Reviewer": {
       "type": "object",
       "required": [
@@ -1674,6 +1692,39 @@
         }
       }
     },
+    "VerdictsPage": {
+      "type": "object",
+      "required": [
+        "verdicts",
+        "total",
+        "hasMore",
+        "nextOffset"
+      ],
+      "properties": {
+        "verdicts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Verdict"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Every verdict the query matches, not only this page's."
+        },
+        "hasMore": {
+          "type": "boolean"
+        },
+        "nextOffset": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "The offset of the next page; null when there is none."
+        }
+      }
+    },
     "HistoryStep": {
       "type": "object",
       "required": [
@@ -2019,7 +2070,7 @@
                 "type": "string"
               },
               "relation": {
-                "type": "string"
+                "$ref": "#/$defs/Relation"
               }
             }
           }
@@ -2730,11 +2781,16 @@
         "allows",
         "grantedBy",
         "grantedAt",
-        "state"
+        "state",
+        "service"
       ],
       "properties": {
         "id": {
           "type": "string"
+        },
+        "service": {
+          "type": "string",
+          "description": "The name of the service that holds the decision, as GET /oversight/info reports it."
         },
         "kind": {
           "enum": [
@@ -3149,7 +3205,19 @@
         "related": {
           "type": "array",
           "items": {
-            "type": "object"
+            "type": "object",
+            "required": [
+              "eventId",
+              "relation"
+            ],
+            "properties": {
+              "eventId": {
+                "type": "string"
+              },
+              "relation": {
+                "$ref": "#/$defs/Relation"
+              }
+            }
           }
         },
         "resumes": {

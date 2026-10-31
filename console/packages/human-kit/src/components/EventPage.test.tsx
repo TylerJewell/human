@@ -123,6 +123,7 @@ describe("governance views", () => {
     renderWith(client, <StandingList standing={[sd]} now={NOW} />);
     expect(screen.getByTestId("standing-row")).toHaveTextContent("pay supplier S-77 up to 4,200 EUR");
     expect(screen.getByTestId("standing-row")).toHaveTextContent("Expires in 30 days");
+    expect(screen.getByTestId("standing-row")).toHaveTextContent("held by payments");
     fireEvent.click(screen.getByTestId("standing-revoke"));
     fireEvent.change(screen.getByTestId("write-reason"), { target: { value: "Supplier changed bank" } });
     fireEvent.click(screen.getByTestId("hk-confirm-run"));

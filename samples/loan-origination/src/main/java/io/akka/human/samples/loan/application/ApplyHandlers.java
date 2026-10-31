@@ -5,6 +5,7 @@ import io.akka.human.akka.HumanClient;
 import io.akka.human.api.Action;
 import io.akka.human.api.Decision;
 import io.akka.human.api.Patterns;
+import io.akka.human.api.Relations;
 import io.akka.human.api.Subject;
 import io.akka.human.api.Trigger;
 import io.akka.human.api.spi.ApplyHandler;
@@ -89,7 +90,7 @@ public final class ApplyHandlers {
         .trigger(new Trigger("person", null, by + " proposed a halt on the referral drift: " + d.rationale(), List.of(),
             List.of()))
         .proposedBy(by)
-        .related(d.eventId(), "proposed-by")
+        .related(d.eventId(), Relations.PROPOSED_BY)
         .dedupeKey("halt-proposed-in-" + d.eventId())
         .effect(Action.HALT, "The automated assessment stops; every application goes to an underwriter.")
         .build()).toCompletableFuture().join().eventId();

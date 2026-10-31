@@ -327,9 +327,13 @@ final class Flows {
   static void awaitVerdictListed(Run run, JsonNode event) {
     String id = event.path("id").asText();
     String path = "/oversight/verdicts?eventId=" + Http.encode(id);
-    run.await("GET /oversight/verdicts lists the verdict", path, "verdicts[]:Verdict",
-        page -> Json.find(page.path("verdicts"), v -> id.equals(v.path("eventId").asText())).isPresent(),
+    JsonNode page = run.await("GET /oversight/verdicts lists the verdict", path, "verdicts[]:Verdict",
+        p -> Json.find(p.path("verdicts"), v -> id.equals(v.path("eventId").asText())).isPresent(),
         "a verdict for " + id);
+    run.check("the verdict page counts what it matches and says whether more follow",
+        page.path("total").asInt(-1) >= page.path("verdicts").size() && page.path("hasMore").isBoolean()
+            && page.has("nextOffset"),
+        "page " + Json.abbreviate(page.toString()));
   }
 
   static void awaitListedPending(Run run, Control c, String id) {

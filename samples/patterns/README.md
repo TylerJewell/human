@@ -78,6 +78,8 @@ workflow's state, or `GET /oversight/events/{id}`, shows how it ends.
 | `GET /agent-approvals/{taskId}` | | The task's status and result |
 | `POST /tool-calls` | `{ agentId, sessionId, tool, arguments }` | What the tool-call approval guardrail decides for the call: `deny` with "awaiting approval: &lt;eventId&gt;" until a person approves, then `allow` once; a standing decision on the call lets it pass at once |
 
+`PayToolAgent` has one tool, `pay`, so the same guardrail runs inside a model's tool loop. The runtime names an agent's own tool `<AgentClass>_<method>` (here `PayToolAgent_pay`) and matches a guardrail's `tools` by exact name, so `application.conf` lists both `pay` and `PayToolAgent_pay`. A refused call fails the agent request with "awaiting approval: &lt;eventId&gt;"; the model is not shown the refusal, and the retry is a new request. `ToolLoopIntegrationTest` drives this with a scripted test model.
+
 ## Trying a scenario
 
 ```

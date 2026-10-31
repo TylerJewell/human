@@ -208,10 +208,12 @@ they can take any product's theme. contextlayer and the desk are both drawn with
 
 ## 6. The conformance suite
 
+**The suite resets every service it checks.** It closes every open event as `KILLED` and clears halts and standing decisions, so it requires the `--allow-reset` flag. Run it only against a development or test service.
+
 The suite checks a service that serves `/oversight/*` against the contract:
 
 ```sh
-java -jar java/human-conformance/target/human-conformance.jar --url http://localhost:9164
+java -jar java/human-conformance/target/human-conformance.jar --url http://localhost:9164 --allow-reset
 ```
 
 All three samples pass. The suite is also behind *Run conformance* in the console's Services view.

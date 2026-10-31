@@ -27,13 +27,13 @@ import io.akka.human.engine.Rules;
 import io.akka.human.engine.StandingDecision;
 import io.akka.human.engine.Verdicts;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -73,36 +73,55 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       var q = requestContext().queryParams();
       var now = library.now();
       var state = q.getString("state").orElse(null);
-      var filters = new ArrayList<Predicate<HumanEvent>>();
-      if ("pending".equals(state)) filters.add(HumanEvent::pending);
-      else if ("resolved".equals(state)) filters.add(e -> !e.pending());
-      else if (state != null) filters.add(e -> e.state().name().equals(state));
-      q.getString("pattern").ifPresent(p -> filters.add(e -> e.settings().pattern().id().equals(p)));
-      q.getString("mode").ifPresent(m -> filters.add(e -> e.settings().mode().equals(m)));
-      q.getString("flavor").ifPresent(f -> filters.add(e -> e.settings().flavor().equals(f)));
-      q.getString("subject").ifPresent(k -> filters.add(e -> e.subject().kind().id().equals(k)));
-      q.getString("control").ifPresent(c -> filters.add(e -> e.settings().control().rowId().equals(c)));
-      q.getString("queue").ifPresent(name -> filters.add(e -> e.queue().equals(name)));
-      q.getString("holder").ifPresent(h -> filters.add(e -> e.holderAt(now) != null && e.holderAt(now).subject().equals(h)));
-      q.getString("sla").ifPresent(s -> filters.add(e -> e.pending() && e.slaState(now).equals(s)));
-      if (!q.getString("shadow").map("true"::equals).orElse(false)) filters.add(e -> !e.shadow());
-      q.getString("since").map(s -> Wire.instant(s, "since")).ifPresent(since -> filters.add(e -> !e.detectedAt().isBefore(since)));
-      q.getString("q").map(String::toLowerCase).ifPresent(text -> filters.add(e ->
+      // Equality filters are keys the view rows hold; the view takes at most Filter.SLOTS of them.
+      var keys = new ArrayList<String>();
+      if ("pending".equals(state)) keys.add("pending:true");
+      else if ("resolved".equals(state)) keys.add("pending:false");
+      else if (state != null) keys.add("state:" + state);
+      q.getString("pattern").ifPresent(p -> keys.add("pattern:" + p));
+      q.getString("mode").ifPresent(m -> keys.add("mode:" + m));
+      q.getString("flavor").ifPresent(f -> keys.add("flavor:" + f));
+      q.getString("subject").ifPresent(k -> keys.add("kind:" + k));
+      q.getString("control").ifPresent(c -> keys.add("control:" + c));
+      q.getString("queue").ifPresent(name -> keys.add("queue:" + name));
+      if (!q.getString("shadow").map("true"::equals).orElse(false)) keys.add("shadow:false");
+      var since = q.getString("since").map(s -> Wire.instant(s, "since")).orElse(Instant.EPOCH);
+      int limit = Math.max(1, Math.min(MAX_LIMIT, q.getInteger("limit").orElse(DEFAULT_LIMIT)));
+      int offset = Math.max(0, q.getInteger("offset").orElse(0));
+
+      // These depend on the service's clock at the moment of the read, or are not equalities, so the
+      // view cannot hold them as columns: the matching rows are read whole, filtered and paged here.
+      var inMemory = new ArrayList<Predicate<HumanEvent>>();
+      q.getString("holder").ifPresent(h -> inMemory.add(e -> e.holderAt(now) != null && e.holderAt(now).subject().equals(h)));
+      q.getString("sla").ifPresent(s -> inMemory.add(e -> e.pending() && e.slaState(now).equals(s)));
+      // A substring match is not indexable: a view's LIKE needs a literal pattern, and text_search matches words.
+      q.getString("q").map(String::toLowerCase).ifPresent(text -> inMemory.add(e ->
           e.ask().question().toLowerCase().contains(text) || e.subject().summary().toLowerCase().contains(text)));
       var reviewer = q.getString("reviewer").orElse(null);
       if (reviewer != null) {
         var roles = q.getString("roles").map(r -> List.of(r.split(",")))
             .orElseGet(() -> library.overseer(reviewer) == null ? List.of() : library.overseer(reviewer).roles());
         var actor = library.actor(new Reviewer(reviewer, null, roles.stream().map(String::trim).toList(), "", false));
-        filters.add(e -> Rules.routable(e, actor, now));
+        inMemory.add(e -> Rules.routable(e, actor, now));
       }
-      var matching = ("pending".equals(state) ? pending() : all()).stream()
-          .filter(e -> filters.stream().allMatch(f -> f.test(e)))
-          .sorted(urgency(now)).toList();
-      int limit = Math.max(1, Math.min(MAX_LIMIT, q.getInteger("limit").orElse(DEFAULT_LIMIT)));
-      int offset = Math.max(0, q.getInteger("offset").orElse(0));
-      var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) Json.event(e, now)).toList();
-      return ok(map("events", page, "total", matching.size()));
+
+      if (!inMemory.isEmpty()) {
+        var matching = HumanQueries.matching(client, materializer, keys, since, Instant.EPOCH).stream()
+            .filter(e -> inMemory.stream().allMatch(f -> f.test(e)))
+            .sorted(urgency()).toList();
+        var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) Json.event(e, now)).toList();
+        return ok(map("events", page, "total", matching.size()));
+      }
+      // Pending events come first, then closed ones, so a page can run across the two.
+      var pending = "resolved".equals(state) ? new HumanQueries.Paged(List.of(), 0)
+          : HumanQueries.pendingPage(client, keys, since, offset, limit);
+      var closed = "pending".equals(state) ? new HumanQueries.Paged(List.of(), 0)
+          : HumanQueries.closedPage(client, keys, since, Math.max(0, offset - (int) pending.total()),
+              Math.max(1, limit - pending.rows().size()));
+      var rows = new ArrayList<>(pending.rows());
+      if (rows.size() < limit) rows.addAll(closed.rows());
+      var page = rows.stream().map(r -> (Object) Json.event(r.event(), now)).toList();
+      return ok(map("events", page, "total", pending.total() + closed.total()));
     });
   }
 
@@ -116,7 +135,9 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
     return read("GET /oversight/summary", () -> {
       var now = library.now();
       var control = requestContext().queryParams().getString("control").orElse(null);
-      var events = all().stream().filter(e -> control == null || e.settings().control().rowId().equals(control)).toList();
+      // Pending events and the 30 days the raised-per-day figures count.
+      var events = HumanQueries.matching(client, materializer, control == null ? List.of() : List.of("control:" + control),
+          Instant.EPOCH, now.minus(Duration.ofDays(30)));
       return ok(Figures.summary(events, library.controls(), halts(), standing(), now));
     });
   }
@@ -126,10 +147,13 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
     return read("GET /oversight/quality", () -> {
       var window = requestContext().queryParams().getString("window").orElse("P30D");
       if (!Durations.valid(window)) return error(Refusal.invalid("window must be an ISO 8601 duration such as P30D"));
-      return ok(Figures.quality(all(), library.controls(), subject -> {
+      var now = library.now();
+      // Pending events, and every event that closed inside the window: all the figures count those.
+      var events = HumanQueries.matching(client, materializer, List.of(), Instant.EPOCH, now.minus(Durations.parse(window)));
+      return ok(Figures.quality(events, library.controls(), subject -> {
         var overseer = library.overseer(subject);
         return overseer == null ? null : overseer.name();
-      }, window, library.now()));
+      }, window, now));
     });
   }
 
@@ -138,14 +162,15 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
     return read("GET /oversight/verdicts", () -> {
       var q = requestContext().queryParams();
       var since = q.getString("since").map(s -> Wire.instant(s, "since")).orElse(Instant.EPOCH);
-      var eventId = q.getString("eventId");
+      var until = q.getString("until").map(s -> Wire.instant(s, "until")).orElse(HumanEventsView.OPEN);
+      var key = q.getString("eventId").map(id -> "event:" + id).orElse(HumanEventsView.ANY);
       int limit = Math.max(1, Math.min(MAX_LIMIT, q.getInteger("limit").orElse(DEFAULT_LIMIT)));
-      var verdicts = all().stream().map(Verdicts::of).filter(Objects::nonNull)
-          .filter(v -> !v.at().isBefore(since))
-          .filter(v -> eventId.isEmpty() || eventId.get().equals(v.eventId()))
-          .sorted(Comparator.comparing(Verdicts.Verdict::at).reversed())
-          .limit(limit).map(v -> (Object) Json.verdict(v)).toList();
-      return ok(map("verdicts", verdicts));
+      int offset = Math.max(0, q.getInteger("offset").orElse(0));
+      var page = HumanQueries.verdictPage(client, key, since, until, offset, limit);
+      var verdicts = page.rows().stream().map(r -> (Object) Json.verdict(Verdicts.of(r.event()))).toList();
+      int next = offset + verdicts.size();
+      return ok(map("verdicts", verdicts, "total", page.total(), "hasMore", next < page.total(),
+          "nextOffset", next < page.total() ? next : null));
     });
   }
 
@@ -399,9 +424,6 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
     return client.forEventSourcedEntity(id);
   }
 
-  private List<HumanEvent> all() {
-    return HumanQueries.all(client, materializer);
-  }
 
   private List<HumanEvent> pending() {
     return HumanQueries.pending(client, materializer);
@@ -424,7 +446,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       out.add(halt(current == null ? HaltState.notHalted(c) : current.listedUnder(c.control()), c));
       listed.add(c.haltTarget());
     }
-    for (var e : all()) {
+    for (var e : HumanQueries.matching(client, materializer, List.of("halt:true"), Instant.EPOCH, Instant.EPOCH)) {
       if (!e.settings().haltRestart() || !listed.add(e.haltTarget())) continue;
       var current = human.halt(e.haltTarget()).state();
       if (current != null) out.add(halt(current, e.settings()));
@@ -445,12 +467,14 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
     return library.haltScope(target, e.settings()).safeStateChecks(target).toCompletableFuture().join();
   }
 
-  /** Overdue first, then the least time left, then the oldest; closed events after, newest first. */
-  private static Comparator<HumanEvent> urgency(Instant now) {
+  /**
+   * The earliest due first, which puts the overdue first, then the oldest; closed events after, newest
+   * first. The view orders pending events the same way, by the same columns.
+   */
+  private static Comparator<HumanEvent> urgency() {
     return (a, b) -> {
       if (a.pending() != b.pending()) return a.pending() ? -1 : 1;
       if (!a.pending()) return Comparator.nullsLast(Comparator.<Instant>reverseOrder()).compare(a.closedAt(), b.closedAt());
-      if (a.overdue(now) != b.overdue(now)) return a.overdue(now) ? -1 : 1;
       int left = Comparator.nullsLast(Comparator.<Instant>naturalOrder()).compare(a.dueAt(), b.dueAt());
       return left != 0 ? left : a.detectedAt().compareTo(b.detectedAt());
     };

@@ -332,17 +332,81 @@ func (s *Server) listed(path, key string) func(http.ResponseWriter, *http.Reques
 	}
 }
 
-// verdicts merges the services' verdicts newest first, keeping at most limit when one is asked.
+// Verdict paging: the services' default and largest page, which the merged page follows.
+const (
+	defaultVerdicts = 50
+	maxVerdicts     = 200
+)
+
+// verdicts merges the services' verdicts newest first and pages the result like a service does:
+// limit and offset choose the page, until and since bound the times, total counts every verdict
+// the services matched. Each service is asked for the first offset+limit verdicts, a page at a time.
 func (s *Server) verdicts(w http.ResponseWriter, r *http.Request) error {
-	objects, names, err := s.gatherObjects(r, withQuery("/verdicts", r, "since", "limit"))
-	if err != nil {
-		return err
+	q := r.URL.Query()
+	limit, offset := defaultVerdicts, 0
+	if n, err := strconv.Atoi(q.Get("limit")); err == nil {
+		limit = min(max(n, 1), maxVerdicts)
 	}
+	if n, err := strconv.Atoi(q.Get("offset")); err == nil && n > 0 {
+		offset = n
+	}
+	need := offset + limit
+
+	type feed struct {
+		items []any
+		total float64
+		more  bool
+	}
+	feeds := map[string]*feed{}
+	asking := s.running()
+	for _, svc := range asking {
+		feeds[svc.Service] = &feed{more: true}
+	}
+	for len(asking) > 0 {
+		replies, err := s.gather(r.Context(), asking, func(svc service) string {
+			f := feeds[svc.Service]
+			p := url.Values{}
+			for _, k := range []string{"since", "until", "eventId"} {
+				if v := q.Get(k); v != "" {
+					p.Set(k, v)
+				}
+			}
+			p.Set("limit", strconv.Itoa(min(need-len(f.items), maxVerdicts)))
+			p.Set("offset", strconv.Itoa(len(f.items)))
+			return "/verdicts?" + p.Encode()
+		})
+		if err != nil {
+			return err
+		}
+		asking = nil
+		for _, rep := range replies {
+			var m map[string]any
+			if err := json.Unmarshal(rep.body, &m); err != nil || m == nil {
+				return errorf(http.StatusBadGateway, "the answer of %s to /verdicts is not a JSON object", rep.svc.Service)
+			}
+			tag(m["verdicts"], rep.svc.Service)
+			items, _ := m["verdicts"].([]any)
+			f := feeds[rep.svc.Service]
+			f.items = append(f.items, items...)
+			more, _ := m["hasMore"].(bool)
+			f.more = more && len(items) > 0
+			f.total, _ = m["total"].(float64)
+			if f.total < float64(len(f.items)) {
+				f.total = float64(len(f.items))
+			}
+			if f.more && len(f.items) < need {
+				asking = append(asking, rep.svc)
+			}
+		}
+	}
+
 	all := []any{}
-	for i, m := range objects {
-		tag(m["verdicts"], names[i])
-		items, _ := m["verdicts"].([]any)
-		all = append(all, items...)
+	total := 0.0
+	for _, svc := range s.running() {
+		if f := feeds[svc.Service]; f != nil {
+			all = append(all, f.items...)
+			total += f.total
+		}
 	}
 	at := func(v any) string {
 		m, _ := v.(map[string]any)
@@ -350,8 +414,15 @@ func (s *Server) verdicts(w http.ResponseWriter, r *http.Request) error {
 		return s
 	}
 	sort.SliceStable(all, func(i, j int) bool { return later(at(all[i]), at(all[j])) })
-	if n, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil && n >= 0 && n < len(all) {
-		all = all[:n]
+	page := []any{}
+	if offset < len(all) {
+		page = all[offset:min(need, len(all))]
 	}
-	return writeJSON(w, http.StatusOK, map[string]any{"verdicts": all})
+	next := offset + len(page)
+	hasMore := float64(next) < total && len(page) > 0
+	var nextOffset any
+	if hasMore {
+		nextOffset = next
+	}
+	return writeJSON(w, http.StatusOK, map[string]any{"verdicts": page, "total": total, "hasMore": hasMore, "nextOffset": nextOffset})
 }

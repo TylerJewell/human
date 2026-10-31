@@ -1,6 +1,6 @@
 # Pinned from Verify
 
-Copied from `akka/governance-explainability` at commit `96ea36b61c4d252d262217f9bba3b1743bdcd80c`
+Copied from Verify at commit `96ea36b61c4d252d262217f9bba3b1743bdcd80c`
 (schema v2.8). Do not edit here; change Verify and copy again.
 
 | File | Source |

@@ -16,7 +16,6 @@ contextlayer's and loan-origination's parts.
   `pnpm spec:check` passes.
 - **Settings come from Verify.** [`spec/verify/`](../spec/verify) is pinned at `96ea36b6`. Never edit
   it.
-- **No commits.** The tree stays uncommitted until the owner asks.
 - **Akka runtime.** Integration tests run in-process with the TestKit (`mvn verify`); they need no
   daemon. To run a service, call `akka_local_status` first and `akka_local_start` only if it is not
   started; use `akka_local_run_service`. Never call `akka_local_stop`: other people's services run

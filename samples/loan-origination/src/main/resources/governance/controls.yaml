@@ -1,5 +1,5 @@
 # The human controls of the Loan Origination assistant. Rows hl-0001 to hl-0007 are the scenarios S1
-# to S7 and hl-0011 is the template review, with the names of the bundle in ai-console
+# to S7 and hl-0011 is the template review, with the names of the bundle in the Akka local console
 # (samples/loan-origination/governance/controls.yaml) under ids of this sample's own, so the two
 # services can share a runtime. Rows hl-0008 to hl-0010 are the domain reviews that were plain
 # workflow pauses there: held notices, underwriting review, contests.

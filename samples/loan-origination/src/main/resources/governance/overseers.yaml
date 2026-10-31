@@ -1,5 +1,5 @@
 # The people who oversee the Loan Origination assistant, in Verify's overseer registry format
-# (spec/verify/overseer-registry.schema.yaml). They are the people of ai-console's prototype
+# (spec/verify/overseer-registry.schema.yaml). They are the people of the Akka local console's prototype
 # fixtures with the roles given there, plus the roles that give every control with two-person
 # review or an independence rule at least two qualified people. People at example.com are fictional.
 schema_version: 1

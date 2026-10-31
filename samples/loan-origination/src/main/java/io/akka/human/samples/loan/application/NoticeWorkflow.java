@@ -23,15 +23,15 @@ import java.util.Map;
  * The adverse-action notice of a declined application. The notice writer drafts it from the decline
  * reasons, the template for the first reason and the underwriter's rationale; a draft the
  * protected-characteristics guardrail blocks is held until an adverse-action reviewer releases it as
- * shown, amends it, or has the standard letter issued (custom-5a1e00000008). Nobody deciding within
+ * shown, amends it, or has the standard letter issued (hl-0008). Nobody deciding within
  * the review window issues the standard letter. The workflow id is the application id.
  */
 @Component(id = "notice")
 public class NoticeWorkflow extends Workflow<NoticeWorkflow.Notice> {
 
   public static final String RESUMER = "notice";
-  public static final String CONTROL = "custom-5a1e00000008";
-  /** custom-5a1e00000008 has 4 hours. */
+  public static final String CONTROL = "hl-0008";
+  /** hl-0008 has 4 hours. */
   static final Duration BACKSTOP = Duration.ofHours(6);
 
   public record Start(List<String> reasons, String rationale) {}

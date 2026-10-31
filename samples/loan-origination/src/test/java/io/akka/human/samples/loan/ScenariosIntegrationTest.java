@@ -177,7 +177,7 @@ public class ScenariosIntegrationTest extends LoanTestSupport {
   @Test
   public void aHaltSendsEveryApplicationToAnUnderwriterUntilARestart() {
     drainQueue();
-    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "custom-5a1e00000006", "lift", false,
+    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "hl-0006", "lift", false,
         "reason", "The referral share drifted."));
     assertEquals(200, halt.status(), halt.body()::toString);
 
@@ -188,7 +188,7 @@ public class ScenariosIntegrationTest extends LoanTestSupport {
     assertNull(referred.assessment().assessedAt());
     Awaitility.await().atMost(WAIT).until(() -> get("/underwriting/queue").body().get("entries").toString().contains(id));
 
-    var lift = post("/oversight/halts", Map.of("reviewer", MOREAU, "control", "custom-5a1e00000006", "lift", true,
+    var lift = post("/oversight/halts", Map.of("reviewer", MOREAU, "control", "hl-0006", "lift", true,
         "reason", "The model was recalibrated."));
     assertEquals(200, lift.status(), lift.body()::toString);
     var liftId = lift.body().get("id").asText();

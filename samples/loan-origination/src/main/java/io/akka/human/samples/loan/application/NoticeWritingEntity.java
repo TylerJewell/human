@@ -8,8 +8,8 @@ import java.util.Map;
 
 /**
  * How adverse-action notices are written: the notice writer's model, changed only by an authorised
- * model change (custom-5a1e00000005), and the letter template per decline reason, changed only by an
- * authorised template review (0ff1ce0001). One instance, {@link #ID}.
+ * model change (hl-0005), and the letter template per decline reason, changed only by an
+ * authorised template review (hl-0011). One instance, {@link #ID}.
  */
 @Component(id = "notice-writing")
 public class NoticeWritingEntity extends KeyValueEntity<NoticeWritingEntity.Writing> {

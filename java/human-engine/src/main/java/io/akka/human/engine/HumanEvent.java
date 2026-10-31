@@ -1,5 +1,6 @@
 package io.akka.human.engine;
 
+import akka.javasdk.annotations.Migration;
 import io.akka.human.api.Action;
 import io.akka.human.api.Ask;
 import io.akka.human.api.Resume;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
  * @param roundStart the first decision of the current round of votes
  * @param requested what the reviewer asked the proposer to change, while sent back
  */
+@Migration(Journal.SnapshotFormat.class)
 public record HumanEvent(
     String id,
     String service,

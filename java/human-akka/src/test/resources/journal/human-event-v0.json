@@ -1,0 +1,983 @@
+{
+  "about" : "Journal entries of the event entity as akka-human 0.1.0 (b6e70be) wrote them on Akka SDK 3.7.0, before the events had type names: each content type is the class name. Four events: pt-0001 claimed, released, asked about, extended, decided and applied; pt-0003 voted, sent back, resubmitted, recused, escalated, timed out and reopened; pt-0008 settled by a standing decision; pt-0012 restarted with its safe-state checks.",
+  "journal" : [ {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Raised",
+    "payload" : {
+      "event" : {
+        "id" : "he-20261030-a1b2c3d4",
+        "service" : "patterns",
+        "environment" : "local",
+        "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
+        "settings" : {
+          "control" : {
+            "rowId" : "pt-0001",
+            "name" : "Payments above the limit need the system owner",
+            "corpusRef" : "aws-agentic-scoping.scope2-human-approval",
+            "revision" : 1
+          },
+          "pattern" : "ACTION_APPROVAL",
+          "patternName" : "Action approval",
+          "flavor" : "human-system-authorization",
+          "subjectKind" : "ACTION",
+          "blockingKind" : "true",
+          "allowedActions" : [ "APPROVE", "DENY", "EDIT", "REQUEST_MORE_INFO", "ESCALATE" ],
+          "actionLabels" : {
+            "APPROVE" : "Approve",
+            "DENY" : "Deny",
+            "EDIT" : "Edit, then approve",
+            "REQUEST_MORE_INFO" : "Ask for more",
+            "ESCALATE" : "Escalate"
+          },
+          "routing" : {
+            "queue" : "system-owners",
+            "roles" : [ "ai-system-owner" ],
+            "groups" : [ ],
+            "attestations" : [ "eu-ai-act-oversight" ],
+            "reviewMode" : "SINGLE",
+            "required" : 1,
+            "of" : null,
+            "splitVote" : "DENY",
+            "independence" : [ "proposer" ]
+          },
+          "accountableOwner" : "ai-system-owner",
+          "slaTarget" : "PT30M",
+          "atRiskAt" : 0.75,
+          "claimTtl" : "PT30M",
+          "timeoutBehaviour" : "RESUME_WITH_DEFAULT",
+          "timeoutDefault" : "DENY",
+          "escalationChain" : [ {
+            "queue" : "system-owners",
+            "roles" : [ "ai-system-owner" ],
+            "after" : null
+          }, {
+            "queue" : "head-of-operations",
+            "roles" : [ "head-of-operations" ],
+            "after" : "PT30M"
+          } ],
+          "sticky" : [ "APPROVE_ONCE", "APPROVE_FOR_PATTERN" ],
+          "rationaleRequired" : true,
+          "minimumReviewSeconds" : 10,
+          "minimumReview" : "ENFORCE",
+          "clockWhileSentBack" : "RUNS",
+          "lateDecision" : "ACCEPT_BREACHED",
+          "aiRecommendation" : null,
+          "proofEvent" : "HumanOversightDecisionRecordedV2",
+          "shadow" : false,
+          "strength" : {
+            "pre-production" : "warn",
+            "production" : "prevent"
+          },
+          "trigger" : {
+            "detector" : "tool-policy",
+            "condition" : "pay.amount > 1000"
+          },
+          "halt" : { }
+        },
+        "state" : "OPEN",
+        "strength" : "prevent",
+        "blocking" : true,
+        "subject" : {
+          "kind" : "ACTION",
+          "summary" : "Pay supplier S-77 4,200 EUR",
+          "service" : "patterns",
+          "agent" : null,
+          "component" : null,
+          "sessionId" : null,
+          "flowId" : null,
+          "traceId" : null,
+          "workflowId" : null,
+          "ref" : null,
+          "detail" : {
+            "tool" : "pay",
+            "arguments" : {
+              "amount" : 4200,
+              "supplier" : "S-77"
+            }
+          }
+        },
+        "trigger" : {
+          "detector" : "tool-policy",
+          "rule" : "pay.amount > 1000",
+          "reason" : "The amount is above the limit.",
+          "values" : [ {
+            "name" : "pay.amount",
+            "value" : 4200,
+            "limit" : 1000
+          } ],
+          "conditions" : [ {
+            "met" : true,
+            "name" : "pay.amount > 1000"
+          } ],
+          "detectedAt" : "2026-10-30T09:00:00Z",
+          "occurrences" : 1
+        },
+        "ask" : {
+          "question" : "Should the agent pay supplier S-77 4,200 EUR?",
+          "checks" : [ {
+            "text" : "The invoice matches the purchase order.",
+            "section" : "subject"
+          } ]
+        },
+        "proposedBy" : null,
+        "builtBy" : null,
+        "firstReviewer" : null,
+        "independentOf" : [ ],
+        "dedupeKey" : "pay-7731",
+        "matchKey" : "pay:S-77",
+        "aiRecommendation" : {
+          "agent" : "payments-judge",
+          "action" : "APPROVE",
+          "score" : 0.82,
+          "rationale" : "The invoice matches.",
+          "at" : "2026-10-30T09:00:00Z"
+        },
+        "effects" : {
+          "APPROVE" : "The payment is made."
+        },
+        "evidence" : [ {
+          "kind" : "invoice",
+          "ref" : "inv-7731"
+        } ],
+        "related" : [ ],
+        "resumes" : {
+          "kind" : "workflow",
+          "target" : "payment",
+          "id" : "pay-7731"
+        },
+        "simulated" : false,
+        "level" : 0,
+        "holder" : null,
+        "presentedAt" : null,
+        "claimedAt" : null,
+        "detectedAt" : "2026-10-30T09:00:00Z",
+        "startedAt" : "2026-10-30T09:00:00Z",
+        "dueAt" : "2026-10-30T09:30:00Z",
+        "pausedAt" : null,
+        "atRiskNoted" : false,
+        "slaExtensions" : [ ],
+        "decisions" : [ ],
+        "roundStart" : 0,
+        "infoRequests" : [ ],
+        "recused" : [ ],
+        "requested" : null,
+        "outcome" : null,
+        "closedAt" : null,
+        "history" : [ {
+          "at" : "2026-10-30T09:00:00Z",
+          "state" : "OPEN",
+          "actor" : "system",
+          "note" : "Routed to system-owners"
+        } ]
+      }
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Repeated",
+    "payload" : {
+      "trigger" : {
+        "detector" : "tool-policy",
+        "rule" : "pay.amount > 1000",
+        "reason" : "The amount is above the limit.",
+        "values" : [ {
+          "name" : "pay.amount",
+          "value" : 4200,
+          "limit" : 1000
+        } ],
+        "conditions" : [ {
+          "met" : true,
+          "name" : "pay.amount > 1000"
+        } ],
+        "detectedAt" : "2026-10-30T09:00:00Z",
+        "occurrences" : 1
+      },
+      "at" : "2026-10-30T09:00:30Z"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Claimed",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "tyler.jewell@akka.io",
+        "name" : "tyler.jewell@akka.io",
+        "roles" : [ "ai-system-owner", "head-of-operations" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "at" : "2026-10-30T09:01:00Z",
+      "expiresAt" : "2026-10-30T09:31:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Released",
+    "payload" : {
+      "by" : "tyler.jewell@akka.io",
+      "note" : "Released",
+      "at" : "2026-10-30T09:02:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Claimed",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "j.lind@example.com",
+        "name" : "j.lind@example.com",
+        "roles" : [ "ai-system-owner", "head-of-operations" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "at" : "2026-10-30T09:03:00Z",
+      "expiresAt" : "2026-10-30T09:33:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$InfoRequested",
+    "payload" : {
+      "request" : {
+        "by" : "j.lind@example.com",
+        "at" : "2026-10-30T09:04:00Z",
+        "question" : "Which purchase order does this pay?"
+      }
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Extended",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "j.lind@example.com",
+        "name" : "j.lind@example.com",
+        "roles" : [ "ai-system-owner", "head-of-operations" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "extra" : "PT1H",
+      "reason" : "Waiting for the purchase order.",
+      "dueAt" : "2026-10-30T10:30:00Z",
+      "at" : "2026-10-30T09:05:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$AtRisk",
+    "payload" : {
+      "at" : "2026-10-30T10:10:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Decided",
+    "payload" : {
+      "vote" : {
+        "reviewer" : {
+          "subject" : "j.lind@example.com",
+          "name" : "j.lind@example.com",
+          "roles" : [ "ai-system-owner", "head-of-operations" ],
+          "identityProvider" : "human-companion",
+          "rehearsal" : true
+        },
+        "action" : "APPROVE",
+        "rationale" : "The invoice matches PO-12.",
+        "edits" : null,
+        "sticky" : "APPROVE_ONCE",
+        "replacement" : null,
+        "presentedAt" : "2026-10-30T09:03:00Z",
+        "submittedAt" : "2026-10-30T10:15:00Z",
+        "reviewSeconds" : 4320,
+        "belowMinimum" : false,
+        "late" : false,
+        "checks" : [ "The invoice matches the purchase order." ],
+        "conditions" : [ {
+          "text" : "Pay only once PO-12 is signed"
+        } ]
+      },
+      "outcome" : {
+        "action" : "APPROVE",
+        "sticky" : "APPROVE_ONCE",
+        "agreedWithAi" : true,
+        "edits" : null,
+        "replacement" : null,
+        "rationale" : "The invoice matches PO-12.",
+        "standingDecisionId" : null,
+        "byStanding" : false,
+        "slaOutcome" : "COMPLETED",
+        "timeoutBehaviour" : null,
+        "appliedAt" : null,
+        "applied" : null,
+        "applyError" : null,
+        "conditions" : [ {
+          "text" : "Pay only once PO-12 is signed"
+        } ]
+      },
+      "note" : "APPROVE"
+    }
+  }, {
+    "entityId" : "he-20261030-a1b2c3d4",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Applied",
+    "payload" : {
+      "note" : "resumed payment pay-7731",
+      "at" : "2026-10-30T10:16:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Raised",
+    "payload" : {
+      "event" : {
+        "id" : "he-20261030-b5e6f7a8",
+        "service" : "patterns",
+        "environment" : "local",
+        "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
+        "settings" : {
+          "control" : {
+            "rowId" : "pt-0003",
+            "name" : "Model rollouts need an approver who did not build them",
+            "corpusRef" : "soc2.cc8.1",
+            "revision" : 1
+          },
+          "pattern" : "CHANGE_AUTHORIZATION",
+          "patternName" : "Change authorization",
+          "flavor" : "human-system-authorization",
+          "subjectKind" : "CHANGE",
+          "blockingKind" : "true",
+          "allowedActions" : [ "APPROVE", "DENY", "SEND_BACK" ],
+          "actionLabels" : {
+            "APPROVE" : "Approve the change",
+            "DENY" : "Reject",
+            "SEND_BACK" : "Request changes"
+          },
+          "routing" : {
+            "queue" : "ai-change-board",
+            "roles" : [ "model-risk-owner" ],
+            "groups" : [ ],
+            "attestations" : [ ],
+            "reviewMode" : "TWO_PERSON",
+            "required" : 2,
+            "of" : null,
+            "splitVote" : "DENY",
+            "independence" : [ "proposer", "builder" ]
+          },
+          "accountableOwner" : "model-risk-owner",
+          "slaTarget" : "P1D",
+          "atRiskAt" : 0.75,
+          "claimTtl" : "PT30M",
+          "timeoutBehaviour" : "ESCALATE",
+          "timeoutDefault" : null,
+          "escalationChain" : [ {
+            "queue" : "ai-change-board",
+            "roles" : [ "model-risk-owner" ],
+            "after" : null
+          }, {
+            "queue" : "head-of-operations",
+            "roles" : [ "head-of-operations" ],
+            "after" : "P1D"
+          } ],
+          "sticky" : [ "APPROVE_ONCE" ],
+          "rationaleRequired" : true,
+          "minimumReviewSeconds" : 0,
+          "minimumReview" : "ENFORCE",
+          "clockWhileSentBack" : "RUNS",
+          "lateDecision" : "ACCEPT_BREACHED",
+          "aiRecommendation" : null,
+          "proofEvent" : "HumanOversightDecisionRecordedV2",
+          "shadow" : false,
+          "strength" : {
+            "pre-production" : "warn",
+            "production" : "prevent"
+          },
+          "trigger" : {
+            "detector" : "change-request"
+          },
+          "halt" : { }
+        },
+        "state" : "OPEN",
+        "strength" : "prevent",
+        "blocking" : true,
+        "subject" : {
+          "kind" : "CHANGE",
+          "summary" : "Roll out eligibility model m-5",
+          "service" : "patterns",
+          "agent" : null,
+          "component" : null,
+          "sessionId" : null,
+          "flowId" : null,
+          "traceId" : null,
+          "workflowId" : null,
+          "ref" : null,
+          "detail" : {
+            "system" : "model-registry",
+            "change" : "rollout",
+            "ref" : "rollout-12",
+            "before" : {
+              "model" : "m-4"
+            },
+            "after" : {
+              "model" : "m-5"
+            }
+          }
+        },
+        "trigger" : {
+          "detector" : "change-request",
+          "rule" : null,
+          "reason" : null,
+          "values" : [ ],
+          "conditions" : [ ],
+          "detectedAt" : "2026-10-30T09:00:00Z",
+          "occurrences" : 1
+        },
+        "ask" : {
+          "question" : "Roll out m-5?",
+          "checks" : [ ]
+        },
+        "proposedBy" : "k.osei@example.com",
+        "builtBy" : "e.novak@example.com",
+        "firstReviewer" : null,
+        "independentOf" : [ "k.osei@example.com", "e.novak@example.com" ],
+        "dedupeKey" : null,
+        "matchKey" : null,
+        "aiRecommendation" : null,
+        "effects" : { },
+        "evidence" : [ ],
+        "related" : [ ],
+        "resumes" : {
+          "kind" : "none",
+          "target" : "",
+          "id" : ""
+        },
+        "simulated" : false,
+        "level" : 0,
+        "holder" : null,
+        "presentedAt" : null,
+        "claimedAt" : null,
+        "detectedAt" : "2026-10-30T09:00:00Z",
+        "startedAt" : "2026-10-30T09:00:00Z",
+        "dueAt" : "2026-10-31T09:00:00Z",
+        "pausedAt" : null,
+        "atRiskNoted" : false,
+        "slaExtensions" : [ ],
+        "decisions" : [ ],
+        "roundStart" : 0,
+        "infoRequests" : [ ],
+        "recused" : [ ],
+        "requested" : null,
+        "outcome" : null,
+        "closedAt" : null,
+        "history" : [ {
+          "at" : "2026-10-30T09:00:00Z",
+          "state" : "OPEN",
+          "actor" : "system",
+          "note" : "Routed to ai-change-board"
+        } ]
+      }
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Claimed",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "a.devos@example.com",
+        "name" : "a.devos@example.com",
+        "roles" : [ "model-risk-owner" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "at" : "2026-10-30T09:01:00Z",
+      "expiresAt" : "2026-10-30T09:31:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Voted",
+    "payload" : {
+      "vote" : {
+        "reviewer" : {
+          "subject" : "a.devos@example.com",
+          "name" : "a.devos@example.com",
+          "roles" : [ "model-risk-owner" ],
+          "identityProvider" : "human-companion",
+          "rehearsal" : true
+        },
+        "action" : "APPROVE",
+        "rationale" : "The evaluation passed.",
+        "edits" : null,
+        "sticky" : null,
+        "replacement" : null,
+        "presentedAt" : "2026-10-30T09:01:00Z",
+        "submittedAt" : "2026-10-30T09:10:00Z",
+        "reviewSeconds" : 540,
+        "belowMinimum" : false,
+        "late" : false,
+        "checks" : [ ],
+        "conditions" : [ ]
+      },
+      "state" : "AWAITING_SECOND",
+      "newRound" : false,
+      "note" : "APPROVE, 1 of 2"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$SentBack",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "n.haddad@example.com",
+        "name" : "n.haddad@example.com",
+        "roles" : [ "model-risk-owner" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "requested" : "Attach the fairness report.",
+      "paused" : false,
+      "at" : "2026-10-30T09:15:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Resubmitted",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "k.osei@example.com",
+        "name" : "k.osei@example.com",
+        "roles" : [ ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "note" : "Attached.",
+      "at" : "2026-10-30T09:20:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Recused",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "n.haddad@example.com",
+        "name" : "n.haddad@example.com",
+        "roles" : [ "model-risk-owner" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "reason" : "I reviewed the training data.",
+      "at" : "2026-10-30T09:21:40Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Escalated",
+    "payload" : {
+      "by" : "system",
+      "reason" : "the deadline passed",
+      "level" : 1,
+      "at" : "2026-10-31T09:00:00Z",
+      "dueAt" : "2026-11-01T09:00:00Z",
+      "vote" : null
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Closed",
+    "payload" : {
+      "state" : "TIMED_OUT",
+      "by" : "system",
+      "note" : "The deadline passed at the last queue",
+      "outcome" : {
+        "action" : null,
+        "sticky" : null,
+        "agreedWithAi" : null,
+        "edits" : null,
+        "replacement" : null,
+        "rationale" : "",
+        "standingDecisionId" : null,
+        "byStanding" : false,
+        "slaOutcome" : "TIMED_OUT",
+        "timeoutBehaviour" : "RAISE_TIMEOUT",
+        "appliedAt" : null,
+        "applied" : null,
+        "applyError" : null,
+        "conditions" : [ ]
+      },
+      "at" : "2026-11-01T09:00:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$ApplyFailed",
+    "payload" : {
+      "error" : "no resumer is registered for rollout",
+      "at" : "2026-11-01T09:00:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-b5e6f7a8",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Reopened",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "tyler.jewell@akka.io",
+        "name" : "tyler.jewell@akka.io",
+        "roles" : [ "ai-system-owner", "head-of-operations" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "reason" : "The rollout is still wanted.",
+      "newEventId" : "he-20261030-b5e6f7a8-r",
+      "at" : "2026-11-02T09:00:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-c9d0e1f2",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Raised",
+    "payload" : {
+      "event" : {
+        "id" : "he-20261030-c9d0e1f2",
+        "service" : "patterns",
+        "environment" : "local",
+        "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
+        "settings" : {
+          "control" : {
+            "rowId" : "pt-0008",
+            "name" : "Oversight persons can override an output, with a reason",
+            "corpusRef" : "eu-ai-act.art14.4.d",
+            "revision" : 1
+          },
+          "pattern" : "OVERRIDE",
+          "patternName" : "Override with justification",
+          "flavor" : "human-system-authorization",
+          "subjectKind" : "OUTPUT",
+          "blockingKind" : "false",
+          "allowedActions" : [ "OVERRIDE", "DISREGARD", "REVERSE" ],
+          "actionLabels" : {
+            "OVERRIDE" : "Override",
+            "DISREGARD" : "Disregard",
+            "REVERSE" : "Reverse"
+          },
+          "routing" : {
+            "queue" : "ai-system-owner",
+            "roles" : [ "ai-system-owner", "oversight-officer" ],
+            "groups" : [ ],
+            "attestations" : [ ],
+            "reviewMode" : "SINGLE",
+            "required" : 1,
+            "of" : null,
+            "splitVote" : "DENY",
+            "independence" : [ "proposer" ]
+          },
+          "accountableOwner" : "ai-system-owner",
+          "slaTarget" : null,
+          "atRiskAt" : 0.75,
+          "claimTtl" : "PT30M",
+          "timeoutBehaviour" : null,
+          "timeoutDefault" : null,
+          "escalationChain" : [ {
+            "queue" : "ai-system-owner",
+            "roles" : [ "ai-system-owner", "oversight-officer" ],
+            "after" : null
+          } ],
+          "sticky" : [ "APPROVE_ONCE" ],
+          "rationaleRequired" : true,
+          "minimumReviewSeconds" : 0,
+          "minimumReview" : "ENFORCE",
+          "clockWhileSentBack" : "RUNS",
+          "lateDecision" : "ACCEPT_BREACHED",
+          "aiRecommendation" : null,
+          "proofEvent" : "HumanOversightDecisionRecordedV2",
+          "shadow" : false,
+          "strength" : {
+            "pre-production" : "warn",
+            "production" : "prevent"
+          },
+          "trigger" : {
+            "detector" : "person"
+          },
+          "halt" : { }
+        },
+        "state" : "OPEN",
+        "strength" : "prevent",
+        "blocking" : false,
+        "subject" : {
+          "kind" : "OUTPUT",
+          "summary" : "Adverse notice to A-77",
+          "service" : "patterns",
+          "agent" : null,
+          "component" : null,
+          "sessionId" : null,
+          "flowId" : null,
+          "traceId" : null,
+          "workflowId" : null,
+          "ref" : "out-77",
+          "detail" : {
+            "output" : "Your application is declined."
+          }
+        },
+        "trigger" : {
+          "detector" : "person",
+          "rule" : null,
+          "reason" : null,
+          "values" : [ ],
+          "conditions" : [ ],
+          "detectedAt" : "2026-10-30T09:00:00Z",
+          "occurrences" : 1
+        },
+        "ask" : {
+          "question" : "Should the output be set aside?",
+          "checks" : [ ]
+        },
+        "proposedBy" : null,
+        "builtBy" : null,
+        "firstReviewer" : null,
+        "independentOf" : [ ],
+        "dedupeKey" : null,
+        "matchKey" : "notice:A-77",
+        "aiRecommendation" : null,
+        "effects" : { },
+        "evidence" : [ ],
+        "related" : [ ],
+        "resumes" : {
+          "kind" : "none",
+          "target" : "",
+          "id" : ""
+        },
+        "simulated" : false,
+        "level" : 0,
+        "holder" : null,
+        "presentedAt" : null,
+        "claimedAt" : null,
+        "detectedAt" : "2026-10-30T09:00:00Z",
+        "startedAt" : "2026-10-30T09:00:00Z",
+        "dueAt" : null,
+        "pausedAt" : null,
+        "atRiskNoted" : false,
+        "slaExtensions" : [ ],
+        "decisions" : [ ],
+        "roundStart" : 0,
+        "infoRequests" : [ ],
+        "recused" : [ ],
+        "requested" : null,
+        "outcome" : null,
+        "closedAt" : null,
+        "history" : [ {
+          "at" : "2026-10-30T09:00:00Z",
+          "state" : "OPEN",
+          "actor" : "system",
+          "note" : "Routed to ai-system-owner"
+        } ]
+      }
+    }
+  }, {
+    "entityId" : "he-20261030-c9d0e1f2",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$StandingApplied",
+    "payload" : {
+      "standingId" : "sd-he-20261029-0f0e0d0c",
+      "action" : "DISREGARD",
+      "at" : "2026-10-30T09:00:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-d3e4f5a6",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Raised",
+    "payload" : {
+      "event" : {
+        "id" : "he-20261030-d3e4f5a6",
+        "service" : "patterns",
+        "environment" : "local",
+        "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
+        "settings" : {
+          "control" : {
+            "rowId" : "pt-0012",
+            "name" : "Automated eligibility assessment can be halted",
+            "corpusRef" : "eu-ai-act.art14.4.e",
+            "revision" : 1
+          },
+          "pattern" : "HALT_RESTART",
+          "patternName" : "Halt and restart",
+          "flavor" : "human-halt",
+          "subjectKind" : "SYSTEM",
+          "blockingKind" : "system",
+          "allowedActions" : [ "HALT", "APPROVE", "DENY" ],
+          "actionLabels" : {
+            "HALT" : "Halt",
+            "APPROVE" : "Approve restart",
+            "DENY" : "Keep halted"
+          },
+          "routing" : {
+            "queue" : "safety-officer",
+            "roles" : [ "safety-officer" ],
+            "groups" : [ ],
+            "attestations" : [ ],
+            "reviewMode" : "TWO_PERSON",
+            "required" : 2,
+            "of" : null,
+            "splitVote" : "DENY",
+            "independence" : [ "proposer" ]
+          },
+          "accountableOwner" : "safety-officer",
+          "slaTarget" : "PT1H",
+          "atRiskAt" : 0.75,
+          "claimTtl" : "PT30M",
+          "timeoutBehaviour" : "RESUME_WITH_DEFAULT",
+          "timeoutDefault" : "DENY",
+          "escalationChain" : [ {
+            "queue" : "safety-officer",
+            "roles" : [ "safety-officer" ],
+            "after" : null
+          } ],
+          "sticky" : [ "APPROVE_ONCE" ],
+          "rationaleRequired" : true,
+          "minimumReviewSeconds" : 0,
+          "minimumReview" : "ENFORCE",
+          "clockWhileSentBack" : "RUNS",
+          "lateDecision" : "ACCEPT_BREACHED",
+          "aiRecommendation" : null,
+          "proofEvent" : "HumanOversightDecisionRecordedV2",
+          "shadow" : false,
+          "strength" : {
+            "pre-production" : "warn",
+            "production" : "prevent"
+          },
+          "trigger" : {
+            "detector" : "person"
+          },
+          "halt" : {
+            "scope" : "capability",
+            "target" : "eligibility-assessment",
+            "exerciser_personae" : [ "safety-officer" ],
+            "exercise_endpoint" : "POST /oversight/halts",
+            "affected_calls" : "all-runtime-operations",
+            "emits_on_exercise" : "HaltExercised",
+            "emits_on_lift" : "HaltLifted"
+          }
+        },
+        "state" : "OPEN",
+        "strength" : "prevent",
+        "blocking" : false,
+        "subject" : {
+          "kind" : "SYSTEM",
+          "summary" : "Restart eligibility-assessment",
+          "service" : "patterns",
+          "agent" : null,
+          "component" : null,
+          "sessionId" : null,
+          "flowId" : null,
+          "traceId" : null,
+          "workflowId" : null,
+          "ref" : null,
+          "detail" : {
+            "scope" : "capability",
+            "target" : "eligibility-assessment",
+            "affectedCalls" : "all-runtime-operations",
+            "safeStateChecks" : [ ],
+            "halted" : true,
+            "lift" : true,
+            "haltEventId" : "he-20261030-00aa11bb"
+          }
+        },
+        "trigger" : {
+          "detector" : "person",
+          "rule" : null,
+          "reason" : null,
+          "values" : [ ],
+          "conditions" : [ ],
+          "detectedAt" : "2026-10-30T09:00:00Z",
+          "occurrences" : 1
+        },
+        "ask" : {
+          "question" : "Restart eligibility-assessment?",
+          "checks" : [ {
+            "text" : "Every safe-state check passes.",
+            "section" : "subject"
+          } ]
+        },
+        "proposedBy" : "l.moreau@example.com",
+        "builtBy" : null,
+        "firstReviewer" : null,
+        "independentOf" : [ "l.moreau@example.com" ],
+        "dedupeKey" : null,
+        "matchKey" : null,
+        "aiRecommendation" : null,
+        "effects" : { },
+        "evidence" : [ ],
+        "related" : [ ],
+        "resumes" : {
+          "kind" : "none",
+          "target" : "",
+          "id" : ""
+        },
+        "simulated" : false,
+        "level" : 0,
+        "holder" : null,
+        "presentedAt" : null,
+        "claimedAt" : null,
+        "detectedAt" : "2026-10-30T09:00:00Z",
+        "startedAt" : "2026-10-30T09:00:00Z",
+        "dueAt" : "2026-10-30T10:00:00Z",
+        "pausedAt" : null,
+        "atRiskNoted" : false,
+        "slaExtensions" : [ ],
+        "decisions" : [ ],
+        "roundStart" : 0,
+        "infoRequests" : [ ],
+        "recused" : [ ],
+        "requested" : null,
+        "outcome" : null,
+        "closedAt" : null,
+        "history" : [ {
+          "at" : "2026-10-30T09:00:00Z",
+          "state" : "OPEN",
+          "actor" : "system",
+          "note" : "Routed to safety-officer"
+        } ]
+      }
+    }
+  }, {
+    "entityId" : "he-20261030-d3e4f5a6",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Claimed",
+    "payload" : {
+      "reviewer" : {
+        "subject" : "s.patel@example.com",
+        "name" : "s.patel@example.com",
+        "roles" : [ "safety-officer" ],
+        "identityProvider" : "human-companion",
+        "rehearsal" : true
+      },
+      "at" : "2026-10-30T09:01:00Z",
+      "expiresAt" : "2026-10-30T09:31:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-d3e4f5a6",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$SafeStateChecked",
+    "payload" : {
+      "checks" : {
+        "backlog drained" : true
+      },
+      "at" : "2026-10-30T09:05:00Z"
+    }
+  }, {
+    "entityId" : "he-20261030-d3e4f5a6",
+    "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Decided",
+    "payload" : {
+      "vote" : {
+        "reviewer" : {
+          "subject" : "s.patel@example.com",
+          "name" : "s.patel@example.com",
+          "roles" : [ "safety-officer" ],
+          "identityProvider" : "human-companion",
+          "rehearsal" : true
+        },
+        "action" : "APPROVE",
+        "rationale" : "The backlog drained.",
+        "edits" : null,
+        "sticky" : null,
+        "replacement" : null,
+        "presentedAt" : "2026-10-30T09:01:00Z",
+        "submittedAt" : "2026-10-30T09:05:00Z",
+        "reviewSeconds" : 240,
+        "belowMinimum" : false,
+        "late" : false,
+        "checks" : [ "Every safe-state check passes." ],
+        "conditions" : [ ]
+      },
+      "outcome" : {
+        "action" : "APPROVE",
+        "sticky" : null,
+        "agreedWithAi" : null,
+        "edits" : null,
+        "replacement" : null,
+        "rationale" : "The backlog drained.",
+        "standingDecisionId" : null,
+        "byStanding" : false,
+        "slaOutcome" : "COMPLETED",
+        "timeoutBehaviour" : null,
+        "appliedAt" : null,
+        "applied" : null,
+        "applyError" : null,
+        "conditions" : [ ]
+      },
+      "note" : "APPROVE"
+    }
+  } ]
+}

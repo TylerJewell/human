@@ -28,6 +28,20 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>
+    <!-- For compiling only: the journal events carry the SDK's @TypeName and @Migration, and their
+         migrations extend JsonMigration. The Akka service that loads the library supplies the SDK. -->
+    <dependency>
+      <groupId>io.akka</groupId>
+      <artifactId>akka-javasdk</artifactId>
+      <version>3.7.0</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>

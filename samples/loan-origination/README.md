@@ -74,7 +74,8 @@ notice for its decline reason, authorised before it is used, not a decision abou
 - **S6.** Allowed actions `[APPROVE, DENY]` are `[HALT, APPROVE, DENY]`: as Verify's halt-restart
   defines it, one officer halts at once and the restart is the two-person decision. Independence
   `[first-reviewer]` is `[proposer]`: whoever asks for a restart may not approve it. The 20 s minimum
-  review time is left out: the library refuses a halt on a control with one (see "Library notes").
+  review time is left out; a control with one still halts at once, and the minimum applies to the restart
+  votes.
 - **S2, S3, S4, S7.** `sticky_modes: []` is left out (the shared default, approve once, has the same
   effect). S2's minimum of 20 assessments is service configuration
   (`loan-origination.monitors.referral-minimum`). S4's first draft allowed halting notice generation;
@@ -154,10 +155,3 @@ its guardrail withholds sentences naming health, age, marital status, religion o
 `ApplicantSupport` (the assistant and its `extendDocumentDeadline` tool, and the deadline extension
 judge). The documents deadline is recorded and moved, but no timer expires an application whose
 documents do not arrive.
-
-## Library notes
-
-- `POST /oversight/halts` with `lift: false` on a halt-restart control that sets
-  `minimum_review_seconds` answers 409 "claim the event first", and leaves the raised halt event
-  pending: `HumanClient.halt` decides HALT without a claim, and `Rules.decide` needs one whenever the
-  control has a minimum review time.

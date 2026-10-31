@@ -6,15 +6,15 @@
 |---|---|
 | 1. Mixed controls | Split each of the twelve into two controls: the human control keeps its id, the gate, guardrail or eval gets a new one. In the Verify follow-up |
 | 2. Decisions covered only by gates | Add a human control beside each gate where the source requires a run-time decision. In the Verify follow-up |
-| 3. Verify follow-up | Merged in two pull requests on `akka/governance-explainability`: #33 (the rule, the twelve controls split, eighteen new human controls, evidence names, the auditor gating CI) and #34 (one config block per control for every mechanism, 138 controls) |
+| 3. Verify follow-up | Merged to Verify in two pull requests: the first (the rule, the twelve controls split, eighteen new human controls, evidence names, the auditor gating CI) and the second (one config block per control for every mechanism, 138 controls) |
 | 4. Defaults | Keep both: late decisions accepted and breached; the clock runs while sent back |
 | 5. One decision event | `HumanOversightDecisionRecordedV2` carrying `pattern`, as merged |
 | 6. Evidence names | Reviewed per control in the Verify follow-up |
 | 7. Outcome reconciliation | Stays a full pattern: contextlayer (cl0044) and the patterns sample use it |
 | 8. `sr11-7.s4.use` | Flag and feedback, as merged |
 | 9–11 | Answered by the build (below) |
-| 12. Housekeeping | Commit locally; no GitHub repository yet |
-| 13. Runtime epic #5335 | Not now |
+| 12. Housekeeping | The repository is public at github.com/TylerJewell/human |
+| 13. Runtime epic on human participation | Not now |
 | 14. contextlayer choices | Keep as built: decisions go through `/oversight`; split halt and restart controls stay supported; the stricter independence stays |
 | 15. loan-origination choices | Keep as built; the template review stays change authorization |
 | 16. Rehearsal | Rehearsal decisions take effect; their verdicts never count as evidence |
@@ -117,21 +117,21 @@ the guardrail directly, not inside a model's tool loop. Acceptable until SDK req
 
 ## 12. Housekeeping
 
-- When to create `akka/human` on GitHub.
-- Ports for the sample services, added to the port table in `C:\Users\tyler\CLAUDE.md`.
-- Who updates the oversight contract in ai-console, and when, so the console stops writing
-  `flavor: custom-human`. Version 2 ([`spec/CONTRACT.md`](../spec/CONTRACT.md)) is what to adopt;
-  its last section lists what changed from version 1.
+- The repository is public at github.com/TylerJewell/human.
+- The sample services use ports 9164, 9165 and 9166, and the companion uses 9167.
+- The Akka local console adopts version 2 of the oversight contract ([`spec/CONTRACT.md`](../spec/CONTRACT.md))
+  by reference and no longer writes `flavor: custom-human`. The last section of the contract lists
+  what changed from version 1.
 
 ## 13. The runtime team's epic
 
-`lightbend/akka-runtime#5335` ("Epic: Human participation", out of scope for governance phase one)
-covers approval gates (#5336), oversight and interventions (#5337), human-based evaluations (#5338)
-and marking HITL tasks (#5196). This library is a working build of #5336, #5337 and #5196, plus
+The Akka runtime's backlog holds an epic, "Human participation" (out of scope for governance phase one),
+that covers approval gates, oversight and interventions, human-based evaluations
+and marking HITL tasks. This library is a working build of approval gates, oversight and interventions and HITL task marking, plus
 deadlines, routing, verdicts and the console. To agree with its authors before anything moves:
 the five flavors and fourteen patterns as the epic's categories; the ledger record shapes (the
 stand-in writes Verify's `HumanOversightDecisionRecordedV2`, `HaltExercised`, `HaltLifted`); and
-where a human evaluation ends and a human control begins (#5338's example `gdpr-art22.art22.4` is
+where a human evaluation ends and a human control begins (the epic's example `gdpr-art22.art22.4` is
 a contest-appeal control here).
 
 ## 14. Choices made while porting contextlayer

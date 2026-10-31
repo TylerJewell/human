@@ -525,6 +525,7 @@ const RegistrySchema = v.looseObject({
 
 const StandingSchema = v.looseObject({
   id: str,
+  service: v.optional(str, ""),
   kind: v.optional(str, "pattern-approval"),
   eventId: v.optional(str, ""),
   control: v.optional(ControlRefSchema, { rowId: "", name: "" }),

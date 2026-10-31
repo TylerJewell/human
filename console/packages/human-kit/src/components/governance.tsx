@@ -185,6 +185,7 @@ function StandingRow({ decision, now }: { decision: StandingDecision; now: numbe
         <span className="hk-muted">
           {decision.control.name} · granted by {decision.grantedBy}, {formatDay(decision.grantedAt)} · used {decision.uses ?? 0}{" "}
           {decision.uses === 1 ? "time" : "times"}
+          {decision.service ? ` · held by ${decision.service}` : ""}
         </span>
         {decision.revoked ? (
           <span className="hk-muted">

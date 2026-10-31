@@ -101,7 +101,7 @@ export interface OversightClient {
   reopen(id: string, reason: string): Promise<HumanEvent>;
   summary(control?: string): Promise<Summary>;
   quality(window?: Duration): Promise<Quality>;
-  verdicts(query?: { since?: string; limit?: number }): Promise<Verdict[]>;
+  verdicts(query?: { since?: string; until?: string; offset?: number; limit?: number }): Promise<Verdict[]>;
   halts(): Promise<Halt[]>;
   standing(): Promise<StandingDecision[]>;
   revokeStanding(id: string, reason: string): Promise<StandingDecision>;
@@ -271,7 +271,7 @@ function common(
     reopen: (id: string, reason: string) => write(id, { kind: "reopen", reason }),
     summary: async (control?: string) => readSummary(await http.get(`${prefix}/summary${queryString({ control })}`)),
     quality: async (window: Duration = "P30D") => readQuality(await http.get(`${prefix}/quality${queryString({ window })}`)),
-    verdicts: async (query: { since?: string; limit?: number } = {}) =>
+    verdicts: async (query: { since?: string; until?: string; offset?: number; limit?: number } = {}) =>
       (unwrap(await http.get(`${prefix}/verdicts${queryString(query)}`), "verdicts") ?? []) as Verdict[],
     halts: async () => readHalts(unwrap(await http.get(`${prefix}/halts`), "halts")),
     standing: async () => readStanding(unwrap(await http.get(`${prefix}/standing`), "standing")),

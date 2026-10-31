@@ -12,6 +12,7 @@ describe("companion client", () => {
       if (url.endsWith("/reviewer")) return { json: { subject: tyler.subject, name: tyler.name, roles: tyler.roles } };
       if (url.endsWith("/halts")) return { json: { halts: [example("Halt.halted")] } };
       if (url.endsWith("/standing")) return { json: { standing: [example("StandingDecision.pattern")] } };
+      if (url.includes("/verdicts")) return { json: { verdicts: [example("Verdict.upheld")] } };
       if (url.endsWith("/registry")) return { json: example("OverseerRegistry.basic") };
       if (url.includes("/summary")) return { json: example("Summary.basic") };
       if (url.includes("/quality")) return { json: example("Quality.basic") };
@@ -62,6 +63,22 @@ describe("companion client", () => {
       { extra: "PT1H", reason: "Waiting on finance" },
       { reason: "New invoice" }
     ]);
+  });
+
+  it("reads the service that holds each standing decision", async () => {
+    const { fetch } = serve();
+    const client = createCompanionClient({ fetch });
+    expect((await client.standing()).map((d) => d.service)).toEqual(["payments"]);
+  });
+
+  it("pages verdicts with since, until and offset", async () => {
+    const { fetch, calls } = serve();
+    const client = createCompanionClient({ fetch });
+    const list = await client.verdicts({ since: "2026-10-01T00:00:00Z", until: "2026-10-29T00:00:00Z", offset: 50, limit: 50 });
+    expect(list).toHaveLength(1);
+    expect(calls[0].url).toBe(
+      "/api/companion/human/verdicts?since=2026-10-01T00%3A00%3A00Z&until=2026-10-29T00%3A00%3A00Z&offset=50&limit=50"
+    );
   });
 
   it("reads and sets the local reviewer", async () => {

@@ -8,15 +8,15 @@ it over, so absorbing a module deletes it here and its callers keep working.
 
 | Module | Holds | Would move to |
 |---|---|---|
-| `spec/` | The Verify registries at a pinned commit, and `oversight.schema.json` for the `/oversight/*` JSON (from ai-console `docs/handoff/contracts/human.md`) | Verify already; the contract to ai-console or the runtime docs |
+| `spec/` | The Verify registries at a pinned commit, and `oversight.schema.json` for the `/oversight/*` JSON (taken from the Akka local console's oversight contract) | Verify already; the contract to the Akka local console or the runtime docs |
 | `java/human-api` | What a workflow, agent or endpoint calls: raising an event per pattern, `Decision`, `Subject` per kind, the workflow and autonomous-task bridges. Interfaces and records only | `akka-javasdk`, as an `akka.javasdk.human` package |
 | `java/human-engine` | Plain Java: the lifecycle state machine with time passed in, settings resolution, routing and independence, verdicts, quality figures | The runtime |
 | `java/human-akka` | A component library: the event entity, queue view, deadline consumer and timed action, halt entity, `/oversight/*` endpoint | Components the runtime provides |
 | `java/human-runtime-local` | The stand-ins below, each behind a `human-api` interface | Deleted as the runtime ships each one |
 | `java/human-testkit` | A fake clock, and helpers that raise and decide events in a service's tests | `akka-javasdk-testkit` |
 | `java/human-conformance` | Scenarios per pattern, run over HTTP against any `/oversight` implementation | Stays |
-| `console/packages/human-kit` | React components, subject views, headless hooks | `kalix-console/packages` |
-| `console/packages/human-elements` | Web components for the decision panel and the queue | `kalix-console/packages` |
+| `console/packages/human-kit` | React components, subject views, headless hooks | The Akka console's packages |
+| `console/packages/human-elements` | Web components for the decision panel and the queue | The Akka console's packages |
 | `console/apps/playground` | A page that drives the components against a sample service | Stays |
 | `samples/` | Small services, one per group of patterns, for the conformance suite and the playground | Stays |
 
@@ -40,6 +40,6 @@ Each names the request it replaces and sits behind the interface the real one wo
 ## Not here
 
 - **The akka CLI companion.** It already merges `/oversight` across services, and changes in
-  ai-console ([Changes elsewhere](06-changes-elsewhere.md)).
-- **The console's Human page.** It moves onto `human-kit` in ai-console.
+  the Akka local console ([Changes elsewhere](06-changes-elsewhere.md)).
+- **The console's Human page.** It moves onto `human-kit` in the Akka local console.
 - **Pattern definitions.** These stay in Verify.

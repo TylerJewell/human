@@ -8,7 +8,7 @@
 >
 > Where this study and the design documents differ, the design documents hold.
 
-**Question.** Across Akka Verify (explainability), the Akka local console and its samples (ai-console),
+**Question.** Across Akka Verify (explainability), the Akka local console and its samples,
 and the context layer (contextlayer), do the places where a person must step in fall into a small set
 of recurring types? If so, should each type be built once, in a shared repository, with a common way
 to implement it in an Akka service and to present it in the Akka console or a customer's own console?
@@ -20,19 +20,19 @@ engine, fourteen pattern profiles, one contract, and one console kit**. Today th
 durable wait, the governance schema has no settings for human controls, and the same engine has been
 written three times in Java and partly again in Go, with the copies already disagreeing.
 
-Paths below are relative to `C:\Users\tyler\explainability` (**V**), `C:\Users\tyler\ai-console`
-(**A**) and `C:\Users\tyler\contextlayer-repo\service` (**C**).
+Abbreviations: **LO** is the loan-origination sample, **TL** is the trace-ledger sample, and **CL** is
+the context layer. Verify references name the regulation pack and file.
 
 ## 1. Evidence
 
 | Source | What was read |
 |---|---|
-| Verify corpus | All 1,747 controls under `V/framework/regulations/`, plus the packs: 206 involve a person (53 consent controls left out); only 38 are of kind `human`. Each was given one primary pattern. |
-| Verify schema | The `human` kind and its five flavors (`V/framework/schema/control.schema.yaml:818-860`), `halt_config` (`:1242-1306`), ADR-016, the survey, the archived cascade-health scenarios. |
-| Local console | The oversight contract (`A/docs/handoff/contracts/human.md`), its plan (`A/docs/plans/human.md`), the companion's `human/` package (Go), the console's Human page (`A/kalix-console/apps/local-console/src/features/human/`), the market study, and the open asks. |
-| Samples | loan-origination (**LO**) and trace-ledger (**TL**) in `A/samples/`. |
-| Context layer | Its 17 human controls (`C/governance/controls.yaml`) and their implementation (`C/src/main/java/io/akka/contextlayer/`). |
-| SDK docs | "Human approval requires more than a pause … A workflow supplies the durable wait and application logic supplies the acceptance conditions" (`C/akka-context/concepts/controls.html.md:28`). |
+| Verify corpus | All 1,747 controls in Verify's regulation packs, plus the packs: 206 involve a person (53 consent controls left out); only 38 are of kind `human`. Each was given one primary pattern. |
+| Verify schema | The `human` kind and its five flavors, `halt_config` in Verify's control schema, ADR-016, the survey, the archived cascade-health scenarios. |
+| Local console | The oversight contract, its plan, the companion's `human/` package (Go), the console's Human page, the market study, and the open asks. |
+| Samples | loan-origination (**LO**) and trace-ledger (**TL**) in the local console's samples. |
+| Context layer | Its 17 human controls and their implementation. |
+| SDK docs | "Human approval requires more than a pause … A workflow supplies the durable wait and application logic supplies the acceptance conditions" (the Akka SDK controls documentation). |
 
 ## 2. The fourteen patterns
 
@@ -57,13 +57,13 @@ local console and its samples handle; **CL** = context layer controls.
 | 14 | **Oversight quality** | Review times, override and approval rates across many decisions | Can block new high-risk decisions | Oversight owner | reset, retrain, reassign | Signal stays raised | 6 | TL figures, companion quality, console Quality tab | cl0008 |
 
 Together these hold 183 of the 206 human-related controls. The rest (23) are about **designing**
-oversight and naming competent overseers (for example `V/framework/regulations/eu-ai-act/controls-ch03-high-risk.yaml:4740`):
+oversight and naming competent overseers (for example `eu-ai-act/controls-ch03-high-risk.yaml`):
 they belong in an overseer registry, not in a runtime pattern.
 
 ### Notes on each pattern
 
 1. **Action approval.** The corpus requires fail-closed approval by an authenticated person who is not
-   the requesting agent, one approval per action (`V/framework/regulations/aws-agentic-scoping/controls.yaml:151`;
+   the requesting agent, one approval per action (`aws-agentic-scoping/controls.yaml:151`;
    maker-checker at `sfc-ai-cyberattack-circular/controls.yaml:555`). Variants: *edit then approve* (the
    console's EDIT with a JSON patch), *the person executes* (CL's "Person Runs the Question", cl0043),
    and *standing approval* (approve a class of actions ahead of time; LO's standing decisions).
@@ -120,10 +120,10 @@ other controls. It is a *trigger* (raise pattern 1, 2 or 11 when confidence is l
 Every pattern runs the same lifecycle and is configured along the same axes. This is what makes one
 engine possible.
 
-**Lifecycle** (the contract, `A/docs/handoff/contracts/human.md:83-84`): open → claimed → in review →
+**Lifecycle** (the oversight contract): open → claimed → in review →
 decided (or awaiting a second reviewer) → applied → closed, with escalated, changes requested
 (send back), timed out, abandoned, withdrawn and reopened. "A decision is a record, not an action":
-the owner of the subject applies it and reports applied (`A/docs/plans/human.md:186-188`).
+the owner of the subject applies it and reports applied (the console's plan for the Human page).
 
 **Policy axes** (one `human_config`, with a preset per pattern):
 
@@ -143,7 +143,7 @@ side by side, an appeal's original decision, a halt's safe-state checks, a flagg
 
 **The SDK stops at the pause.** Four of the five control types have SDK constructs (guardrails,
 sanitizers, evaluators with a control id, gates). Human decisions have `thenPause`, suspend and resume,
-and an unassigned approval task (`A/docs/handoff/shipped/sdk.md:42-48`). Authority, independence,
+and an unassigned approval task. Authority, independence,
 deadlines, escalation, minimum review and evidence are left to every application.
 
 **So every application rebuilt it, and the copies drift.** One contract, three Java implementations,
@@ -174,7 +174,7 @@ HumanApprovalRecorded, OutputOverrideRecorded, …).
 **The console experience is locked in one app.** The Human page's generic parts (queue, claim,
 minimum review countdown, four-eyes explanation, deadline ring, journey, confirmation of every write,
 quality) depend only on the event's fields, but they live in `apps/local-console`; nothing is in the
-shared components package, although the plan intended it (`A/docs/plans/human.md:329-330`). A
+shared components package, although the console's plan intended it. A
 customer cannot put them in their own console. Some parts are still written for the loan sample (loan
 names, "days" wording).
 
@@ -184,7 +184,7 @@ approval, a scoped halt, a local API for pending events, windowed monitors) and 
 (`human_config` per flavor, one decision vocabulary, a change as a subject, what a human verdict
 concludes, halt values, shadow and strength, an overseer registry). The market study names the same
 gaps as the differentiator: deadlines with timeout outcomes, qualified routing, separation of duties, a
-governed stop, and override analytics (`A/docs/research/human-oversight-market.md:75-90`).
+governed stop, and override analytics.
 
 ## 5. Recommendation
 

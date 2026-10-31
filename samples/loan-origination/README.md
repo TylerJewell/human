@@ -1,6 +1,6 @@
 # loan-origination
 
-The Loan Origination assistant of ai-console (`samples/loan-origination`) with its human oversight
+The Loan Origination assistant of the Akka local console with its human oversight
 rebuilt on the library: the seven scenario controls S1 to S7, the template review, and the domain
 reviews that were plain workflow pauses there. The service runs on port **9166** with the
 development routes on, registers itself in `~/.akka/human/services/loan-origination.json` for the
@@ -20,7 +20,7 @@ curl localhost:9166/oversight/info
 
 `mvn -q -pl samples/loan-origination -am verify` (from the repository root) runs the TestKit
 integration tests in-process. The local runtime knows the service as `human-loan-origination`, since
-ai-console's own loan-origination service (9089) uses the plain name; events and the registration
+the local console's own loan-origination service (9089) uses the plain name; events and the registration
 file name it `loan-origination`.
 
 ## How the library is wired
@@ -37,7 +37,7 @@ file name it `loan-origination`.
 ## Controls
 
 [`governance/controls.yaml`](src/main/resources/governance/controls.yaml) keeps the row ids and names
-of ai-console's bundle; each row's `human_config` is Verify v2.8 and names its pattern.
+of the local console's bundle; each row's `human_config` is Verify v2.8 and names its pattern.
 
 | Row | Name | Pattern | Flavor | Who decides | Deadline, then | Raised by |
 |---|---|---|---|---|---|---|
@@ -56,7 +56,7 @@ of ai-console's bundle; each row's `human_config` is Verify v2.8 and names its p
 The template review is change authorization, not decision review: a template is a change to every
 notice for its decline reason, authorised before it is used, not a decision about one person.
 
-### Settings that differ from ai-console's rows
+### Settings that differ from the local console's rows
 
 - **Flavors.** The seven scenario rows keep theirs. `0ff1ce0001` had no flavor (mechanism `hitl`); it
   takes `human-system-authorization`, the only flavor change authorization runs under.
@@ -79,11 +79,11 @@ notice for its decline reason, authorised before it is used, not a decision abou
 - **S2, S3, S4, S7.** `sticky_modes: []` is left out (the shared default, approve once, has the same
   effect). S2's minimum of 20 assessments is service configuration
   (`loan-origination.monitors.referral-minimum`). S4's first draft allowed halting notice generation;
-  as in ai-console, it is not offered.
+  as in the local console, it is not offered.
 
 ## Overseers
 
-[`governance/overseers.yaml`](src/main/resources/governance/overseers.yaml): the people of ai-console's
+[`governance/overseers.yaml`](src/main/resources/governance/overseers.yaml): the people of the local console's
 prototype fixtures, with roles added so every control with two-person review or an independence rule
 has at least two qualified people. K. Osei stays unqualified (training expired).
 

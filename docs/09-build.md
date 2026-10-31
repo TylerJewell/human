@@ -7,8 +7,8 @@ contextlayer's and loan-origination's parts.
 
 ## Rules
 
-- **Isolated.** Nothing outside this repository changes. `ai-console`, `contextlayer-akka`,
-  `explainability` and the akka CLI are read for reference only. Where this library needs a change
+- **Isolated.** Nothing outside this repository changes. the Akka local console, contextlayer,
+  Verify and the akka CLI are read for reference only. Where this library needs a change
   in one of them, the change is built here instead, as a stand-in or a sample.
 - **The contract is fixed.** [`spec/CONTRACT.md`](../spec/CONTRACT.md) and
   [`spec/oversight.schema.json`](../spec/oversight.schema.json) define every route and type. Code
@@ -23,6 +23,19 @@ contextlayer's and loan-origination's parts.
   under the same daemon.
 - **Comments describe the code**, for a reader with no memory of how it got here. No history, no
   "now", no "fixed".
+
+## Packaging
+
+- **snakeyaml.** `org.yaml:snakeyaml` must be on the runtime classpath. The library reads the
+  bundle and the overseer registry with it. A service that sets snakeyaml to `test` scope fails at
+  startup, and the library reports a message that names snakeyaml.
+- **Restricting `/oversight`.** `OversightEndpoint` carries `@Acl(allow = ALL)`. To restrict it
+  with `@Acl` or `@JWT`, a service subclasses the endpoint and puts the annotation on the subclass.
+  The SDK offers no way to configure the library's endpoint without subclassing it.
+- **The conformance suite resets every service it checks.** Each run calls `POST /oversight/dev/reset`,
+  which closes every open event as `KILLED` and clears halts and standing decisions. The suite
+  requires the `--allow-reset` flag. Run it only against a development or test service, never
+  against one that holds events people still need to decide.
 
 ## Ports
 

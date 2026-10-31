@@ -20,6 +20,14 @@ public final class Json {
   private Json() {}
 
   public static Map<String, Object> event(HumanEvent e, Instant now) {
+    return event(e, now, null);
+  }
+
+  /**
+   * The event; {@code blockedBy} names the oversight-quality event that blocks settling decisions on it
+   * ({@link Blocks}), or is null.
+   */
+  public static Map<String, Object> event(HumanEvent e, Instant now, String blockedBy) {
     var s = e.settings();
     var verdict = Verdicts.of(e);
     var m = new LinkedHashMap<String, Object>();
@@ -59,6 +67,7 @@ public final class Json {
     m.put("rationaleRequired", s.rationaleRequired());
     m.put("minimumReviewSeconds", s.minimumReviewSeconds());
     m.put("minimumReview", s.minimumReview());
+    m.put("blockedBy", blockedBy);
     m.put("slaExtensions", e.slaExtensions().stream().map(x -> (Object) map("by", x.by(), "at", str(x.at()),
         "extra", x.extra(), "reason", x.reason())).toList());
     m.put("aiRecommendation", e.aiRecommendation());
@@ -171,6 +180,7 @@ public final class Json {
     m.put("shadow", s.shadow());
     m.put("strength", s.strength());
     m.put("halt", s.halt().isEmpty() ? null : s.halt());
+    m.put("blockDecisions", s.blockDecisions());
     return m;
   }
 
@@ -255,6 +265,7 @@ public final class Json {
     m.put("error", r.error());
     if (r.kind() == Refusal.Kind.CONFLICT && r.state() != null) m.put("state", r.state());
     if (r.kind() == Refusal.Kind.INVALID) m.put("errors", r.errors());
+    if (r.blockedBy() != null) m.put("blockedBy", r.blockedBy());
     return m;
   }
 

@@ -84,6 +84,35 @@ library.
 | Access control | Decides who may read and decide over `/oversight`, for services with their own authorization |
 | Halt scope | Checks the safe state before a restart, for services with halts |
 
+## The journal
+
+The event entity's journal is the record an audit reads, so it must read back after the code
+changes.
+
+- **Stable type names.** Every journal event has a type name, from `human-event-raised` to
+  `human-event-apply-failed`, so a class can move or be renamed. Each event's migration also lists the
+  class name the first release recorded it under, so those entries still resolve (`Journal` in
+  `human-engine`).
+- **The settings in force at raise time.** `Raised` carries the whole event as raised, with the
+  control's resolved settings, and the journal keeps that document as written. The entity's snapshot
+  holds the same document.
+- **A version and a migration hook.** Both carry the format version, `Journal.VERSION` (0 today), in
+  their content type, and Akka passes an older document through `Journal.upgrade` before binding it.
+  Removing a field needs no step, and neither does adding one whose absent value reads right: a field
+  the code no longer has is ignored, and a field a document lacks reads as null, false or 0
+  (`blockDecisions` came in this way: an event raised before it existed blocks nothing). Any
+  other change raises the version and adds a step: a rename, a new type, a removed enum constant, or a
+  new field whose right value for older events is not that default (an empty list rather than null).
+- **A fixture of the first release's journal.** `human-akka/src/test/resources/journal/` holds entries
+  as the first release wrote them, under the class names; `JournalTest` replays them through Akka's
+  serializer.
+
+The trade-off: the document is the event's own shape, not a separate journal type. A frozen journal
+type would separate the two completely, at the cost of a second copy of every field and the mapping
+between them; the version and the hook give the same safety when a change needs it. Ignoring unknown
+fields is the SDK's default; a service that turns `FAIL_ON_UNKNOWN_PROPERTIES` on in its object
+mapper cannot read an event after a field is removed.
+
 ## How a service loads it
 
 The SDK loads components from a library jar. The library is built with the Akka parent pom and

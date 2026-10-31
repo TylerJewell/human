@@ -16,6 +16,9 @@ import java.util.Map;
  * @param blockingKind the pattern's {@code blocking}: {@code true}, {@code false} or {@code system}
  * @param trigger the control's {@code trigger} block as written
  * @param halt the control's {@code halt_config}, for halt-restart controls; empty otherwise
+ * @param blockDecisions oversight-quality: an event of this control blocks settling decisions on the
+ *     control it judges until it is settled ({@link Blocks}). The control's {@code block_decisions}; on
+ *     by default for oversight-quality, as the pattern registry describes, and off for every other pattern
  */
 public record ControlSettings(
     ControlRef control,
@@ -45,7 +48,8 @@ public record ControlSettings(
     boolean shadow,
     Map<String, String> strength,
     Map<String, Object> trigger,
-    Map<String, Object> halt) {
+    Map<String, Object> halt,
+    boolean blockDecisions) {
 
   public record ControlRef(String rowId, String name, String corpusRef, Integer revision) {}
 

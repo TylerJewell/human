@@ -1,8 +1,5 @@
 package io.akka.human.engine;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.akka.human.api.Action;
 import io.akka.human.api.Pattern;
 import io.akka.human.api.SubjectKind;
@@ -96,7 +93,7 @@ public final class Verify {
   private static Map<String, Object> read(String file) {
     try (InputStream in = Verify.class.getClassLoader().getResourceAsStream(ROOT + file)) {
       if (in == null) throw new IllegalStateException("the pinned Verify file is not on the classpath: " + ROOT + file);
-      return new ObjectMapper(new YAMLFactory()).readValue(in, new TypeReference<LinkedHashMap<String, Object>>() {});
+      return Yaml.read(in.readAllBytes());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

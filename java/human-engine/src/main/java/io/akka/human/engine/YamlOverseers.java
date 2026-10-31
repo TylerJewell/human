@@ -1,8 +1,5 @@
 package io.akka.human.engine;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.akka.human.api.Action;
 import io.akka.human.api.spi.Overseer;
 import io.akka.human.api.spi.OverseerDirectory;
@@ -10,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,7 +32,7 @@ public final class YamlOverseers implements OverseerDirectory {
   @SuppressWarnings("unchecked")
   public static YamlOverseers parse(byte[] yaml) {
     try {
-      var root = new ObjectMapper(new YAMLFactory()).readValue(yaml, new TypeReference<LinkedHashMap<String, Object>>() {});
+      var root = Yaml.read(yaml);
       var people = ((List<Map<String, Object>>) root.getOrDefault("overseers", List.of())).stream().map(o -> new Overseer(
           String.valueOf(o.get("subject")),
           (String) o.get("name"),

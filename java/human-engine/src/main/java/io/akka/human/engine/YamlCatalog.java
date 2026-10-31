@@ -1,8 +1,5 @@
 package io.akka.human.engine;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.akka.human.api.spi.ControlCatalog;
 import io.akka.human.api.spi.HumanControl;
 import java.io.IOException;
@@ -11,7 +8,6 @@ import java.io.UncheckedIOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +39,7 @@ public final class YamlCatalog implements ControlCatalog {
   @SuppressWarnings("unchecked")
   public static YamlCatalog parse(byte[] yaml) {
     try {
-      var root = new ObjectMapper(new YAMLFactory()).readValue(yaml, new TypeReference<LinkedHashMap<String, Object>>() {});
+      var root = Yaml.read(yaml);
       var controls = ((List<Map<String, Object>>) root.getOrDefault("controls", List.of())).stream()
           .map(c -> new HumanControl(
               String.valueOf(c.get("id")),

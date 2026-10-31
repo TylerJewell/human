@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.akka.human.api.Pattern;
 import io.akka.human.api.Reviewer;
 import io.akka.human.api.spi.HumanPlugins;
+import io.akka.human.engine.Blocks;
 import io.akka.human.engine.Durations;
 import io.akka.human.engine.Figures;
 import io.akka.human.engine.HaltState;
@@ -105,11 +106,12 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
         inMemory.add(e -> Rules.routable(e, actor, now));
       }
 
+      var blocks = blocks();
       if (!inMemory.isEmpty()) {
         var matching = HumanQueries.matching(client, materializer, keys, since, Instant.EPOCH).stream()
             .filter(e -> inMemory.stream().allMatch(f -> f.test(e)))
             .sorted(urgency()).toList();
-        var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) Json.event(e, now)).toList();
+        var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) Json.event(e, now, Blocks.blocking(e, blocks))).toList();
         return ok(map("events", page, "total", matching.size()));
       }
       // Pending events come first, then closed ones, so a page can run across the two.
@@ -120,7 +122,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
               Math.max(1, limit - pending.rows().size()));
       var rows = new ArrayList<>(pending.rows());
       if (rows.size() < limit) rows.addAll(closed.rows());
-      var page = rows.stream().map(r -> (Object) Json.event(r.event(), now)).toList();
+      var page = rows.stream().map(r -> (Object) Json.event(r.event(), now, Blocks.blocking(r.event(), blocks))).toList();
       return ok(map("events", page, "total", pending.total() + closed.total()));
     });
   }
@@ -252,7 +254,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       var current = human.find(id);
       if (current.refused()) return current;
       return entity(id).method(HumanEventEntity::decide).invoke(new HumanEventEntity.Decide(library.actor(reviewer),
-          request, safeState(current.event()), library.now()));
+          request, safeState(current.event()), Blocks.blocking(current.event(), blocks()), library.now()));
     });
   }
 
@@ -461,6 +463,16 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
         scope.callsPerMinute(state.target()), library.plugins().service());
   }
 
+  /**
+   * Each blocked control with the oversight-quality event that blocks it, as the queue view shows them:
+   * an event raised a moment ago may not block yet.
+   */
+  private Map<String, String> blocks() {
+    if (!library.controls().patterns().contains(Pattern.OVERSIGHT_QUALITY)) return Map.of();
+    return Blocks.of(HumanQueries.matching(client, materializer, List.of("pattern:" + Pattern.OVERSIGHT_QUALITY.id()),
+        Instant.EPOCH, Instant.EPOCH));
+  }
+
   /** A restart's safe-state checks as they stand now; nothing for any other event. */
   private Map<String, Boolean> safeState(HumanEvent e) {
     if (!e.settings().haltRestart() || !e.lift()) return Map.of();
@@ -524,7 +536,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
 
   private HttpResponse answer(HumanEventEntity.Answer answer) {
     if (answer.refused()) return error(answer.refusal());
-    return ok(Json.event(answer.event(), library.now()));
+    return ok(Json.event(answer.event(), library.now(), Blocks.blocking(answer.event(), blocks())));
   }
 
   private static HttpResponse ok(Object body) {

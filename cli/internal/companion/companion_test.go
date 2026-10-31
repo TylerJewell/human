@@ -616,7 +616,7 @@ func TestRegistryFromYAML(t *testing.T) {
 		Overseers []overseerJSON `json:"overseers"`
 	}
 	w.get(t, "/api/companion/human/registry", &reg)
-	if len(reg.Overseers) != 8 {
+	if len(reg.Overseers) != 10 {
 		t.Fatalf("%d overseers", len(reg.Overseers))
 	}
 	osei := reg.Overseers[7]

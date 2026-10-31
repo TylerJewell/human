@@ -44,7 +44,7 @@ func (s *Server) conformance(w http.ResponseWriter, r *http.Request) error {
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Minute)
 	defer cancel()
 	out, runErr := exec.CommandContext(ctx, "java", "-jar", s.opts.ConformanceJar,
-		"--url", target.URL, "--report", report.Name()).CombinedOutput()
+		"--url", target.URL, "--allow-reset", "--report", report.Name()).CombinedOutput()
 	data, _ := os.ReadFile(report.Name())
 	if len(data) == 0 || !json.Valid(data) {
 		tail := strings.TrimSpace(string(out))

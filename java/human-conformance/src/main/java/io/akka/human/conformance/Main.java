@@ -26,6 +26,18 @@ public final class Main {
       out.println(Options.USAGE);
       return 0;
     }
+    if (!options.allowReset()) {
+      err.println("Refusing to run: the suite resets every service it checks, and --allow-reset was not given.");
+      err.println("It would reset:");
+      err.println("  " + options.url() + "  (POST /oversight/dev/reset, and its development clock)");
+      err.println(Options.USAGE);
+      return 2;
+    }
+    out.println("*".repeat(78));
+    out.println("WARNING: --allow-reset. This run resets the service below before every scenario:");
+    out.println("every pending event is closed, every halt lifted, every standing decision revoked.");
+    out.println("  " + options.url());
+    out.println("*".repeat(78));
     out.println("human-conformance against " + options.url());
     String[] pattern = {null};
     Report report = new Suite(options, result -> {

@@ -14,7 +14,8 @@ import java.util.stream.Collectors;
  * Runs the scenarios against one service. The service checks come first and are prerequisites: the suite
  * discovers controls and people from them. Then, for each pattern, every scenario runs against the first of
  * the pattern's controls that makes it applicable, each starting from a reset service. Scenarios run one at
- * a time; they share the service and its dev clock.
+ * a time; they share the service and its dev clock. The last step resets the service once more and puts the
+ * dev clock back to real time, so a run leaves no pending event, halt or moved clock behind.
  */
 final class Suite {
   static final String SERVICE = "service";
@@ -49,6 +50,7 @@ final class Suite {
       service("summary", false, run -> ServiceScenarios.summary(run, controls));
       service("quality", false, ServiceScenarios::quality);
       service("reads", false, ServiceScenarios::reads);
+      service("cleanup", true, Run::resetClock);
     }
     return new Report(options.url(), info.get(), started, Instant.now(), List.copyOf(results));
   }

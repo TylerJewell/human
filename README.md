@@ -211,10 +211,12 @@ they can take any product's theme. contextlayer and the desk are both drawn with
 The suite checks a service that serves `/oversight/*` against the contract:
 
 ```sh
-java -jar java/human-conformance/target/human-conformance.jar --url http://localhost:9164
+java -jar java/human-conformance/target/human-conformance.jar --url http://localhost:9164 --allow-reset
 ```
 
-All three samples pass. The suite is also behind *Run conformance* in the console's Services view.
+The suite resets the service before every scenario (it closes every pending event, lifts every halt and revokes every standing decision) and moves its development clock, putting the clock back at the end. It therefore refuses to run without `--allow-reset`; without it, it exits 2 and lists the service it would reset. With it, it prints a warning naming the service first. Run it only against a service whose state you do not keep.
+
+All three samples pass. The suite is also behind *Run conformance* in the console's Services view, which passes `--allow-reset` because a person asked for that run.
 
 ## Drive it from code
 

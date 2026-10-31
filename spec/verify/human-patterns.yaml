@@ -4,6 +4,11 @@
 # one in `akka_runtime.human_config.pattern`; the pattern supplies a default for
 # every setting the control leaves out.
 #
+# Only human controls carry a pattern. A control has exactly one mechanism: a
+# gate or evaluation that involves a person stays a gate or evaluation, with no
+# pattern, and a person reviewing its result is a second control of kind
+# `human`, with its own pattern.
+#
 # Patterns sit under the five human flavors (ADR-016): the flavor says who
 # decides and how tightly the person is coupled to the system, the pattern says
 # what situation they decide and how. A pattern lists the flavors it runs under.

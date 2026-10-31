@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "verify/human-config.schema.json",
-  "title": "human_config and halt_config, from Verify control.schema.yaml at 641097fa",
+  "title": "human_config and halt_config, from Verify control.schema.yaml at 96ea36b6",
   "$defs": {
     "human_config": {
       "type": "object",
-      "description": "Required when the mechanism kind is `human` (all five flavors; a\n`human-halt` control carries `halt_config` beside it). Names the\noversight pattern — one of the fourteen in\nframework/schema/registries/human-patterns.yaml — and the settings\nthat differ from that pattern's defaults. A corpus control states\nwhat its source text requires; a deployment fills in the rest\n(roles, deadlines, escalation queues) when it writes the bundle.\nDecision names come from framework/schema/registries/human-decisions.yaml.\nThe pattern must run under the control's flavor; the\nmechanism-coverage auditor checks this and that every human\ncontrol has the block. See specs/decisions/adr-018-human-patterns.md.\n",
+      "description": "Required when the mechanism kind is `human` (all five flavors; a\n`human-halt` control carries `halt_config` beside it). Names the\noversight pattern — one of the fourteen in\nframework/schema/registries/human-patterns.yaml — and the settings\nthat differ from that pattern's defaults. A corpus control states\nwhat its source text requires; a deployment fills in the rest\n(roles, deadlines, escalation queues) when it writes the bundle.\nDecision names come from framework/schema/registries/human-decisions.yaml.\nOnly human controls carry a pattern. A gate or evaluation that\ninvolves a person stays a gate or evaluation, with no pattern; if a\nperson must review its result, that review is a second control, of\nkind `human`, with its own id. Every control carries only its own\nmechanism's config block, so a human control carries no\ngate_config, guardrail_config, eval_config or sanitizer_config. The\npattern must run under the control's flavor; the mechanism-coverage\nauditor checks this, that every human control has the block, that no\nother control has it, and that no control carries another\nmechanism's block. See specs/decisions/adr-018-human-patterns.md.\n",
       "required": [
         "pattern",
         "subject_kind"

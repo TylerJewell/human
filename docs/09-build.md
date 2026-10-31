@@ -14,7 +14,7 @@ contextlayer's and loan-origination's parts.
   [`spec/oversight.schema.json`](../spec/oversight.schema.json) define every route and type. Code
   follows them; a needed change to the contract is made there first, with its example, and
   `pnpm spec:check` passes.
-- **Settings come from Verify.** [`spec/verify/`](../spec/verify) is pinned at `641097fa`. Never edit
+- **Settings come from Verify.** [`spec/verify/`](../spec/verify) is pinned at `96ea36b6`. Never edit
   it.
 - **No commits.** The tree stays uncommitted until the owner asks.
 - **Akka runtime.** Integration tests run in-process with the TestKit (`mvn verify`); they need no

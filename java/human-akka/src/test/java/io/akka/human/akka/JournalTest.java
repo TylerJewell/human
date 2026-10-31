@@ -84,6 +84,7 @@ public class JournalTest {
     assertEquals("resumed payment pay-7731", payment.outcome().applied());
     assertEquals(10, payment.settings().minimumReviewSeconds());
     assertEquals(List.of("eu-ai-act-oversight"), payment.settings().routing().attestations());
+    assertFalse(payment.settings().blockDecisions(), "the first release had no block_decisions");
 
     var rollout = events.get("he-20261030-b5e6f7a8");
     assertEquals(State.REOPENED, rollout.state());
@@ -120,6 +121,7 @@ public class JournalTest {
     var payload = raised.payload().deepCopy();
     var event = (ObjectNode) payload.get("event");
     var settings = (ObjectNode) event.get("settings");
+    assertFalse(settings.has("blockDecisions"), "the fixture predates blockDecisions");
     settings.put("retiredSetting", "kept in the journal, unknown to the code");
     settings.remove("aiRecommendation");
     event.putObject("retiredBlock").put("of", "an older release");
@@ -130,6 +132,7 @@ public class JournalTest {
     assertEquals("pt-0001", read.event().settings().control().rowId());
     assertEquals(State.OPEN, read.event().state());
     assertEquals(10, read.event().settings().minimumReviewSeconds());
+    assertFalse(read.event().settings().blockDecisions());
     assertEquals(null, read.event().settings().aiRecommendation());
   }
 

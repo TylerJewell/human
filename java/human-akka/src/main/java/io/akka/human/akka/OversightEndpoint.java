@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.akka.human.api.Pattern;
 import io.akka.human.api.Reviewer;
 import io.akka.human.api.spi.HumanPlugins;
+import io.akka.human.engine.Blocks;
 import io.akka.human.engine.Durations;
 import io.akka.human.engine.Figures;
 import io.akka.human.engine.HaltState;
@@ -101,7 +102,9 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
           .sorted(urgency(now)).toList();
       int limit = Math.max(1, Math.min(MAX_LIMIT, q.getInteger("limit").orElse(DEFAULT_LIMIT)));
       int offset = Math.max(0, q.getInteger("offset").orElse(0));
-      var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) Json.event(e, now)).toList();
+      var blocks = blocks();
+      var page = matching.stream().skip(offset).limit(limit)
+          .map(e -> (Object) Json.event(e, now, Blocks.blocking(e, blocks))).toList();
       return ok(map("events", page, "total", matching.size()));
     });
   }
@@ -226,7 +229,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       var current = human.find(id);
       if (current.refused()) return current;
       return entity(id).method(HumanEventEntity::decide).invoke(new HumanEventEntity.Decide(library.actor(reviewer),
-          request, safeState(current.event()), library.now()));
+          request, safeState(current.event()), Blocks.blocking(current.event(), blocks()), library.now()));
     });
   }
 
@@ -438,6 +441,14 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
         scope.callsPerMinute(state.target()), library.plugins().service());
   }
 
+  /**
+   * Each blocked control with the oversight-quality event that blocks it, as the queue view shows them:
+   * an event raised a moment ago may not block yet.
+   */
+  private Map<String, String> blocks() {
+    return library.controls().patterns().contains(Pattern.OVERSIGHT_QUALITY) ? Blocks.of(all()) : Map.of();
+  }
+
   /** A restart's safe-state checks as they stand now; nothing for any other event. */
   private Map<String, Boolean> safeState(HumanEvent e) {
     if (!e.settings().haltRestart() || !e.lift()) return Map.of();
@@ -499,7 +510,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
 
   private HttpResponse answer(HumanEventEntity.Answer answer) {
     if (answer.refused()) return error(answer.refusal());
-    return ok(Json.event(answer.event(), library.now()));
+    return ok(Json.event(answer.event(), library.now(), Blocks.blocking(answer.event(), blocks())));
   }
 
   private static HttpResponse ok(Object body) {

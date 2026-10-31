@@ -331,6 +331,56 @@ public class OversightIntegrationTest extends TestKitSupport {
     return raised.eventId();
   }
 
+  /**
+   * pt-0014 judges pt-0004 here, not pt-0001 as the patterns sample does, so the block stays away from
+   * the payments the other tests decide.
+   */
+  @Test
+  public void anOversightQualityEventBlocksDecisionsUntilItIsReset() {
+    var chen = reviewer("r.chen@example.com", "compliance-lead");
+    var waiver = new HumanClient(componentClient, TestPlugins.PLUGINS).raise(Patterns.exception("Waive rule R-9?")
+        .control("pt-0004").subject(Subject.exception("Waive rule R-9", "R-9", "No payments to new suppliers",
+            "supplier S-" + UUID.randomUUID(), java.time.Instant.parse("2099-01-01T00:00:00Z")))
+        .build()).toCompletableFuture().join().eventId();
+
+    var finding = MAPPER.createObjectNode();
+    finding.put("control", "pt-0014");
+    finding.putObject("ask").put("question", "Reset, retrain or reassign the reviewers of pt-0004?");
+    var subject = finding.putObject("subject");
+    subject.put("kind", "behaviour").put("summary", "below-minimum-share on pt-0004 is 0.4").put("ref", "pt-0004");
+    subject.putObject("detail").put("metric", "below-minimum-share").put("value", 0.4).put("threshold", 0.2)
+        .put("comparison", ">");
+    var raised = post("/oversight/dev/events", finding);
+    assertEquals(200, raised.status(), raised.body()::toString);
+    var qualityId = raised.body().get("id").asText();
+
+    Awaitility.await().atMost(WAIT).until(() -> qualityId.equals(get("/oversight/events/" + waiver).body()
+        .path("blockedBy").asText(null)));
+    var listed = get("/oversight/events?state=pending&control=pt-0004&limit=200").body();
+    assertConforms("EventsPage", listed);
+    for (var e : listed.get("events")) assertEquals(qualityId, e.get("blockedBy").asText());
+    for (var c : get("/oversight/controls").body().get("controls")) {
+      assertEquals(c.at("/control/rowId").asText().equals("pt-0014"), c.get("blockDecisions").asBoolean());
+    }
+
+    var claimed = post("/oversight/events/" + waiver + "/claim", Map.of("reviewer", chen));
+    assertEquals(200, claimed.status(), claimed.body()::toString);
+    assertEquals(qualityId, claimed.body().get("blockedBy").asText());
+    var blocked = post("/oversight/events/" + waiver + "/decision", decision(chen, "APPROVE", "The rule does not apply."));
+    assertEquals(409, blocked.status(), blocked.body()::toString);
+    assertConforms("Error", blocked.body());
+    assertEquals(qualityId, blocked.body().get("blockedBy").asText());
+    assertTrue(blocked.body().get("error").asText().contains(qualityId));
+    assertEquals("CLAIMED", blocked.body().get("state").asText());
+
+    var reset = post("/oversight/events/" + qualityId + "/decision", decision(TYLER, "APPROVE", "Reviewers retrained."));
+    assertEquals(200, reset.status(), reset.body()::toString);
+    Awaitility.await().atMost(WAIT).until(() -> get("/oversight/events/" + waiver).body().get("blockedBy").isNull());
+    var decided = post("/oversight/events/" + waiver + "/decision", decision(chen, "APPROVE", "The rule does not apply."));
+    assertEquals(200, decided.status(), decided.body()::toString);
+    assertEquals("DECIDED", decided.body().get("state").asText());
+  }
+
   private static io.akka.human.api.RaiseRequest.Builder payment(String question) {
     return Patterns.actionApproval(question).control("pt-0001").proposedBy("agent:payments")
         .subject(Subject.action("Pay a supplier", "pay", Map.of("supplier", "S-55", "amount", 900)));

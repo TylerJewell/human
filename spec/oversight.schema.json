@@ -1873,6 +1873,13 @@
             "ENFORCE"
           ]
         },
+        "blockedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The oversight-quality event that blocks settling decisions on this pending event: one against the event's control (its subject.ref) that is open, or closed without being reset. A decision other than ESCALATE, SEND_BACK, REQUEST_MORE_INFO, RECUSE or HALT answers 409 until that event is settled with Reset, Retrain or Reassign. Null otherwise."
+        },
         "slaExtensions": {
           "type": "array",
           "items": {
@@ -3038,6 +3045,10 @@
             "null"
           ],
           "description": "halt_config, for halt-restart controls."
+        },
+        "blockDecisions": {
+          "type": "boolean",
+          "description": "Oversight-quality: an event of this control blocks settling decisions on the control it judges (its subject.ref) until it is settled with Reset, Retrain or Reassign. On by default for oversight-quality; false for every other pattern."
         }
       }
     },
@@ -3281,6 +3292,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "blockedBy": {
+          "type": "string",
+          "description": "On a 409 for a blocked decision: the oversight-quality event that blocks it."
         }
       }
     },

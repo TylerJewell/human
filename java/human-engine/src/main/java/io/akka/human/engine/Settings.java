@@ -118,6 +118,10 @@ public final class Settings {
         }
       }
     }
+    if (hc.containsKey("block_decisions")
+        && (pattern != Pattern.OVERSIGHT_QUALITY || !(hc.get("block_decisions") instanceof Boolean))) {
+      out.add(id + ": block_decisions is true or false, on an oversight-quality control");
+    }
     if (pattern == Pattern.HALT_RESTART && control.haltConfig().isEmpty()) {
       out.add(id + ": a halt-restart control needs halt_config");
     }
@@ -200,7 +204,8 @@ public final class Settings {
         Boolean.TRUE.equals(merged.get("shadow")),
         strength,
         hc.get("trigger") instanceof Map<?, ?> t ? (Map<String, Object>) t : Map.of(),
-        control.haltConfig());
+        control.haltConfig(),
+        merged.get("block_decisions") instanceof Boolean block ? block : pattern == Pattern.OVERSIGHT_QUALITY);
   }
 
   /** {@code over} laid over {@code base}; nested maps merge, anything else replaces. */

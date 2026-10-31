@@ -9,8 +9,9 @@ import java.util.List;
  *
  * @param state the event's state, for a 409
  * @param errors each problem found, for a 422
+ * @param blockedBy the oversight-quality event that blocks the decision, for a 409
  */
-public record Refusal(Kind kind, String error, String state, List<String> errors) {
+public record Refusal(Kind kind, String error, String state, List<String> errors, String blockedBy) {
 
   public enum Kind {
     NOT_FOUND(404),
@@ -33,12 +34,21 @@ public record Refusal(Kind kind, String error, String state, List<String> errors
     errors = errors == null ? List.of() : List.copyOf(errors);
   }
 
+  public Refusal(Kind kind, String error, String state, List<String> errors) {
+    this(kind, error, state, errors, null);
+  }
+
   public static Refusal notFound(String error) {
     return new Refusal(Kind.NOT_FOUND, error, null, List.of());
   }
 
   public static Refusal conflict(String error, String state) {
     return new Refusal(Kind.CONFLICT, error, state, List.of());
+  }
+
+  /** A settling decision while an oversight-quality event blocks the event's control ({@link Blocks}). */
+  public static Refusal blocked(String error, String state, String blockedBy) {
+    return new Refusal(Kind.CONFLICT, error, state, List.of(), blockedBy);
   }
 
   public static Refusal forbidden(String error) {

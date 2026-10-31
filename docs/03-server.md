@@ -99,7 +99,8 @@ changes.
 - **A version and a migration hook.** Both carry the format version, `Journal.VERSION` (0 today), in
   their content type, and Akka passes an older document through `Journal.upgrade` before binding it.
   Removing a field needs no step, and neither does adding one whose absent value reads right: a field
-  the code no longer has is ignored, and a field a document lacks reads as null, false or 0. Any
+  the code no longer has is ignored, and a field a document lacks reads as null, false or 0
+  (`blockDecisions` came in this way: an event raised before it existed blocks nothing). Any
   other change raises the version and adds a step: a rename, a new type, a removed enum constant, or a
   new field whose right value for older events is not that default (an empty list rather than null).
 - **A fixture of the first release's journal.** `human-akka/src/test/resources/journal/` holds entries

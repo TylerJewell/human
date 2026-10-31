@@ -93,6 +93,38 @@ Errors:
 | 403 | `{ "error" }` | The reviewer's roles, qualification, authority or independence do not allow the call |
 | 422 | `{ "error", "errors": [] }` | The request is invalid: an action the event does not allow, a missing rationale, a check the event does not list, a decision under the minimum review time under `minimum_review: ENFORCE` |
 
+### Oversight-quality blocks
+
+An oversight-quality event judges the control its `subject.ref` names: the monitored control of the
+quality figures. While it blocks that control, the service holds new decisions on the control's
+events until the people the oversight-quality control routes to (its accountable owner, in pt-0014)
+reset it.
+
+- **What is refused.** `decision` with any action but `ESCALATE`, `SEND_BACK`, `REQUEST_MORE_INFO`,
+  `RECUSE` or `HALT` answers 409 `{ "error", "state", "blockedBy" }`: `error` names the
+  oversight-quality event and `blockedBy` is its id. Claim, release, escalate, send back, resubmit,
+  extend and withdraw still work, and new events are still raised; they wait. The clock keeps running,
+  so a blocked event escalates or times out under its control's settings.
+- **What shows it.** Every pending event of the blocked control carries `blockedBy`, the
+  oversight-quality event's id, in `GET /oversight/events`, `GET /oversight/events/{id}` and the
+  answer to every write; it is null otherwise.
+- **When it lifts.** For each oversight-quality control and monitored control, the latest event
+  decides. It blocks while pending, escalated included, and after it times out or is abandoned. It
+  lifts when that event is settled with Reset (`APPROVE`), Retrain (`REPLAN`) or Reassign
+  (`REDIRECT`), or withdrawn or killed. Settling a newer event against the same control, such as the
+  one that reopens a timed-out event, lifts it as well.
+- **Which controls.** The setting is `block_decisions` on the oversight-quality control
+  (`blockDecisions` in `ControlSettings`), on by default for oversight-quality and false for every other
+  pattern. Verify v2.8 gives a control no risk level, so every control an oversight-quality event
+  judges is treated as high-risk: the quality control's metric and threshold choose which controls,
+  and `block_decisions: false` turns the block off. Only an event routed at strength `prevent` blocks;
+  under `warn`, or recorded without routing, it does not. Verify v2.8's `human_config` allows no other
+  keys, so a bundle can set `block_decisions` only once Verify adds it; until then the default holds.
+- **What it does not hold.** Acts a person starts and that are decided at once: exercising a halt
+  (`POST /oversight/halts`) and an override (`POST /oversight/overrides`). A standing decision granted
+  before the block still settles a matching new event; revoke it to stop that. The service reads blocks
+  from its queue, so an oversight-quality event raised a moment ago can take a moment to block.
+
 ### Development routes
 
 Served only when the service turns them on (`HumanPlugins.devRoutes`; the samples read

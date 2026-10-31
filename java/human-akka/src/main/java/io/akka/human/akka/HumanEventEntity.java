@@ -43,7 +43,14 @@ public class HumanEventEntity extends EventSourcedEntity<HumanEvent, HumanEventE
 
   public record Release(Reviewer reviewer, Instant now) {}
 
-  public record Decide(Actor actor, Rules.DecisionRequest request, Map<String, Boolean> safeState, Instant now) {}
+  /** @param blockedBy the oversight-quality event that blocks the event's control, or null ({@code Blocks}) */
+  public record Decide(Actor actor, Rules.DecisionRequest request, Map<String, Boolean> safeState, String blockedBy,
+      Instant now) {
+
+    public Decide(Actor actor, Rules.DecisionRequest request, Map<String, Boolean> safeState, Instant now) {
+      this(actor, request, safeState, null, now);
+    }
+  }
 
   /** Escalate (with a reason) or send back (with what is requested). */
   public record Move(Actor actor, String text, Instant now) {}
@@ -103,7 +110,8 @@ public class HumanEventEntity extends EventSourcedEntity<HumanEvent, HumanEventE
   public Effect<Answer> decide(Decide command) {
     if (!exists()) return missing();
     var safeState = command.safeState() == null ? Map.<String, Boolean>of() : command.safeState();
-    return handle(Rules.decide(currentState(), command.actor(), command.request(), safeState, command.now()));
+    return handle(Rules.decide(currentState(), command.actor(), command.request(), safeState, command.blockedBy(),
+        command.now()));
   }
 
   public Effect<Answer> escalate(Move command) {

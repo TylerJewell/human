@@ -87,14 +87,22 @@ public final class Rules {
 
   // ---- deciding
 
-  /**
-   * A decision. ESCALATE, SEND_BACK, REQUEST_MORE_INFO and RECUSE move the event without settling it;
-   * every other allowed action is a vote under the control's review mode.
-   *
-   * @param safeState a halt target's safe-state checks as they stand now, for a restart; empty otherwise
-   */
+  /** A decision on an event nothing blocks. */
   public static Checked<List<HumanEventEvent>> decide(
       HumanEvent e, Actor actor, DecisionRequest r, Map<String, Boolean> safeState, Instant now) {
+    return decide(e, actor, r, safeState, null, now);
+  }
+
+  /**
+   * A decision. ESCALATE, SEND_BACK, REQUEST_MORE_INFO and RECUSE move the event without settling it;
+   * every other allowed action is a vote under the control's review mode. While an oversight-quality
+   * event blocks the control, a vote is refused; exercising a halt never is.
+   *
+   * @param safeState a halt target's safe-state checks as they stand now, for a restart; empty otherwise
+   * @param blockedBy the oversight-quality event that blocks the event's control ({@link Blocks}), or null
+   */
+  public static Checked<List<HumanEventEvent>> decide(HumanEvent e, Actor actor, DecisionRequest r,
+      Map<String, Boolean> safeState, String blockedBy, Instant now) {
     if (!e.pending()) return Checked.refuse(notPending(e));
     var action = r.action();
     if (action == null) return Checked.refuse(Refusal.invalid("an action is required"));
@@ -119,6 +127,12 @@ public final class Rules {
     }
     var haltProblem = haltProblem(e, action);
     if (haltProblem != null) return Checked.refuse(Refusal.invalid(haltProblem));
+    if (blockedBy != null && action != Action.HALT) {
+      var control = e.settings().control().rowId();
+      return Checked.refuse(Refusal.blocked(control + " is blocked by oversight-quality event " + blockedBy
+          + "; its events can be decided once that event is settled with Reset, Retrain or Reassign",
+          e.stateAt(now).name(), blockedBy));
+    }
     var gate = routedAndPending(e, now);
     if (gate != null) return Checked.refuse(gate);
     var lateRefusal = refusedAsLate(e, now);

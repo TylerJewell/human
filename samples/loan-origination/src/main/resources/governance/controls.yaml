@@ -1,7 +1,8 @@
-# The human controls of the Loan Origination assistant. Rows custom-5a1e00000001 to 07 are the
-# scenarios S1 to S7 and 0ff1ce0001 is the template review, with the ids and names of the bundle in
-# ai-console (samples/loan-origination/governance/controls.yaml). Rows 08 to 10 are the domain
-# reviews that were plain workflow pauses there: held notices, underwriting review, contests.
+# The human controls of the Loan Origination assistant. Rows hl-0001 to hl-0007 are the scenarios S1
+# to S7 and hl-0011 is the template review, with the names of the bundle in ai-console
+# (samples/loan-origination/governance/controls.yaml) under ids of this sample's own, so the two
+# services can share a runtime. Rows hl-0008 to hl-0010 are the domain reviews that were plain
+# workflow pauses there: held notices, underwriting review, contests.
 #
 # Each human_config is a Verify v2.8 human_config (spec/verify/human-config.schema.json); a setting
 # left out takes the pattern's default, then the shared default (spec/verify/human-patterns.yaml).
@@ -9,7 +10,7 @@
 schema_version: 1
 service: loan-origination
 controls:
-  - id: custom-5a1e00000001
+  - id: hl-0001
     name: Deadline extensions beyond policy need the system owner
     flavor: human-system-authorization
     human_config:
@@ -32,7 +33,7 @@ controls:
       strength: { pre-production: prevent, production: prevent }
       shadow: false
 
-  - id: custom-5a1e00000002
+  - id: hl-0002
     name: Referral rate drift is reviewed by the model risk owner
     flavor: human-monitoring
     human_config:
@@ -60,8 +61,8 @@ controls:
       shadow: false
 
   # The figure is the share of the underwriting review's decisions made under its minimum review
-  # time (custom-5a1e00000009: 8 seconds, recorded rather than refused).
-  - id: custom-5a1e00000003
+  # time (hl-0009: 8 seconds, recorded rather than refused).
+  - id: hl-0003
     name: Rushed underwriting reviews go to the risk officer
     flavor: human-monitoring
     human_config:
@@ -87,7 +88,7 @@ controls:
       strength: { pre-production: warn, production: warn }
       shadow: false
 
-  - id: custom-5a1e00000004
+  - id: hl-0004
     name: Bursts of protected-characteristics blocks go to compliance
     flavor: human-monitoring
     human_config:
@@ -113,7 +114,7 @@ controls:
       strength: { pre-production: warn, production: warn }
       shadow: false
 
-  - id: custom-5a1e00000005
+  - id: hl-0005
     name: Model changes to adverse-action notices need two approvals
     flavor: human-system-authorization
     human_config:
@@ -138,7 +139,7 @@ controls:
       shadow: false
 
   # One officer halts at once; a restart needs two others while the safe-state checks pass.
-  - id: custom-5a1e00000006
+  - id: hl-0006
     name: Automated eligibility assessment can be halted
     flavor: human-halt
     human_config:
@@ -170,7 +171,7 @@ controls:
       emits_on_lift: HaltLifted
       safe_state_definition: No automated assessment runs; every application whose documents are in goes to an underwriter.
 
-  - id: custom-5a1e00000007
+  - id: hl-0007
     name: Flagged support replies are triaged
     flavor: human-feedback
     human_config:
@@ -191,7 +192,7 @@ controls:
 
   # A suggested template is a change to every notice for its decline reason, not a decision about
   # one person, so it is authorised as a change before it is used.
-  - id: "0ff1ce0001"
+  - id: "hl-0011"
     name: Adverse-action letter template review
     flavor: human-system-authorization
     human_config:
@@ -206,7 +207,7 @@ controls:
         - { queue: template-review, roles: [underwriting-counsel] }
       strength: { pre-production: prevent, production: prevent }
 
-  - id: custom-5a1e00000008
+  - id: hl-0008
     name: Held adverse-action notices are released by a reviewer
     flavor: human-domain-decision
     human_config:
@@ -224,8 +225,8 @@ controls:
       strength: { pre-production: prevent, production: prevent }
 
   # Decisions under the minimum review time are recorded with a warning, so that
-  # custom-5a1e00000003 can see rushed reviews.
-  - id: custom-5a1e00000009
+  # hl-0003 can see rushed reviews.
+  - id: hl-0009
     name: Referred applications are decided by an underwriter
     flavor: human-domain-decision
     human_config:
@@ -245,7 +246,7 @@ controls:
       ai_recommendation: eligibility-assessor
       strength: { pre-production: prevent, production: prevent }
 
-  - id: custom-5a1e00000010
+  - id: hl-0010
     name: Declined applicants can contest the decision
     flavor: human-domain-decision
     human_config:

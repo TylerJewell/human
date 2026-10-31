@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * A declined applicant's contest (custom-5a1e00000010). A senior underwriter reconsiders the decline;
+ * A declined applicant's contest (hl-0010). A senior underwriter reconsiders the decline;
  * the underwriter who declined, and anyone above them, may not. An overturn approves the application
  * (the decline stays in its history); an uphold sends the applicant a contest notice. The workflow id
  * is the application id.
@@ -28,8 +28,8 @@ import java.util.List;
 public class ContestWorkflow extends Workflow<ContestWorkflow.Contest> {
 
   public static final String RESUMER = "contest";
-  public static final String CONTROL = "custom-5a1e00000010";
-  /** custom-5a1e00000010 has 14 days at contest review, then 7 at the head of credit. */
+  public static final String CONTROL = "hl-0010";
+  /** hl-0010 has 14 days at contest review, then 7 at the head of credit. */
   static final Duration BACKSTOP = Duration.ofDays(22);
 
   public record Start(String statement) {}

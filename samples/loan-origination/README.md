@@ -36,29 +36,31 @@ file name it `loan-origination`.
 
 ## Controls
 
-[`governance/controls.yaml`](src/main/resources/governance/controls.yaml) keeps the row ids and names
-of the local console's bundle; each row's `human_config` is Verify v2.8 and names its pattern.
+[`governance/controls.yaml`](src/main/resources/governance/controls.yaml) keeps the names of
+the local console's bundle under ids of its own (`hl-0001` to `hl-0011`), so a runtime shared with
+the local console's loan-origination service has no two controls with one id; each row's `human_config`
+is Verify v2.8 and names its pattern.
 
 | Row | Name | Pattern | Flavor | Who decides | Deadline, then | Raised by |
 |---|---|---|---|---|---|---|
-| `custom-5a1e00000001` | S1 Deadline extensions beyond policy need the system owner | action-approval | system-authorization | loan-system-owner; head-of-credit when escalated; 20 s minimum; judge recommendation | PT30M, then DENY | The support assistant asks for more than 14 days (`DeadlineExtensionWorkflow`) |
-| `custom-5a1e00000002` | S2 Referral rate drift is reviewed by the model risk owner | triage | monitoring | model-risk-owner, then head-of-credit | P1D, escalate | `Monitors`: under 20% of the last 24 h's assessments referred (once there are 20) |
-| `custom-5a1e00000003` | S3 Rushed underwriting reviews go to the risk officer | oversight-quality | monitoring | risk-officer, then head-of-credit | P2D, escalate | `Monitors`, from the library's figures: over 10% of the underwriting review's decisions in 7 days made under its 8 s minimum |
-| `custom-5a1e00000004` | S4 Bursts of protected-characteristics blocks go to compliance | triage | monitoring | compliance-lead, then head-of-credit | PT1H, escalate | `Monitors`: more than 5 notice drafts blocked in the last hour |
-| `custom-5a1e00000005` | S5 Model changes to adverse-action notices need two approvals | change-authorization | system-authorization | two of ai-system-owner and compliance-lead, neither proposer nor builder; 60 s minimum | P2D, then DENY | `POST /notice-writer/model-changes` |
-| `custom-5a1e00000006` | S6 Automated eligibility assessment can be halted | halt-restart | halt | one oversight or safety officer halts; two others approve a restart while the safe-state checks pass | PT4H, then DENY (restart) | `POST /oversight/halts`; a HALT on S2 proposes one |
-| `custom-5a1e00000007` | S7 Flagged support replies are triaged | flag-feedback | feedback | ai-system-owner, then compliance-lead | P5D, abandoned | `POST /support/sessions/{id}/flag` or `POST /oversight/flags` |
-| `0ff1ce0001` | Adverse-action letter template review | change-authorization | system-authorization | underwriting-counsel, not the proposer or the notice writer | P3D, then the proposer is told | `POST /notice-writer/templates` |
-| `custom-5a1e00000008` | Held adverse-action notices are released by a reviewer | decision-review | domain-decision | adverse-action-reviewer | PT4H, then DENY (standard letter) | `NoticeWorkflow`: the guardrail blocked the draft |
-| `custom-5a1e00000009` | Referred applications are decided by an underwriter | decision-review | domain-decision | underwriter, then senior-underwriter; 8 s minimum, recorded rather than refused; assessor recommendation | P2D, then P3D at senior review | `UnderwritingWorkflow`: the rule did not approve alone, or the assessment is halted |
-| `custom-5a1e00000010` | Declined applicants can contest the decision | contest-appeal | domain-decision | senior-underwriter, then head-of-credit; never the underwriter who declined or their managers | P14D, then P7D at head of credit | `POST /applications/{id}/contest` (`ContestWorkflow`) |
+| `hl-0001` | S1 Deadline extensions beyond policy need the system owner | action-approval | system-authorization | loan-system-owner; head-of-credit when escalated; 20 s minimum; judge recommendation | PT30M, then DENY | The support assistant asks for more than 14 days (`DeadlineExtensionWorkflow`) |
+| `hl-0002` | S2 Referral rate drift is reviewed by the model risk owner | triage | monitoring | model-risk-owner, then head-of-credit | P1D, escalate | `Monitors`: under 20% of the last 24 h's assessments referred (once there are 20) |
+| `hl-0003` | S3 Rushed underwriting reviews go to the risk officer | oversight-quality | monitoring | risk-officer, then head-of-credit | P2D, escalate | `Monitors`, from the library's figures: over 10% of the underwriting review's decisions in 7 days made under its 8 s minimum |
+| `hl-0004` | S4 Bursts of protected-characteristics blocks go to compliance | triage | monitoring | compliance-lead, then head-of-credit | PT1H, escalate | `Monitors`: more than 5 notice drafts blocked in the last hour |
+| `hl-0005` | S5 Model changes to adverse-action notices need two approvals | change-authorization | system-authorization | two of ai-system-owner and compliance-lead, neither proposer nor builder; 60 s minimum | P2D, then DENY | `POST /notice-writer/model-changes` |
+| `hl-0006` | S6 Automated eligibility assessment can be halted | halt-restart | halt | one oversight or safety officer halts; two others approve a restart while the safe-state checks pass | PT4H, then DENY (restart) | `POST /oversight/halts`; a HALT on S2 proposes one |
+| `hl-0007` | S7 Flagged support replies are triaged | flag-feedback | feedback | ai-system-owner, then compliance-lead | P5D, abandoned | `POST /support/sessions/{id}/flag` or `POST /oversight/flags` |
+| `hl-0011` | Adverse-action letter template review | change-authorization | system-authorization | underwriting-counsel, not the proposer or the notice writer | P3D, then the proposer is told | `POST /notice-writer/templates` |
+| `hl-0008` | Held adverse-action notices are released by a reviewer | decision-review | domain-decision | adverse-action-reviewer | PT4H, then DENY (standard letter) | `NoticeWorkflow`: the guardrail blocked the draft |
+| `hl-0009` | Referred applications are decided by an underwriter | decision-review | domain-decision | underwriter, then senior-underwriter; 8 s minimum, recorded rather than refused; assessor recommendation | P2D, then P3D at senior review | `UnderwritingWorkflow`: the rule did not approve alone, or the assessment is halted |
+| `hl-0010` | Declined applicants can contest the decision | contest-appeal | domain-decision | senior-underwriter, then head-of-credit; never the underwriter who declined or their managers | P14D, then P7D at head of credit | `POST /applications/{id}/contest` (`ContestWorkflow`) |
 
 The template review is change authorization, not decision review: a template is a change to every
 notice for its decline reason, authorised before it is used, not a decision about one person.
 
 ### Settings that differ from the local console's rows
 
-- **Flavors.** The seven scenario rows keep theirs. `0ff1ce0001` had no flavor (mechanism `hitl`); it
+- **Flavors.** The seven scenario rows keep theirs. `hl-0011` had no flavor (mechanism `hitl`); it
   takes `human-system-authorization`, the only flavor change authorization runs under.
 - **S1.** A timeout applies the default (DENY) at the first deadline; the head of credit decides only
   when someone escalates. A standing approval for the pattern settles later requests for the same
@@ -111,9 +113,9 @@ has at least two qualified people. K. Osei stays unqualified (training expired).
 | S7 | `POST /support/sessions/{id}/flag` | `{ by, note }` | Flags the session's latest reply; APPROVE adds it to the eval set (`GET /support/eval-set`), DENY dismisses |
 | S5 | `POST /notice-writer/model-changes` | `{ to, proposedBy, builtBy, evaluation? }` | Two approvals switch the notice writer's model (`GET /notice-writer`); a send-back goes to the proposer, who resubmits through `POST /oversight/events/{id}/resubmit` |
 | Template | `POST /notice-writer/templates` | `{ reason, text, proposedBy? }` | Counsel's approval puts the template in use for the reason; later notices for it open with it |
-| S6 | `POST /oversight/halts` | `{ reviewer, control: "custom-5a1e00000006", lift: false, reason }` | Halted: underwriting asks no assessor and refers every application (`AUTOMATED_ASSESSMENT_HALTED`) |
+| S6 | `POST /oversight/halts` | `{ reviewer, control: "hl-0006", lift: false, reason }` | Halted: underwriting asks no assessor and refers every application (`AUTOMATED_ASSESSMENT_HALTED`) |
 | | `POST /oversight/halts` with `lift: true` | | A restart; approval is refused (409) until no application is between documents and routing and at most `loan-origination.halt.max-referral-backlog` (5) wait for an underwriter (`GET /oversight/halts` shows the checks) |
-| S2, S3, S4 | `POST /monitors/run` | `{}` | Runs the monitors now (they also run every minute) and answers each reading; one event per episode, later readings add occurrences while it is pending. A HALT on S2 raises an S6 halt for an officer to exercise. `GET /monitors/{key}` shows what was decided (S3's key is `custom-5a1e00000003:<watched control>`) |
+| S2, S3, S4 | `POST /monitors/run` | `{}` | Runs the monitors now (they also run every minute) and answers each reading; one event per episode, later readings add occurrences while it is pending. A HALT on S2 raises an S6 halt for an officer to exercise. `GET /monitors/{key}` shows what was decided (S3's key is `hl-0003:<watched control>`) |
 
 ## Underwriting desk
 

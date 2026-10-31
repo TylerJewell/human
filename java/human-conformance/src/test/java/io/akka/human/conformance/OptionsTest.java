@@ -28,6 +28,12 @@ class OptionsTest {
   }
 
   @Test
+  void allowResetIsOffUnlessGiven() {
+    assertFalse(Options.parse(new String[] {"--url", "http://localhost:9164"}).allowReset());
+    assertTrue(Options.parse(new String[] {"--url", "http://localhost:9164", "--allow-reset"}).allowReset());
+  }
+
+  @Test
   void refusesAnUnknownPatternAMissingUrlAndAMissingValue() {
     assertThrows(IllegalArgumentException.class,
         () -> Options.parse(new String[] {"--url", "http://x", "--pattern", "approval"}));

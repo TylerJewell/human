@@ -12,7 +12,7 @@ import java.util.List;
 public final class EligibilityAssessor {
 
   public static final String AGENT = "eligibility-assessor";
-  /** The capability the halt of custom-5a1e00000006 stops. */
+  /** The capability the halt of hl-0006 stops. */
   public static final String CAPABILITY = "eligibility-assessment";
 
   static final double ANNUAL_RATE = 0.06;

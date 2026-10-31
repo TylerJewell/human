@@ -30,9 +30,9 @@ public final class Monitors {
 
   /** The apply handler every monitor's event resumes; its id is the monitor's key. */
   public static final String HANDLER = "monitor";
-  public static final String DRIFT = "custom-5a1e00000002";
-  public static final String RUSHED = "custom-5a1e00000003";
-  public static final String BLOCKS = "custom-5a1e00000004";
+  public static final String DRIFT = "hl-0002";
+  public static final String RUSHED = "hl-0003";
+  public static final String BLOCKS = "hl-0004";
 
   /** @param monitor the key of the monitor's {@link MonitorEntity}; S3 keeps one per watched control */
   public record Reading(String monitor, String control, double value, boolean fires, String eventId) {}

@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 public final class ApplyHandlers {
 
   /** The control whose halt a HALT on referral drift proposes. */
-  public static final String HALT_CONTROL = "custom-5a1e00000006";
+  public static final String HALT_CONTROL = "hl-0006";
   public static final String TEMPLATE = "template";
   public static final String WRITER_MODEL = "notice-writer-model";
 

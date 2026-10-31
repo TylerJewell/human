@@ -6,11 +6,11 @@ import type { HumanEvent, HumanEventRow } from "@akka-human/kit";
 // React so it can be tested on its own.
 
 /** Referred applications are decided by an underwriter. */
-export const UNDERWRITING = "custom-5a1e00000009";
+export const UNDERWRITING = "hl-0009";
 /** Held adverse-action notices are released by a reviewer. */
-export const HELD_NOTICE = "custom-5a1e00000008";
+export const HELD_NOTICE = "hl-0008";
 /** Declined applicants can contest the decision. */
-export const CONTEST = "custom-5a1e00000010";
+export const CONTEST = "hl-0010";
 
 export const DESK_CONTROLS = [UNDERWRITING, HELD_NOTICE, CONTEST] as const;
 

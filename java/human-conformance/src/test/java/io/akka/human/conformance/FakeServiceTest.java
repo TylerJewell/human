@@ -32,6 +32,8 @@ class FakeServiceTest {
   private String url;
   private boolean devRoutes = true;
   private Duration offset = Duration.ZERO;
+  private boolean offsetWasMoved;
+  private final AtomicInteger resets = new AtomicInteger();
   private final AtomicInteger pendingReads = new AtomicInteger();
 
   @BeforeEach
@@ -57,11 +59,15 @@ class FakeServiceTest {
       case "/oversight/registry" -> json(exchange, 200,
           "{\"overseers\":[{\"subject\":\"amy@x\",\"roles\":[\"owner\"],\"qualified\":true}]}");
       case "/oversight/controls" -> json(exchange, 200, "{\"controls\":[]}");
-      case "/oversight/dev/reset" -> json(exchange, 200, "{\"removed\":0}");
+      case "/oversight/dev/reset" -> {
+        resets.incrementAndGet();
+        json(exchange, 200, "{\"removed\":0}");
+      }
       case "/oversight/dev/clock" -> {
         JsonNode request = Json.MAPPER.readTree(body);
         if (request.path("reset").asBoolean(false)) offset = Duration.ZERO;
         if (request.has("advance")) offset = offset.plus(Duration.parse(request.path("advance").asText()));
+        if (!offset.isZero()) offsetWasMoved = true;
         json(exchange, 200, "{\"now\":\"" + Instant.now().plus(offset) + "\",\"offset\":\"" + offset + "\"}");
       }
       case "/oversight/events" -> {
@@ -105,7 +111,8 @@ class FakeServiceTest {
     Path report = dir.resolve("report.json");
     ByteArrayOutputStream console = new ByteArrayOutputStream();
 
-    int exit = main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url, "--report", report.toString());
+    int exit = main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url, "--allow-reset", "--report",
+        report.toString());
 
     String printed = console.toString(StandardCharsets.UTF_8);
     assertEquals(0, exit, printed);
@@ -116,11 +123,50 @@ class FakeServiceTest {
   }
 
   @Test
+  void aRunLeavesTheClockAtRealTimeAndResetsTheServiceOnceMore() {
+    ByteArrayOutputStream console = new ByteArrayOutputStream();
+
+    int exit = main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url, "--allow-reset");
+
+    assertEquals(0, exit, console.toString(StandardCharsets.UTF_8));
+    assertTrue(offsetWasMoved, "the dev-clock scenario moves the clock");
+    assertEquals(Duration.ZERO, offset);
+    assertTrue(console.toString(StandardCharsets.UTF_8).contains("cleanup"));
+    assertTrue(resets.get() >= 1);
+  }
+
+  @Test
+  void withoutAllowResetTheRunRefusesAndListsTheServiceItWouldReset() {
+    ByteArrayOutputStream console = new ByteArrayOutputStream();
+
+    int exit = main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url);
+
+    String printed = console.toString(StandardCharsets.UTF_8);
+    assertEquals(2, exit);
+    assertTrue(printed.contains("It would reset:") && printed.contains(url), printed);
+    assertTrue(printed.contains("--allow-reset"), printed);
+    assertEquals(0, resets.get(), "nothing was called on the service");
+    assertEquals(Duration.ZERO, offset);
+  }
+
+  @Test
+  void withAllowResetTheRunWarnsBeforeItStartsAndNamesTheService() {
+    ByteArrayOutputStream console = new ByteArrayOutputStream();
+
+    main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url, "--allow-reset");
+
+    String printed = console.toString(StandardCharsets.UTF_8);
+    int warning = printed.indexOf("WARNING");
+    assertTrue(warning >= 0 && printed.indexOf(url) >= 0, printed);
+    assertTrue(warning < printed.indexOf("human-conformance against"), "the warning comes before the run is announced");
+  }
+
+  @Test
   void devRoutesOffFailsTheRunAtTheServiceInfo() {
     devRoutes = false;
     ByteArrayOutputStream console = new ByteArrayOutputStream();
 
-    int exit = main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url);
+    int exit = main(new PrintStream(console, true, StandardCharsets.UTF_8), "--url", url, "--allow-reset");
 
     assertEquals(1, exit);
     assertTrue(console.toString(StandardCharsets.UTF_8).contains("dev routes are on"));

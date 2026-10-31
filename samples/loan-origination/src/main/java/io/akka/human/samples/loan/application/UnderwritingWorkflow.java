@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Underwriting of one application once its documents are in: the credit file and affordability, the
  * eligibility assessor's recommendation, and the rule that approves only low-risk, in-policy cases
- * alone. Every other case waits for an underwriter (custom-5a1e00000009), and for a senior
+ * alone. Every other case waits for an underwriter (hl-0009), and for a senior
  * underwriter once the standard queue's deadline passes. While a halt stops the eligibility
  * assessment, the assessor is not asked and every case goes to an underwriter. The workflow id is the
  * application id.
@@ -30,10 +30,10 @@ import java.util.List;
 public class UnderwritingWorkflow extends Workflow<UnderwritingWorkflow.Underwriting> {
 
   public static final String RESUMER = "underwriting";
-  public static final String CONTROL = "custom-5a1e00000009";
+  public static final String CONTROL = "hl-0009";
   public static final String AUTOMATIC = "rule:automatic-approval";
   public static final String HALTED = "AUTOMATED_ASSESSMENT_HALTED";
-  /** custom-5a1e00000009 has 2 days at standard review, then 3 at senior review. */
+  /** hl-0009 has 2 days at standard review, then 3 at senior review. */
   static final Duration BACKSTOP = Duration.ofDays(6);
 
   /** {@code status}: ASSESSING, AWAITING_REVIEW, DECIDED or NO_ANSWER. */

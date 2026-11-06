@@ -1,0 +1,701 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://akka.io/schemas/policy-platform/verdict/v1"
+title: "Verdict"
+description: |
+  A verdict is a versioned, environment-scoped claim: this control, at this version, in this
+  boundary, reached this conclusion. It is what one control concluded when it ran.
+
+  One schema for every place a verdict is recorded. A verdict written by a project's tests on a
+  developer's machine, a verdict loaded from a CI run, and a verdict the running platform records
+  validate against this same schema and carry the same fields. Only `environment` and `source`
+  say where it came from. Verdicts are written as newline-delimited JSON, one record per line
+  (locally under `.akka/verdicts/<environment>/`).
+
+  Field names are camelCase, as in the JSON form of the platform ledger's protobuf records
+  (kalix.backoffice.ledger.v1). The verdict is not the ledger record: a verdict is derived from a
+  ledger record that carries a control id, and specs/platform/verdicts.md gives the field-by-field
+  mapping and what the ledger does not yet record. A platform that emits verdicts itself writes
+  this schema directly.
+
+type: object
+additionalProperties: false
+required:
+  - schemaVersion
+  - verdictId
+  - control
+  - mechanism
+  - environment
+  - observedAt
+  - conclusion
+  - reason
+  - subject
+  - source
+  - integrity
+  - detail
+
+properties:
+  schemaVersion: { const: 1 }
+
+  verdictId:
+    type: string
+    minLength: 1
+    description: Stable. A verdict is never rewritten; a correction is a new verdict.
+
+  control:
+    description: Which control, in which version of the contract.
+    type: object
+    additionalProperties: false
+    required: [rowId, bundle]
+    properties:
+      rowId:
+        type: string
+        pattern: "^[a-z0-9-]{8,64}$"
+        description: The contract row's row_id (controls.schema.yaml). The ledger's control_id.
+      corpusRef:
+        type: string
+        description: The corpus control the row implements, when it has one.
+      bundle:
+        oneOf:
+          - type: object
+            description: |
+              A signed contract. Verdicts that count as evidence name one. The digest, not the
+              number, is identity (ADR-015 section 8).
+            additionalProperties: false
+            required: [systemId, govVersion, manifestDigest, trust]
+            properties:
+              systemId: { type: string, minLength: 1 }
+              govVersion: { type: integer, minimum: 1 }
+              manifestDigest: { $ref: "#/$defs/digest" }
+              trust:
+                enum: [identity, local]
+                description: "identity: signed in the hosted service with the key of a logged-in person, the only official contract. local: signed on a developer machine for testing; verdicts against it are never evidence."
+          - type: object
+            description: |
+              A draft, for a check run before anything is signed. A verdict against a draft is
+              never evidence for a signed contract.
+            additionalProperties: false
+            required: [systemId, draftRevision]
+            properties:
+              systemId: { type: string, minLength: 1 }
+              draftRevision: { type: integer, minimum: 0 }
+
+  mechanism:
+    enum: [guardrail, human, sanitizer, eval, gate]
+    description: The control's mechanism (ADR-017). A red-team campaign produces eval verdicts.
+
+  environment:
+    enum: [documents, pre-production, production]
+    description: |
+      documents: gates over documents and attestations, and human-only controls.
+      pre-production: evals, red-team runs, tests, CI, and a service run on a developer's machine.
+      production: the running platform.
+
+  observedAt:
+    type: string
+    format: date-time
+    description: When the control ran.
+  recordedAt:
+    type: string
+    format: date-time
+    description: When the verdict entered the store. Absent when it is the same as observedAt.
+
+  conclusion:
+    enum: [upheld, breached, varied, inconclusive, error]
+    description: |
+      One normalised outcome so verdicts of every mechanism sit in one table. specs/platform/verdicts.md
+      gives the mapping from each mechanism's own outcome.
+
+  outcome:
+    type: string
+    description: The mechanism's own word for what happened (allow, deny, passed, approved, fail ...).
+
+  reason:
+    type: object
+    additionalProperties: false
+    required: [text]
+    properties:
+      code: { type: string }
+      text: { type: string, minLength: 1 }
+
+  subject:
+    description: What the control ran against. Fields are those that apply.
+    type: object
+    additionalProperties: false
+    properties:
+      systemId: { type: string }
+      service: { type: string }
+      agent: { type: string, description: The agent component id. }
+      session: { type: string }
+      traceId: { type: string }
+      spanId: { type: string }
+      interactionId: { type: string }
+      flowId: { type: string }
+
+  evidence:
+    type: array
+    description: |
+      What backs the verdict. A reader opens these rather than trusting the conclusion.
+    items:
+      type: object
+      additionalProperties: false
+      required: [kind, ref]
+      properties:
+        kind:
+          enum: [trace, ledger-record, run-file, document, attestation, test-result, pipeline-run, record]
+        ref: { type: string, minLength: 1 }
+        digest: { $ref: "#/$defs/digest" }
+        facts:
+          type: object
+          description: What the source recorded about it (a document's date and approver, a trace's duration ...).
+
+  source:
+    description: |
+      How the verdict arrived. runtime: recorded automatically by a running service, locally in
+      dev mode or on the platform. import: loaded from a file the project holds (a run, a CI
+      result). simulated: written by a generator in place of a source that cannot record yet; the
+      evidence it names may not exist. rehearsal: a decision made while practising a flow;
+      never evidence.
+    type: object
+    additionalProperties: false
+    required: [kind]
+    properties:
+      kind: { enum: [runtime, import, simulated, rehearsal] }
+      componentId: { type: string }
+      spiffeId: { type: string }
+      ledger:
+        type: object
+        additionalProperties: false
+        required: [recordId, recordType]
+        description: The platform ledger record this verdict was taken from, when there is one.
+        properties:
+          recordId: { type: string, minLength: 1 }
+          recordType:
+            enum: [evaluation, guardrail-decision, sanitization, interaction, activity, tool-call, classification, control-configuration]
+      file: { type: string, description: For import, the file loaded. }
+      importedBy: { type: string }
+      importedAt: { type: string, format: date-time }
+      generator: { type: string, description: For simulated, what wrote it. }
+      by: { type: string, description: For rehearsal, who practised. }
+    allOf:
+      - if: { properties: { kind: { const: import } } }
+        then: { required: [file] }
+      - if: { properties: { kind: { const: simulated } } }
+        then: { required: [generator] }
+      - if: { properties: { kind: { const: rehearsal } } }
+        then: { required: [by] }
+
+  integrity:
+    type: object
+    additionalProperties: false
+    required: [digest]
+    properties:
+      digest:
+        allOf: [{ $ref: "#/$defs/digest" }]
+        description: |
+          sha256 of the RFC 8785 canonical JSON of this record without `integrity`. A record that
+          is edited no longer matches.
+      signature:
+        type: string
+        description: Where the source signs its records, a detached JWS over the same bytes.
+
+  detail:
+    description: The mechanism's own block; the one that matches `mechanism` is required.
+    type: object
+
+allOf:
+  - if: { properties: { mechanism: { const: guardrail } }, required: [mechanism] }
+    then: { properties: { detail: { $ref: "#/$defs/guardrail-detail" } } }
+  - if: { properties: { mechanism: { const: sanitizer } }, required: [mechanism] }
+    then: { properties: { detail: { $ref: "#/$defs/sanitizer-detail" } } }
+  - if: { properties: { mechanism: { const: eval } }, required: [mechanism] }
+    then: { properties: { detail: { $ref: "#/$defs/eval-detail" } } }
+  - if: { properties: { mechanism: { const: human } }, required: [mechanism] }
+    then: { properties: { detail: { $ref: "#/$defs/human-detail" } } }
+  - if: { properties: { mechanism: { const: gate } }, required: [mechanism] }
+    then: { properties: { detail: { $ref: "#/$defs/gate-detail" } } }
+  # A rehearsal is never recorded in production.
+  - if: { properties: { source: { properties: { kind: { const: rehearsal } }, required: [kind] } }, required: [source] }
+    then: { properties: { environment: { not: { const: production } } } }
+
+$defs:
+  digest:
+    type: string
+    pattern: "^sha256:[a-f0-9]{64}$"
+
+  human-decision:
+    description: "A decision from registries/human-decisions.yaml, lower-case with hyphens: APPROVE is approve, REQUEST_MORE_INFO is request-more-info."
+    enum:
+      - approve
+      - deny
+      - edit
+      - redirect
+      - replan
+      - escalate
+      - halt
+      - recuse
+      - request-more-info
+      - send-back
+      - decline-system
+      - override
+      - disregard
+      - reverse
+
+  test:
+    description: "A check run as a test: which suite and case, and where it ran."
+    type: object
+    additionalProperties: false
+    properties:
+      suite: { type: string }
+      case: { type: string }
+      input: { type: string }
+      pipeline: { type: string }
+      run: { type: string }
+      commit: { type: string }
+      branch: { type: string }
+
+  error:
+    type: object
+    additionalProperties: false
+    properties:
+      class: { type: string }
+      message: { type: string }
+      failMode: { enum: [fail-closed, fail-open] }
+
+  guardrail-detail:
+    description: |
+      A guardrail decision (ledger GuardrailDecisionDetail). `decision` is the ledger's
+      ALLOW, DENY or FAIL; `hook` is the corpus hook, of which the ledger records three as its
+      boundary (before-llm-call, before-agent-response, before-tool-call).
+    type: object
+    additionalProperties: false
+    required: [guardrail, hook, decision]
+    properties:
+      guardrail:
+        type: object
+        additionalProperties: false
+        required: [name]
+        properties:
+          id: { type: string }
+          name: { type: string, minLength: 1 }
+          version: { type: string }
+          family: { type: string }
+          category: { type: string }
+      hook:
+        enum:
+          - before-agent-invocation
+          - before-agent-response
+          - before-llm-call
+          - after-llm-response
+          - before-tool-call
+          - after-tool-call
+          - on-data-intake
+          - on-endpoint-call
+          - on-definition-accepted
+          - before-state-transition
+      direction: { enum: [input, output] }
+      target: { type: string }
+      decision: { enum: [allow, deny, fail] }
+      expected:
+        enum: [allow, deny]
+        description: In a test, the decision the case expects. A decision that differs breaches the control.
+      reportOnly: { type: boolean, description: The guardrail recorded its decision and did not act on it. }
+      consequence: { enum: [continued, blocked, blocked-fail-closed] }
+      failMode: { enum: [fail-closed, fail-open] }
+      score:
+        type: object
+        additionalProperties: false
+        properties:
+          name: { type: string }
+          value: { type: number }
+          threshold: { type: number }
+      blockedAction:
+        type: object
+        additionalProperties: false
+        properties:
+          type: { type: string }
+          target: { type: string }
+      remediation:
+        type: object
+        additionalProperties: false
+        properties:
+          requiredAction: { type: string }
+          approvalRequired: { type: boolean }
+      tool:
+        type: object
+        additionalProperties: false
+        properties:
+          callId: { type: string }
+          name: { type: string }
+          origin: { enum: [function-tool, remote-mcp] }
+          mcpEndpoint: { type: string }
+      explanation: { type: string }
+      durationMs: { type: number, minimum: 0 }
+      error: { $ref: "#/$defs/error" }
+      test: { $ref: "#/$defs/test" }
+
+  sanitizer-detail:
+    description: A sanitizer acting on traffic, or a test or sweep of one (ledger Sanitization).
+    type: object
+    additionalProperties: false
+    required: [sanitizer]
+    properties:
+      sanitizer:
+        type: object
+        additionalProperties: false
+        required: [name]
+        properties:
+          id: { type: string }
+          name: { type: string, minLength: 1 }
+          version: { type: string }
+      injectionPoint: { type: string }
+      strategy: { type: string }
+      dataClasses:
+        type: array
+        items: { type: string }
+      runs:
+        type: array
+        description: The ledger's SanitizerRun, one per point the sanitizer ran at.
+        items:
+          type: object
+          additionalProperties: false
+          required: [point, texts, maskedTexts]
+          properties:
+            point: { enum: [model-call, tool-result] }
+            texts: { type: integer, minimum: 0 }
+            maskedTexts: { type: integer, minimum: 0 }
+            matches: { type: integer, minimum: 0 }
+      matched:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            class: { type: string }
+            field: { type: string }
+            count: { type: integer, minimum: 0 }
+            detector: { type: string }
+      expected:
+        type: array
+        description: In a test, the data classes the case expects to be masked.
+        items: { type: string }
+      missed:
+        type: array
+        description: In a test, the expected classes that were not masked. A non-empty list breaches the control.
+        items: { type: string }
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          before: { $ref: "#/$defs/payload-ref" }
+          after: { $ref: "#/$defs/payload-ref" }
+      sweep:
+        type: object
+        additionalProperties: false
+        properties:
+          kind: { type: string }
+          selection: { type: string }
+          scanned: { type: integer, minimum: 0 }
+          changed: { type: integer, minimum: 0 }
+      durationMs: { type: number, minimum: 0 }
+      error: { $ref: "#/$defs/error" }
+      test: { $ref: "#/$defs/test" }
+
+  payload-ref:
+    type: object
+    additionalProperties: false
+    properties:
+      ref: { type: string }
+      bytes: { type: integer, minimum: 0 }
+
+  eval-detail:
+    description: |
+      An evaluation (ledger Evaluation). `result.kind` is the ledger's EvaluationOutcome:
+      a verdict (passed or not), inconclusive, or failure.
+    type: object
+    additionalProperties: false
+    required: [evaluator, trigger, result]
+    properties:
+      evaluator:
+        type: object
+        additionalProperties: false
+        required: [id]
+        properties:
+          id: { type: string, minLength: 1 }
+          version: { type: string }
+          sourceKind: { enum: [code, llm-judge, external, human, adversarial] }
+      flavor: { type: string }
+      integrity:
+        type: object
+        additionalProperties: false
+        required: [recordsChecked, problemsFound]
+        description: "For an eval-integrity-watch evaluation: how many evidence records the walk checked and how many were altered, missing or reordered, with the chain head it ended on. problemsFound above zero means the evaluation did not pass."
+        properties:
+          recordsChecked: { type: integer, minimum: 0 }
+          problemsFound: { type: integer, minimum: 0 }
+          chainHead: { type: string }
+      trigger: { enum: [manual, on-interaction, scheduled, event, run] }
+      checkIntent: { type: string }
+      evaluationSubject:
+        type: object
+        additionalProperties: false
+        properties:
+          interactionId: { type: string }
+          agentComponentId: { type: string }
+      result:
+        type: object
+        additionalProperties: false
+        required: [kind]
+        properties:
+          kind: { enum: [verdict, inconclusive, failure] }
+          passed: { type: boolean }
+          score: { type: number }
+          label: { type: string }
+          explanation: { type: string }
+          reason: { type: string }
+          confidence: { type: number, minimum: 0, maximum: 1 }
+          attributes:
+            type: object
+            additionalProperties: { type: string }
+        allOf:
+          - if: { properties: { kind: { const: verdict } } }
+            then: { required: [passed] }
+      threshold:
+        type: object
+        additionalProperties: false
+        properties:
+          value: { type: number }
+          direction: { enum: [at-least, at-most] }
+      window:
+        type: object
+        additionalProperties: false
+        properties:
+          id: { type: string }
+          shape: { type: string }
+          start: { type: string, format: date-time }
+          end: { type: string, format: date-time }
+          sampleSize: { type: integer, minimum: 0 }
+      run:
+        type: object
+        description: For an evaluation read from a run file (an eval run or a red-team campaign).
+        properties:
+          kind: { type: string }
+          file: { type: string }
+          reference: { type: string }
+          startedAt: { type: string, format: date-time }
+          durationMs: { type: number, minimum: 0 }
+          repeats: { type: integer, minimum: 1 }
+          passedRepeats:
+            type: integer
+            minimum: 0
+            description: How many of the repeats passed. Some but not all makes the conclusion varied.
+          lowerBound: { type: number }
+      error: { $ref: "#/$defs/error" }
+
+  human-detail:
+    description: |
+      A human control: what the person did, in time, with authority. A human verdict judges the
+      oversight, not the action under review: see specs/platform/verdicts.md.
+    type: object
+    additionalProperties: false
+    required: [flavor, mode, status]
+    properties:
+      status:
+        enum: [decided, abandoned, timed-out, killed, not-applied]
+        description: "What became of the item. decided: a reviewer submitted a decision. abandoned: presented or claimed and left. timed-out: the SLA ran out, see timeout. killed: cancelled by an operator. not-applied: decided and not carried out."
+      authorized:
+        type: boolean
+        description: "Whether the reviewer held the authority the control requires (roles, attestations). Judged by the producer, which has the contract row."
+      twoPerson:
+        type: object
+        additionalProperties: false
+        required: [required, satisfied]
+        description: "Where the control requires two people."
+        properties:
+          required: { type: boolean }
+          satisfied: { type: boolean }
+      rationaleRequired:
+        type: boolean
+        description: "From the control's human_config. A decision without a rationale then breaches the control."
+      flavor:
+        enum:
+          - human-domain-decision
+          - human-system-authorization
+          - human-monitoring
+          - human-feedback
+          - human-halt
+      mode: { enum: [hitl, hotl] }
+      pattern:
+        description: "The control's human_config.pattern (registries/human-patterns.yaml)."
+        enum:
+          - action-approval
+          - decision-review
+          - change-authorization
+          - exception
+          - match-adjudication
+          - outcome-reconciliation
+          - contest-appeal
+          - override
+          - flag-feedback
+          - triage
+          - hand-off
+          - halt-restart
+          - attestation
+          - oversight-quality
+      workItem:
+        type: object
+        additionalProperties: false
+        required: [id]
+        properties:
+          id: { type: string }
+          queue: { type: string }
+      reviewer:
+        type: object
+        additionalProperties: false
+        required: [subject]
+        properties:
+          subject: { type: string }
+          roles:
+            type: array
+            items: { type: string }
+          identityProvider: { type: string }
+      presentedAt: { type: string, format: date-time }
+      claimedAt: { type: string, format: date-time }
+      submittedAt: { type: string, format: date-time }
+      reviewSeconds: { type: number, minimum: 0 }
+      minimumSeconds: { type: number, minimum: 0 }
+      belowMinimum: { type: boolean }
+      action:
+        $ref: "#/$defs/human-decision"
+        description: "The decision that settled the item."
+      rubric:
+        type: array
+        items:
+          type: object
+          additionalProperties: false
+          required: [criterion, score]
+          properties:
+            criterion: { type: string }
+            score: { type: number }
+            of: { type: number }
+      edits:
+        type: object
+        additionalProperties: false
+        properties:
+          count: { type: integer, minimum: 0 }
+          summary: { type: string }
+      rationale: { type: string }
+      votes:
+        type: array
+        description: "Each reviewer's vote, in the order cast, where the control takes more than one decision (two-person, N of M, consensus). `action` above is the decision the votes settled."
+        items:
+          type: object
+          additionalProperties: false
+          required: [subject, action, submittedAt]
+          properties:
+            subject: { type: string }
+            roles:
+              type: array
+              items: { type: string }
+            action: { $ref: "#/$defs/human-decision" }
+            submittedAt: { type: string, format: date-time }
+            reviewSeconds: { type: number, minimum: 0 }
+      standing:
+        type: object
+        additionalProperties: false
+        required: [decisionId, mode, grantedBy, grantedAt]
+        description: "Set when a standing decision settled the item and no reviewer looked at it. The minimum review time and the two-person rule were applied when the standing decision was granted; `authorized` is the grantor's authority."
+        properties:
+          decisionId: { type: string }
+          mode: { enum: [approve-for-session, approve-for-pattern, deny-for-pattern] }
+          grantedBy: { type: string }
+          grantedAt: { type: string, format: date-time }
+      sla:
+        type: object
+        additionalProperties: false
+        properties:
+          target: { type: string, description: An ISO 8601 duration. }
+          outcome: { enum: [met, missed, escalated] }
+      timeout:
+        type: object
+        additionalProperties: false
+        description: Set when the item timed out.
+        properties:
+          behaviour: { enum: [fail-open, fail-closed, escalate] }
+          defaultApplied: { type: string }
+          exhausted:
+            type: boolean
+            description: "With `escalate`: the escalation chain had no further queue, so nobody was asked to decide after this timeout."
+      signals:
+        type: object
+        description: Effectiveness signals (override rate, rubber-stamp rate ...).
+
+  gate-detail:
+    description: |
+      A gate: a check of a document or an artifact that can block a build, a pull request, a
+      deploy, a promotion or a release. `outcome` is the gate's own result.
+    type: object
+    additionalProperties: false
+    required: [documentKind, blocks, outcome]
+    properties:
+      flavor: { type: string }
+      documentKind: { type: string, minLength: 1 }
+      artifact:
+        type: object
+        additionalProperties: false
+        required: [path]
+        properties:
+          path: { type: string }
+          digest: { $ref: "#/$defs/digest" }
+          modifiedAt: { type: string, format: date-time }
+          approvedBy: { type: string }
+          version: { type: string }
+      checkIntent: { type: string }
+      freshness:
+        type: object
+        additionalProperties: false
+        required: [window, ageSeconds]
+        properties:
+          window: { type: string, description: The control's freshness window, an ISO 8601 duration. }
+          ageSeconds: { type: integer, minimum: 0 }
+      failsWhen:
+        type: object
+        additionalProperties: false
+        description: The control's fails_when and what it evaluated to.
+        required: [holds]
+        properties:
+          condition: { type: string }
+          holds: { type: boolean }
+      findings:
+        type: array
+        description: The conditions found to hold.
+        items: { type: string }
+      blocks:
+        enum: [build, pull-request, deploy, promotion, release, readiness]
+      blocked: { type: boolean }
+      runsAt:
+        enum: [pre-release, at-deployment]
+        description: "Which of the control's gate_config.runs_at modes this run was. A gate that lists both produces verdicts of either kind."
+      release:
+        type: object
+        additionalProperties: false
+        description: For a gate that runs once per release, the release it ran for.
+        properties:
+          digest: { $ref: "#/$defs/digest" }
+      outcome: { enum: [pass, fail, error, stale] }
+      pipeline:
+        type: object
+        additionalProperties: false
+        properties:
+          pipeline: { type: string }
+          run: { type: string }
+          commit: { type: string }
+          branch: { type: string }
+          step: { type: string }
+      tests:
+        type: object
+        additionalProperties: false
+        properties:
+          total: { type: integer, minimum: 0 }
+          failed: { type: integer, minimum: 0 }
+          skipped: { type: integer, minimum: 0 }
+      error: { $ref: "#/$defs/error" }

@@ -27,6 +27,7 @@ import io.akka.human.engine.Json;
 import io.akka.human.engine.Refusal;
 import io.akka.human.engine.Rules;
 import io.akka.human.engine.StandingDecision;
+import io.akka.human.engine.Verdicts;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -96,7 +97,8 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       int offset = Math.max(0, q.getInteger("offset").orElse(0));
 
       // These depend on the service's clock at the moment of the read, or are not equalities, so the
-      // view cannot hold them as columns: the matching rows are read whole, filtered and paged here.
+      // view cannot hold them as columns. The view cannot order what it selects through the keys
+      // either, so the matching rows are read whole, filtered, ordered and paged here.
       var inMemory = new ArrayList<Predicate<HumanEvent>>();
       q.getString("holder").ifPresent(h -> inMemory.add(e -> e.holderAt(now) != null && e.holderAt(now).subject().equals(h)));
       q.getString("sla").ifPresent(s -> inMemory.add(e -> e.pending() && e.slaState(now).equals(s)));
@@ -112,23 +114,11 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       }
 
       var blocks = blocks();
-      if (!inMemory.isEmpty()) {
-        var matching = HumanQueries.matching(client, materializer, keys, since, Instant.EPOCH).stream()
-            .filter(e -> inMemory.stream().allMatch(f -> f.test(e)))
-            .sorted(urgency()).toList();
-        var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) shown(e, now, Blocks.blocking(e, blocks))).toList();
-        return ok(map("events", page, "total", matching.size()));
-      }
-      // Pending events come first, then closed ones, so a page can run across the two.
-      var pending = "resolved".equals(state) ? new HumanQueries.Paged(List.of(), 0)
-          : HumanQueries.pendingPage(client, keys, since, offset, limit);
-      var closed = "pending".equals(state) ? new HumanQueries.Paged(List.of(), 0)
-          : HumanQueries.closedPage(client, keys, since, Math.max(0, offset - (int) pending.total()),
-              Math.max(1, limit - pending.rows().size()));
-      var rows = new ArrayList<>(pending.rows());
-      if (rows.size() < limit) rows.addAll(closed.rows());
-      var page = rows.stream().map(r -> (Object) shown(r.event(), now, Blocks.blocking(r.event(), blocks))).toList();
-      return ok(map("events", page, "total", pending.total() + closed.total()));
+      var matching = HumanQueries.matching(client, materializer, keys, since, Instant.EPOCH).stream()
+          .filter(e -> inMemory.stream().allMatch(f -> f.test(e)))
+          .sorted(urgency()).toList();
+      var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) shown(e, now, Blocks.blocking(e, blocks))).toList();
+      return ok(map("events", page, "total", matching.size()));
     });
   }
 
@@ -173,11 +163,14 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       var key = q.getString("eventId").map(id -> "event:" + id).orElse(HumanEventsView.ANY);
       int limit = Math.max(1, Math.min(MAX_LIMIT, q.getInteger("limit").orElse(DEFAULT_LIMIT)));
       int offset = Math.max(0, q.getInteger("offset").orElse(0));
-      var page = HumanQueries.verdictPage(client, key, since, until, offset, limit);
-      var verdicts = page.rows().stream().map(r -> (Object) Json.verdict(r.event())).toList();
+      // Newest first, equal times in verdict id order: the event id's order.
+      var all = HumanQueries.withVerdicts(client, materializer, key, since, until).stream()
+          .sorted(Comparator.comparing((HumanEvent e) -> Verdicts.of(e).at()).reversed().thenComparing(HumanEvent::id))
+          .toList();
+      var verdicts = all.stream().skip(offset).limit(limit).map(e -> (Object) Json.verdict(e)).toList();
       int next = offset + verdicts.size();
-      return ok(map("verdicts", verdicts, "total", page.total(), "hasMore", next < page.total(),
-          "nextOffset", next < page.total() ? next : null));
+      return ok(map("verdicts", verdicts, "total", all.size(), "hasMore", next < all.size(),
+          "nextOffset", next < all.size() ? next : null));
     });
   }
 
@@ -487,15 +480,16 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
 
   /**
    * The earliest due first, which puts the overdue first, then the oldest; closed events after, newest
-   * first. The view orders pending events the same way, by the same columns.
+   * first. Equal times in event id order, so a page holds the same events however often it is read.
    */
   private static Comparator<HumanEvent> urgency() {
-    return (a, b) -> {
+    Comparator<HumanEvent> order = (a, b) -> {
       if (a.pending() != b.pending()) return a.pending() ? -1 : 1;
       if (!a.pending()) return Comparator.nullsLast(Comparator.<Instant>reverseOrder()).compare(a.closedAt(), b.closedAt());
       int left = Comparator.nullsLast(Comparator.<Instant>naturalOrder()).compare(a.dueAt(), b.dueAt());
       return left != 0 ? left : a.detectedAt().compareTo(b.detectedAt());
     };
+    return order.thenComparing(HumanEvent::id);
   }
 
   private HttpResponse read(String route, java.util.function.Supplier<HttpResponse> body) {

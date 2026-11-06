@@ -363,6 +363,9 @@ public class OversightIntegrationTest extends TestKitSupport {
       assertEquals(200, post("/oversight/events/" + raised.eventId() + "/claim", Map.of("reviewer", TYLER)).status());
       TestPlugins.CLOCK.advance(Duration.ofSeconds(11));
       assertEquals(200, post("/oversight/events/" + raised.eventId() + "/decision", decision(TYLER, "APPROVE", "Regular.")).status());
+      // A verdict's time is when its outcome was applied, so the clock moves on only after that.
+      Awaitility.await().atMost(WAIT).until(() ->
+          "APPLIED".equals(get("/oversight/events/" + raised.eventId()).body().get("state").asText()));
       ids.add(raised.eventId());
     }
     Awaitility.await().atMost(WAIT).until(() -> ids.stream()

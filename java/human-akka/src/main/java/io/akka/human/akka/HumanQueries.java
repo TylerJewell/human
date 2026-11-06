@@ -15,9 +15,6 @@ public final class HumanQueries {
 
   private HumanQueries() {}
 
-  /** A page of rows and the count of every row the query matches. */
-  public record Paged(List<HumanEventsView.Row> rows, long total) {}
-
   public static List<HumanEvent> all(ComponentClient client, Materializer materializer) {
     return client.forView().stream(HumanEventsView::all).source().runWith(Sink.seq(), materializer)
         .toCompletableFuture().join().stream().map(HumanEventsView.Row::event).toList();
@@ -34,32 +31,16 @@ public final class HumanQueries {
    */
   public static List<HumanEvent> matching(ComponentClient client, Materializer materializer, List<String> keys,
       Instant detectedSince, Instant relevantSince) {
-    var filter = HumanEventsView.Filter.of(keys, detectedSince, relevantSince, 0, 0);
+    var filter = HumanEventsView.Filter.of(keys, detectedSince, relevantSince);
     return client.forView().stream(HumanEventsView::matching).source(filter).runWith(Sink.seq(), materializer)
         .toCompletableFuture().join().stream().map(HumanEventsView.Row::event).toList();
   }
 
-  /** The matching pending events, most urgent first. */
-  public static Paged pendingPage(ComponentClient client, List<String> keys, Instant detectedSince, int offset,
-      int limit) {
-    var page = client.forView().method(HumanEventsView::pendingPage)
-        .invoke(HumanEventsView.Filter.of(keys, detectedSince, Instant.EPOCH, offset, limit));
-    return new Paged(page.entries(), page.total());
-  }
-
-  /** The matching closed events, latest closed first. */
-  public static Paged closedPage(ComponentClient client, List<String> keys, Instant detectedSince, int offset,
-      int limit) {
-    var page = client.forView().method(HumanEventsView::closedPage)
-        .invoke(HumanEventsView.Filter.of(keys, detectedSince, Instant.EPOCH, offset, limit));
-    return new Paged(page.entries(), page.total());
-  }
-
-  /** The events whose verdict falls in {@code since}..{@code until}, latest first. */
-  public static Paged verdictPage(ComponentClient client, String key, Instant since, Instant until, int offset,
-      int limit) {
-    var page = client.forView().method(HumanEventsView::verdictPage)
-        .invoke(new HumanEventsView.VerdictFilter(key, since, until, offset, limit));
-    return new Paged(page.entries(), page.total());
+  /** Every event holding {@code key} whose verdict was reached in {@code since}..{@code until}, in no order. */
+  public static List<HumanEvent> withVerdicts(ComponentClient client, Materializer materializer, String key,
+      Instant since, Instant until) {
+    var filter = new HumanEventsView.VerdictFilter(key, since, until);
+    return client.forView().stream(HumanEventsView::verdicts).source(filter).runWith(Sink.seq(), materializer)
+        .toCompletableFuture().join().stream().map(HumanEventsView.Row::event).toList();
   }
 }

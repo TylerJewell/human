@@ -23,7 +23,8 @@ import java.util.Optional;
  * <p>A row also carries the columns the queries filter and order on. A view query cannot take an
  * optional condition, so the equality filters (pattern, mode, control and the rest) are one array,
  * {@code keys}, and a query names a fixed number of keys the row must hold; an unused slot asks for
- * {@link #ANY}, which every row holds.
+ * {@link #ANY}, which every row holds. The runtime cannot order the rows a query selects through
+ * that array, so the queries answer the matching rows unordered and the caller orders and pages them.
  */
 @Component(id = "human-events")
 public class HumanEventsView extends View {
@@ -40,13 +41,12 @@ public class HumanEventsView extends View {
    * @param keys {@link #ANY}, then {@code pending:}, {@code state:}, {@code pattern:}, {@code mode:},
    *     {@code flavor:}, {@code kind:}, {@code control:}, {@code queue:}, {@code shadow:}, {@code halt:} and
    *     {@code event:} each followed by the event's value
-   * @param dueAt when the event's window ends; empty when it has none
    * @param relevantFrom {@link #OPEN} while pending, else when it closed: a windowed read wants the
    *     rows from its window's start on
    * @param verdictAt when the event's verdict was reached; empty while it has none
    */
   public record Row(String id, boolean pending, String document, List<String> keys, Instant detectedAt,
-      Optional<Instant> dueAt, Optional<Instant> closedAt, Instant relevantFrom, Optional<Instant> verdictAt) {
+      Instant relevantFrom, Optional<Instant> verdictAt) {
 
     public HumanEvent event() {
       try {
@@ -63,8 +63,7 @@ public class HumanEventsView extends View {
             "pending:" + e.pending(), "state:" + e.state().name(), "pattern:" + e.settings().pattern().id(),
             "mode:" + e.settings().mode(), "flavor:" + e.settings().flavor(), "kind:" + e.subject().kind().id(),
             "control:" + e.settings().control().rowId(), "queue:" + e.queue(), "shadow:" + e.shadow(),
-            "event:" + e.id(), "halt:" + e.settings().haltRestart()), e.detectedAt(), Optional.ofNullable(e.dueAt()),
-            Optional.ofNullable(e.closedAt()),
+            "event:" + e.id(), "halt:" + e.settings().haltRestart()), e.detectedAt(),
             e.pending() ? OPEN : e.closedAt() != null ? e.closedAt() : e.detectedAt(),
             Optional.ofNullable(verdict).map(Verdicts.Verdict::at));
       } catch (JsonProcessingException ex) {
@@ -82,26 +81,23 @@ public class HumanEventsView extends View {
     }
   }
 
-  /** The keys a query asks of a row, one per slot; the lower bounds on its times; the page. */
+  /** The keys a query asks of a row, one per slot, and the lower bounds on its times. */
   public record Filter(String k1, String k2, String k3, String k4, String k5, String k6, String k7, String k8,
-      Instant detectedSince, Instant relevantSince, int offset, int limit) {
+      Instant detectedSince, Instant relevantSince) {
 
     /** The number of keys a query can name; the slots left over ask for {@link HumanEventsView#ANY}. */
     public static final int SLOTS = 8;
 
-    public static Filter of(List<String> keys, Instant detectedSince, Instant relevantSince, int offset, int limit) {
+    public static Filter of(List<String> keys, Instant detectedSince, Instant relevantSince) {
       if (keys.size() > SLOTS) throw new IllegalArgumentException("a query takes at most " + SLOTS + " keys");
       var k = new String[SLOTS];
       for (int i = 0; i < SLOTS; i++) k[i] = i < keys.size() ? keys.get(i) : ANY;
-      return new Filter(k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7], detectedSince, relevantSince, offset, limit);
+      return new Filter(k[0], k[1], k[2], k[3], k[4], k[5], k[6], k[7], detectedSince, relevantSince);
     }
   }
 
-  /** The rows of one page and the count of every row the query matches. */
-  public record Page(List<Row> entries, long total) {}
-
-  /** One key, the verdict times a row may have (both ends inclusive), and the page. */
-  public record VerdictFilter(String k1, Instant since, Instant until, int offset, int limit) {}
+  /** One key, and the verdict times a row may have, both ends inclusive. */
+  public record VerdictFilter(String k1, Instant since, Instant until) {}
 
   private static final String MATCHING = """
       FROM human_events
@@ -126,29 +122,9 @@ public class HumanEventsView extends View {
     return queryStreamResult();
   }
 
-  /** A page of the matching pending rows, the most urgent first: the earliest due, then the oldest. */
-  @Query("SELECT * AS entries, total_count() AS total " + MATCHING
-      + " AND pending = true ORDER BY dueAt, detectedAt OFFSET :offset LIMIT :limit")
-  public QueryEffect<Page> pendingPage(Filter filter) {
-    return queryResult();
-  }
-
-  /** A page of the matching closed rows, the latest closed first. */
-  @Query("SELECT * AS entries, total_count() AS total " + MATCHING
-      + " AND pending = false ORDER BY closedAt DESC, id OFFSET :offset LIMIT :limit")
-  public QueryEffect<Page> closedPage(Filter filter) {
-    return queryResult();
-  }
-
-  /** A page of the rows whose verdict falls in the range, the latest first. */
-  @Query("""
-      SELECT * AS entries, total_count() AS total
-      FROM human_events
-      WHERE :k1 = ANY(keys) AND verdictAt >= :since AND verdictAt <= :until
-      ORDER BY verdictAt DESC, id
-      OFFSET :offset LIMIT :limit
-      """)
-  public QueryEffect<Page> verdictPage(VerdictFilter filter) {
-    return queryResult();
+  /** Every row holding the key whose verdict falls in the range, in no order. */
+  @Query("SELECT * FROM human_events WHERE :k1 = ANY(keys) AND verdictAt >= :since AND verdictAt <= :until")
+  public QueryStreamEffect<Row> verdicts(VerdictFilter filter) {
+    return queryStreamResult();
   }
 }

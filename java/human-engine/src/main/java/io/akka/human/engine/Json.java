@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 /**
  * The contract's JSON (spec/oversight.schema.json), as ordered maps a JSON writer serialises as they
@@ -94,6 +95,41 @@ public final class Json {
     m.put("simulated", e.simulated());
     m.put("now", str(now));
     return m;
+  }
+
+  /**
+   * The event as a reviewer is shown it when a sanitizer runs before human display: {@code mask} is
+   * applied to every text of the subject's summary and detail, the trigger's reason and values, the
+   * ask, the evidence, the AI recommendation's rationale and the context. Ids, people and settings
+   * are left as they are, so the event can still be routed and decided.
+   */
+  public static Map<String, Object> masked(Map<String, Object> event, UnaryOperator<String> mask) {
+    var m = new LinkedHashMap<>(event);
+    m.computeIfPresent("subject", (k, v) -> maskFields(v, mask, "summary", "detail"));
+    m.computeIfPresent("trigger", (k, v) -> maskFields(v, mask, "reason", "values"));
+    m.computeIfPresent("aiRecommendation", (k, v) -> maskFields(v, mask, "rationale"));
+    for (var key : List.of("ask", "evidence", "context")) m.computeIfPresent(key, (k, v) -> maskAll(v, mask));
+    return m;
+  }
+
+  private static Object maskFields(Object value, UnaryOperator<String> mask, String... fields) {
+    if (!(value instanceof Map<?, ?> map)) return value;
+    var m = new LinkedHashMap<Object, Object>(map);
+    for (var field : fields) m.computeIfPresent(field, (k, v) -> maskAll(v, mask));
+    return m;
+  }
+
+  private static Object maskAll(Object value, UnaryOperator<String> mask) {
+    return switch (value) {
+      case String s -> mask.apply(s);
+      case Map<?, ?> map -> {
+        var m = new LinkedHashMap<Object, Object>();
+        map.forEach((k, v) -> m.put(k, maskAll(v, mask)));
+        yield m;
+      }
+      case List<?> list -> list.stream().map(v -> maskAll(v, mask)).toList();
+      case null, default -> value;
+    };
   }
 
   /** The companion's row: what a queue lists. */

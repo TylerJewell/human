@@ -6,6 +6,7 @@ import akka.http.javadsl.model.HttpEntity;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.MediaTypes;
 import akka.http.javadsl.model.StatusCodes;
+import akka.javasdk.Sanitizer;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
@@ -35,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.function.UnaryOperator;
 import java.util.function.Predicate;
 
 /**
@@ -57,12 +59,16 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
   private final HumanLibrary library;
   private final HumanClient human;
   private final Materializer materializer;
+  /** The service's sanitizers, when a sanitizer control masks what a reviewer is shown; null otherwise. */
+  private final UnaryOperator<String> display;
 
-  public OversightEndpoint(ComponentClient client, HumanPlugins plugins, Materializer materializer) {
+  public OversightEndpoint(ComponentClient client, HumanPlugins plugins, Materializer materializer,
+      Sanitizer sanitizer) {
     this.client = client;
     this.library = HumanLibrary.of(plugins);
     this.human = new HumanClient(client, plugins);
     this.materializer = materializer;
+    this.display = plugins.catalog().masksHumanDisplay() ? sanitizer::sanitize : null;
   }
 
   // ---- reading
@@ -110,7 +116,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
         var matching = HumanQueries.matching(client, materializer, keys, since, Instant.EPOCH).stream()
             .filter(e -> inMemory.stream().allMatch(f -> f.test(e)))
             .sorted(urgency()).toList();
-        var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) Json.event(e, now, Blocks.blocking(e, blocks))).toList();
+        var page = matching.stream().skip(offset).limit(limit).map(e -> (Object) shown(e, now, Blocks.blocking(e, blocks))).toList();
         return ok(map("events", page, "total", matching.size()));
       }
       // Pending events come first, then closed ones, so a page can run across the two.
@@ -121,7 +127,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
               Math.max(1, limit - pending.rows().size()));
       var rows = new ArrayList<>(pending.rows());
       if (rows.size() < limit) rows.addAll(closed.rows());
-      var page = rows.stream().map(r -> (Object) Json.event(r.event(), now, Blocks.blocking(r.event(), blocks))).toList();
+      var page = rows.stream().map(r -> (Object) shown(r.event(), now, Blocks.blocking(r.event(), blocks))).toList();
       return ok(map("events", page, "total", pending.total() + closed.total()));
     });
   }
@@ -535,7 +541,13 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
 
   private HttpResponse answer(HumanEventEntity.Answer answer) {
     if (answer.refused()) return error(answer.refusal());
-    return ok(Json.event(answer.event(), library.now(), Blocks.blocking(answer.event(), blocks())));
+    return ok(shown(answer.event(), library.now(), Blocks.blocking(answer.event(), blocks())));
+  }
+
+  /** The event as a reviewer is shown it: its subject masked when a sanitizer runs before human display. */
+  private Map<String, Object> shown(HumanEvent e, Instant now, String blockedBy) {
+    var json = Json.event(e, now, blockedBy);
+    return display == null ? json : Json.masked(json, display);
   }
 
   private static HttpResponse ok(Object body) {

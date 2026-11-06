@@ -142,6 +142,36 @@ public class OversightIntegrationTest extends TestKitSupport {
     assertConforms("EventsPage", page);
   }
 
+  /** The test catalog's sanitizer control masks account numbers in what a reviewer is shown. */
+  @Test
+  public void aReviewerIsShownTheSubjectMasked() {
+    var human = new HumanClient(componentClient, TestPlugins.PLUGINS);
+    var raised = human.raise(Patterns.actionApproval("Pay ACCT-123456 900 EUR?").control("pt-00001")
+        .proposedBy("agent:payments")
+        .subject(Subject.action("Pay account ACCT-123456", "pay", Map.of("account", "ACCT-123456", "amount", 900)))
+        .build()).toCompletableFuture().join();
+    awaitInView(raised.eventId());
+
+    var shown = get("/oversight/events/" + raised.eventId()).body();
+    assertEquals("Pay account ***********", shown.at("/subject/summary").asText());
+    assertEquals("***********", shown.at("/subject/detail/arguments/account").asText());
+    assertEquals(900, shown.at("/subject/detail/arguments/amount").asInt());
+    assertEquals("Pay *********** 900 EUR?", shown.at("/ask/question").asText());
+    assertEquals("pt-00001", shown.at("/control/rowId").asText());
+    assertConforms("HumanEvent", shown);
+
+    var listed = get("/oversight/events?state=pending&control=pt-00001&limit=200").body().get("events");
+    assertTrue(has(listed, raised.eventId()));
+    for (var e : listed) {
+      if (e.get("id").asText().equals(raised.eventId())) {
+        assertEquals("Pay account ***********", e.at("/subject/summary").asText());
+      }
+    }
+
+    // The service's own record keeps what was raised.
+    assertEquals("Pay account ACCT-123456", human.find(raised.eventId()).event().subject().summary());
+  }
+
   @Test
   public void aTimeoutAppliesTheDefault() {
     var human = new HumanClient(componentClient, TestPlugins.PLUGINS);

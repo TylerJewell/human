@@ -29,3 +29,11 @@ controls:
       affected_calls: all-runtime-operations
       emits_on_exercise: HaltExercised
       emits_on_lift: HaltLifted
+
+  - id: test-0003
+    name: Account numbers are masked in what a reviewer is shown
+    flavor: sanitizer-pii
+    sanitizer_config:
+      data_classes: [financial]
+      injection_point: before-human-display
+      redaction_strategy: mask

@@ -116,6 +116,11 @@ final class TestPlugins {
       public String digest() {
         return fixtures.digest();
       }
+
+      @Override
+      public List<io.akka.human.api.spi.SanitizerControl> sanitizers() {
+        return extra.sanitizers();
+      }
     };
   }
 

@@ -283,6 +283,17 @@ commit) reach the same conclusion from its `detail` as the table above. A servic
 - `integrity.digest` is `sha256:` and the hex SHA-256 of the RFC 8785 canonical JSON of the record
   without `integrity`. Absent fields are left out, never null, and nothing may add a field afterwards.
 
+### What a reviewer is shown
+
+A service whose controls include a sanitizer control with `sanitizer_config.injection_point:
+before-human-display` masks every event it answers with its configured sanitizers
+(`akka.javasdk.sanitization`). It masks the text of the subject's `summary` and `detail`, the
+trigger's `reason` and `values`, the `ask`, the `evidence`, the AI recommendation's `rationale` and
+the `context`. Ids, people, settings and verdicts are left as they are, so the event can still be
+routed and decided. The service's own record keeps the text as raised. Without such a control
+nothing is masked: a reviewer sometimes needs the value itself, such as an account number on a
+payment they approve.
+
 ## Proof records
 
 `GET /oversight/proof` answers the records the service appended, as Verify's audit taxonomy names
@@ -306,6 +317,8 @@ pinned commit. It stands in for the runtime writing oversight records to its own
   `GET /oversight/controls`, and the subject kind and the time applied are on the event.
 - The companion no longer adds `service` to a verdict.
 - `ServiceInfo.contract` is 3.
+- A sanitizer control at `before-human-display` masks what a reviewer is shown (What a reviewer is
+  shown).
 
 ## What changed from version 1
 

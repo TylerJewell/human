@@ -7,7 +7,7 @@
   "pattern": "match-adjudication",
   "patternName": "Match and adjudication",
   "control": {
-    "rowId": "pt-0005",
+    "rowId": "pt-00005",
     "name": "Possible duplicate customers are matched by a data steward",
     "corpusRef": "eu-ai-act.art14.5",
     "revision": 1

@@ -22,7 +22,7 @@ const GROUNDS =
 
 /** The most recent decided notice: the decision an applicant can appeal. */
 function useDecidedNotice() {
-  return useDomain<ResolvedPage>("/oversight/events?control=pt-0002&state=resolved&limit=10", 4000).data?.events.find(
+  return useDomain<ResolvedPage>("/oversight/events?control=pt-00002&state=resolved&limit=10", 4000).data?.events.find(
     (e) => e.outcome?.action && e.state !== "KILLED"
   );
 }
@@ -228,7 +228,7 @@ function OverrideDecide({ run, setRun, event, go }: SceneProps) {
   const me = useMe();
   const actAs = useActAs();
   const controls = useDomain<{ controls: ControlSettings[] }>("/oversight/controls", 60_000).data;
-  const settings = controls?.controls.find((c) => c.control.rowId === "pt-0008");
+  const settings = controls?.controls.find((c) => c.control.rowId === "pt-00008");
   const [action, setAction] = useState("REVERSE");
   const [rationale, setRationale] = useState(RATIONALE);
   const [replacement, setReplacement] = useState("Eligible");
@@ -268,7 +268,7 @@ function OverrideDecide({ run, setRun, event, go }: SceneProps) {
   const overrideIt = () =>
     start(async () => {
       const decided = await oversight!.client.override({
-        control: "pt-0008",
+        control: "pt-00008",
         ref: run.entity!,
         action,
         rationale,

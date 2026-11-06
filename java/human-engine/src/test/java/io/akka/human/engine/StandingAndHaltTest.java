@@ -37,7 +37,7 @@ class StandingAndHaltTest {
   }
 
   private static HumanEvent payment(String matchKey) {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     return raise(s, request(s).matchKey(matchKey).build());
   }
 
@@ -59,19 +59,19 @@ class StandingAndHaltTest {
     assertEquals(Action.APPROVE, standing.action());
     assertTrue(standing.allows().contains("Pay S-77"));
 
-    assertTrue(standing.matches("pt-0001", "pay:S-77", null, at(Duration.ofDays(1))));
-    assertFalse(standing.matches("pt-0001", "pay:S-78", null, at(Duration.ofDays(1))));
-    assertFalse(standing.matches("pt-0002", "pay:S-77", null, at(Duration.ofDays(1))));
+    assertTrue(standing.matches("pt-00001", "pay:S-77", null, at(Duration.ofDays(1))));
+    assertFalse(standing.matches("pt-00001", "pay:S-78", null, at(Duration.ofDays(1))));
+    assertFalse(standing.matches("pt-00002", "pay:S-77", null, at(Duration.ofDays(1))));
     assertEquals("ACTIVE", standing.stateAt(at(Duration.ofDays(1))));
     assertEquals("EXPIRING", standing.stateAt(at(Duration.ofDays(24))));
     assertEquals("EXPIRED", standing.stateAt(at(Duration.ofDays(31))));
-    assertFalse(standing.matches("pt-0001", "pay:S-77", null, at(Duration.ofDays(31))));
+    assertFalse(standing.matches("pt-00001", "pay:S-77", null, at(Duration.ofDays(31))));
 
     var used = standing.usedFor("he-2").usedFor("he-2").usedFor("he-3");
     assertEquals(List.of("he-2", "he-3"), used.usedBy());
     var revoked = used.revokedBy(TYLER, at(Duration.ofDays(2)), "Supplier changed bank");
     assertEquals("REVOKED", revoked.stateAt(at(Duration.ofDays(3))));
-    assertFalse(revoked.matches("pt-0001", "pay:S-77", null, at(Duration.ofDays(3))));
+    assertFalse(revoked.matches("pt-00001", "pay:S-77", null, at(Duration.ofDays(3))));
     assertEquals("Supplier changed bank", revoked.revoked().reason());
   }
 
@@ -123,7 +123,7 @@ class StandingAndHaltTest {
   @Test
   void aStandingDecisionSettlesAMatchingRaise() {
     var e = payment("pay:S-77");
-    var settled = ok(e, Rules.settleByStanding(e, "sd-1", Action.APPROVE, T0));
+    var settled = ok(e, Rules.settleByStanding(e, Fx.grant("sd-1"), Action.APPROVE, T0));
     assertEquals(State.DECIDED, settled.state());
     assertTrue(settled.outcome().byStanding());
     assertEquals("sd-1", settled.outcome().standingDecisionId());
@@ -132,12 +132,12 @@ class StandingAndHaltTest {
     assertNull(settled.settlingVote());
     assertNull(StandingDecision.from(settled));
     assertEquals(Verdicts.UPHELD, Verdicts.of(settled).conclusion());
-    refused(Rules.settleByStanding(settled, "sd-1", Action.APPROVE, T0), 409);
+    refused(Rules.settleByStanding(settled, Fx.grant("sd-1"), Action.APPROVE, T0), 409);
   }
 
   @Test
   void oneAuthorisedPersonExercisesAHalt() {
-    var halt = raise(control("pt-0012"));
+    var halt = raise(control("pt-00012"));
     assertFalse(halt.lift());
     assertEquals("HALT", halt.settings().mode());
     assertTrue(refused(Rules.decide(halt, actor(PATEL), Fx.decision(reviewer(PATEL), Action.APPROVE), Map.of(), T0), 422)
@@ -151,7 +151,7 @@ class StandingAndHaltTest {
 
   @Test
   void aRestartNeedsTwoApprovalsWithEverySafeStateCheckPassing() {
-    var s = control("pt-0012");
+    var s = control("pt-00012");
     var lift = raise(s, request(s).subject(Subject.system("Restart eligibility", "capability", "eligibility-assessment",
         "all-runtime-operations", true)).build());
     assertTrue(lift.lift());
@@ -180,7 +180,7 @@ class StandingAndHaltTest {
 
   @Test
   void haltStateRecordsWhoHaltedUntilTheLift() {
-    var s = control("pt-0012");
+    var s = control("pt-00012");
     var none = HaltState.notHalted(s);
     assertFalse(none.halted());
     var halted = none.exercised(PATEL, "Referral drift", "he-1", "pr-he-1-halt", T0);

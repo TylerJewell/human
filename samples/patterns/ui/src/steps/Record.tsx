@@ -4,10 +4,11 @@ import {
   formatMoment,
   HaltsPanel,
   History,
-  readable,
   SummaryTiles,
   useEvent,
   useRegistry,
+  verdictAction,
+  verdictDeciders,
   type HumanEvent,
   type Verdict
 } from "@akka-human/kit";
@@ -69,6 +70,8 @@ function VerdictCard({ id }: { id: string }) {
     );
   }
   if (!verdict) return <Waiting>The verdict on {id} is being reached.</Waiting>;
+  const action = verdictAction(verdict);
+  const deciders = verdictDeciders(verdict);
   return (
     <div className="pt-card pt-verdict" data-testid="verdict">
       <div className="pt-card__head">
@@ -79,11 +82,11 @@ function VerdictCard({ id }: { id: string }) {
       <Rows
         rows={[
           ["Event", <Mono>{event.id}</Mono>],
-          ["Action", verdict.action ? actionLabel(verdict.action, event.actionLabels) : "None"],
-          ["Deciders", verdict.deciders?.length ? verdict.deciders.map((s) => nameIn(registry, s)).join(", ") : "Nobody"],
+          ["Action", action ? actionLabel(action, event.actionLabels) : "None"],
+          ["Deciders", deciders.length ? deciders.map((s) => nameIn(registry, s)).join(", ") : "Nobody"],
           ["Source", <SourceWords kind={verdict.source.kind} />],
-          ["Applied", verdict.appliedAt ? formatMoment(verdict.appliedAt) : "Not applied"],
-          ...(verdict.reasons?.length ? [["Reasons", verdict.reasons.map(readable).join(", ")] as [string, string]] : [])
+          ["Reached", formatMoment(verdict.observedAt)],
+          ["Reason", verdict.reason.text]
         ]}
       />
     </div>
@@ -91,13 +94,15 @@ function VerdictCard({ id }: { id: string }) {
 }
 
 function verdictSentence(event: HumanEvent, verdict: Verdict, nameOf: (s: string) => string) {
-  const who = verdict.deciders?.length ? verdict.deciders.map(nameOf).join(" and ") : "Nobody";
-  const action = verdict.action ? actionLabel(verdict.action, event.actionLabels).toLowerCase() : "no action";
+  const deciders = verdictDeciders(verdict);
+  const who = deciders.length ? deciders.map(nameOf).join(" and ") : "Nobody";
+  const decided = verdictAction(verdict);
+  const action = decided ? actionLabel(decided, event.actionLabels).toLowerCase() : "no action";
   switch (verdict.conclusion) {
     case "upheld":
       return `The control held: ${who} decided "${action}" as the control requires.`;
     case "breached":
-      return `The control was breached: ${verdict.reasons?.map(readable).join(", ").toLowerCase() || "see the reasons below"}.`;
+      return `The control was breached. ${verdict.reason.text}`;
     case "inconclusive":
       return "The verdict is inconclusive: the record does not show whether the control held.";
     default:

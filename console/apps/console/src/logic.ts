@@ -21,9 +21,6 @@ import {
 /** A control as the companion merges it: the service that declares it travels with it. */
 export type ServiceControl = ControlSettings & { service?: string };
 
-/** A verdict as the companion merges it, with the service that gave it. */
-export type ServiceVerdict = Verdict & { service?: string };
-
 export interface AttentionItem {
   id: string;
   severity: "urgent" | "risk";
@@ -225,14 +222,11 @@ export function scenarioOrder(scenarios: readonly ConformanceScenario[]): Confor
 }
 
 /** Verdicts newest first, kept to those that match a conclusion and a service when given. */
-export function verdictsOf(
-  verdicts: readonly ServiceVerdict[],
-  filter: { conclusion?: string; service?: string }
-): ServiceVerdict[] {
+export function verdictsOf(verdicts: readonly Verdict[], filter: { conclusion?: string; service?: string }): Verdict[] {
   return verdicts
     .filter((v) => !filter.conclusion || v.conclusion === filter.conclusion)
-    .filter((v) => !filter.service || (v.service ?? v.source.service) === filter.service)
-    .sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+    .filter((v) => !filter.service || v.subject.service === filter.service)
+    .sort((a, b) => Date.parse(b.observedAt) - Date.parse(a.observedAt));
 }
 
 export const VIEWS = [

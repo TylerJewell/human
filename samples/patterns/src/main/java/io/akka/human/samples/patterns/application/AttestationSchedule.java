@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Asks the model-risk owner each quarter to attest that the eligibility model is still fit (pt-0013).
+ * Asks the model-risk owner each quarter to attest that the eligibility model is still fit (pt-00013).
  * Each run raises the quarter's attestation and sets the timer for the start of the next quarter.
  */
 @Component(id = "attestation-schedule")
@@ -41,7 +41,7 @@ public class AttestationSchedule extends TimedAction {
     var today = LocalDate.ofInstant(now, ZoneOffset.UTC);
     var quarter = today.getYear() + "-Q" + today.get(IsoFields.QUARTER_OF_YEAR);
     human.raise(Patterns.attestation("Is the eligibility model still fit for use in " + quarter + "?")
-        .control("pt-0013")
+        .control("pt-00013")
         .subject(Subject.attestation("Quarterly attestation of the eligibility model, " + quarter, "model",
                 "eligibility-model", "Eligibility model v3",
                 List.of(Map.of("kind", "validation-report", "ref", "vr-" + quarter, "summary", "Back-test within tolerance",

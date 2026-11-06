@@ -130,9 +130,8 @@ public final class HumanClient implements Human {
   private HumanEventEntity.Answer raiseAs(String id, ControlSettings settings, RaiseRequest request,
       StandingDecisionsEntity.Found standing, Instant now) {
     var event = Raise.event(id, settings, request, library.context(), now);
-    var decision = standing == null ? null : standing.decision();
     return client.forEventSourcedEntity(id).method(HumanEventEntity::raise).invoke(new HumanEventEntity.Raise(event,
-        decision == null ? null : decision.id(), decision == null ? null : decision.action()));
+        standing == null ? null : standing.decision()));
   }
 
   private StandingDecisionsEntity.Found standingFor(ControlSettings settings, RaiseRequest request, Instant now) {
@@ -329,7 +328,7 @@ public final class HumanClient implements Human {
         List.of(Map.of("eventId", eventId, "relation", Relations.REOPENS)), null, old.simulated());
     var now = library.now();
     client.forEventSourcedEntity(newId).method(HumanEventEntity::raise)
-        .invoke(new HumanEventEntity.Raise(Raise.event(newId, settings, request, library.context(), now), null, null));
+        .invoke(new HumanEventEntity.Raise(Raise.event(newId, settings, request, library.context(), now), null));
     return answer;
   }
 

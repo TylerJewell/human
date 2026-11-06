@@ -7,7 +7,7 @@
   "pattern": "hand-off",
   "patternName": "Hand-off to a person",
   "control": {
-    "rowId": "pt-0011",
+    "rowId": "pt-00011",
     "name": "A person takes over a conversation when asked",
     "corpusRef": null,
     "revision": 1

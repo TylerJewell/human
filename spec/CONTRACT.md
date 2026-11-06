@@ -1,11 +1,13 @@
-# Oversight contract, version 2
+# Oversight contract, version 3
 
 The JSON every implementation of `/oversight/*` serves and every console reads. The types are in
 [`oversight.schema.json`](oversight.schema.json); each one has a valid example in
-[`examples/`](examples). Settings come from Verify v2.8 ([`verify/`](verify)).
+[`examples/`](examples). Settings come from Verify v2.8, and a verdict is Verify's verdict record
+(verdict schema v1); both are pinned in [`verify/`](verify).
 
-Version 2 extends version 1 of this contract. What changed is listed at the end. A console written for version 1 still reads version 2: every
-version 1 field keeps its name and meaning.
+Version 3 changes one type, `Verdict`, to the record Verify defines. Every other type is as in
+version 2, and version 2 extends version 1: a console written for version 1 reads every version 1
+field with its name and meaning. What changed is listed at the end.
 
 ## Roles in the contract
 
@@ -43,9 +45,9 @@ events that reviewer can act on now ("routable"), `sla` (`at-risk` \| `overdue`)
 (default 50), `offset`. Pending events are ordered most urgent first: overdue, then least time
 left, then oldest. Resolved events are ordered by `closedAt`, newest first.
 
-Query for `GET /oversight/verdicts`: `since` and `until`, inclusive, bound the verdicts by `at`;
-`eventId` keeps one event's; `limit` 1–200 (default 50); `offset` (default 0). Verdicts are newest
-first, equal times in event id order. The answer is a `VerdictsPage`:
+Query for `GET /oversight/verdicts`: `since` and `until`, inclusive, bound the verdicts by
+`observedAt`; `eventId` keeps one event's; `limit` 1–200 (default 50); `offset` (default 0).
+Verdicts are newest first, equal times in verdict id order. The answer is a `VerdictsPage`:
 
 ```json
 { "verdicts": [ Verdict ], "total": 130, "hasMore": true, "nextOffset": 50 }
@@ -109,7 +111,7 @@ Errors:
 
 An oversight-quality event judges the control its `subject.ref` names: the monitored control of the
 quality figures. While it blocks that control, the service holds new decisions on the control's
-events until the people the oversight-quality control routes to (its accountable owner, in pt-0014)
+events until the people the oversight-quality control routes to (its accountable owner, in pt-00014)
 reset it.
 
 - **What is refused.** `decision` with any action but `ESCALATE`, `SEND_BACK`, `REQUEST_MORE_INFO`,
@@ -165,7 +167,7 @@ response unchanged.
 | `GET /api/companion/human/events/{id}` | The event, from the service that owns it |
 | `POST /api/companion/human/events/{id}/{claim\|release\|decision\|escalate\|send-back\|resubmit\|withdraw\|extend\|reopen}` | Forwarded with the stamped reviewer |
 | `GET /api/companion/human/summary`, `…/quality`, `…/standing`, `…/halts`, `…/controls` | Merged across services; each list item keeps the `service` it carries, or gains the name of the service it came from |
-| `GET /api/companion/human/verdicts?since=&until=&eventId=&limit=&offset=` | Every service's verdicts merged newest first and paged like a service's: a `VerdictsPage` whose `total` sums the services' |
+| `GET /api/companion/human/verdicts?since=&until=&eventId=&limit=&offset=` | Every service's verdicts merged newest first and paged like a service's: a `VerdictsPage` whose `total` sums the services'. Each verdict is passed on unchanged, because its digest covers every field; `subject.service` names its service |
 | `POST /api/companion/human/flags`, `…/halts`, `…/contests`, `…/overrides` | Sent to the service that declares the control (or that owns the flow) |
 | `POST /api/companion/human/standing/{id}/revoke` | Sent to the service that lists the id |
 | `GET /api/companion/human/registry` | The overseer registry the companion stamps reviewers from |
@@ -264,12 +266,46 @@ A service names a relation with the constants of `Relations` in `human-api`; the
 A split vote under `TWO_PERSON` or `N_OF_M` settles by `routing.splitVote`: `DENY` settles the
 event denied, `ESCALATE` moves it to the next queue.
 
+A verdict is Verify's verdict record, and Verify's rules (`specs/platform/verdicts.md` at the pinned
+commit) reach the same conclusion from its `detail` as the table above. A service fills it as follows:
+
+- `verdictId` is `vd-` and the event id; `observedAt` is when the outcome was applied, or when the
+  event closed.
+- `control.rowId` is the control id, which must have 8 to 64 lower-case letters, digits and hyphens.
+  Nobody has signed the controls a service declares, so `control.bundle` is a draft: the service as
+  `systemId` and the control's revision as `draftRevision`.
+- `environment` is `production` when the service runs in production, and `pre-production` otherwise.
+- `reason.code` is the first reason the table gives; `reason.text` says every reason in a sentence.
+- `detail.workItem` is the event and its queue. A decision a person settled adds the reviewer, the
+  times, the review seconds, `action` and `rationale`, and `votes` where the control takes more than
+  one. One a standing decision settled adds `standing`: its id, its mode, who granted it and when. A
+  timeout adds `timeout`, with `exhausted` when an escalation reached the last queue.
+- `integrity.digest` is `sha256:` and the hex SHA-256 of the RFC 8785 canonical JSON of the record
+  without `integrity`. Absent fields are left out, never null, and nothing may add a field afterwards.
+
 ## Proof records
 
 `GET /oversight/proof` answers the records the service appended, as Verify's audit taxonomy names
 them: `HumanOversightDecisionRecordedV2` for every settling decision (and every vote, in `votes`),
 `HaltExercised` and `HaltLifted`. The payloads follow `specs/corpus/aud-taxonomy.yaml` at the
 pinned commit. It stands in for the runtime writing oversight records to its own ledger; until it does, each service serves the records it appended.
+
+## What changed from version 2
+
+- `Verdict`, in `GET /oversight/verdicts` and in `verdict` on a closed event, is Verify's verdict
+  record. Its fields map from version 2's as follows:
+  - `id` is `verdictId`, and `at` is `observedAt`;
+  - `eventId` and `boundary` are `detail.workItem`;
+  - `reasons` is `reason`, with the first reason as its code;
+  - `action` is `detail.action`, lower-case with hyphens (`request-more-info`);
+  - `deciders` are `detail.votes`, `detail.reviewer` or `detail.standing`;
+  - `pattern` is `detail.pattern`;
+  - `source.service` is `subject.service`.
+
+  `control.name`, `subjectKind` and `appliedAt` are not in the record: the control's name is in
+  `GET /oversight/controls`, and the subject kind and the time applied are on the event.
+- The companion no longer adds `service` to a verdict.
+- `ServiceInfo.contract` is 3.
 
 ## What changed from version 1
 

@@ -97,7 +97,7 @@ function HaltTrigger({ run, setRun, go }: SceneProps) {
 
   const haltIt = () =>
     start(async () => {
-      const event = await oversight!.client.halt("pt-0012", false, reason);
+      const event = await oversight!.client.halt("pt-00012", false, reason);
       oversight!.cache.set(`event:${event.id}`, event);
       oversight!.cache.invalidate("halts");
       setRun(newRun({ events: [event.id], data: { haltEventId: event.id } }));
@@ -192,7 +192,7 @@ function HaltDecide({ run, setRun, event, go }: SceneProps) {
   if (!event) {
     const askRestart = () =>
       start(async () => {
-        const restart = await oversight!.client.halt("pt-0012", true, reason);
+        const restart = await oversight!.client.halt("pt-00012", true, reason);
         oversight!.cache.set(`event:${restart.id}`, restart);
         setRun({ ...run, eventId: restart.id, events: [...run.events.filter((e) => e !== restart.id), restart.id] });
       });

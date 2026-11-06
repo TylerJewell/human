@@ -82,6 +82,8 @@ class HaltControlsTest {
     assertEquals(State.DECIDED, halted.state());
     assertEquals(false, halted.decisions().getFirst().belowMinimum());
     assertEquals(Verdicts.UPHELD, Verdicts.of(halted).conclusion());
+    // One person may halt, so the halt's verdict asks for no second person.
+    assertEquals(null, ((java.util.Map<?, ?>) Json.verdict(halted).get("detail")).get("twoPerson"));
 
     var restart = Fx.raise(settings, Fx.request(settings).subject(Subject.system("Restart eligibility", "capability",
         "eligibility-assessment", "all-runtime-operations", true)).build());

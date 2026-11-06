@@ -7,7 +7,7 @@
   "pattern": "contest-appeal",
   "patternName": "Contest and appeal",
   "control": {
-    "rowId": "pt-0007",
+    "rowId": "pt-00007",
     "name": "Applicants can appeal an automated decision to a person",
     "corpusRef": "colorado-sb26-189.6-1-1705.human-review",
     "revision": 1

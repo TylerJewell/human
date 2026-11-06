@@ -13,6 +13,8 @@ export {
   readSubject,
   rowOf,
   SUBJECT_KINDS,
+  verdictAction,
+  verdictDeciders,
   votesOf,
   type Parsed,
   type SubjectReading

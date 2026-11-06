@@ -1,15 +1,13 @@
 package io.akka.human.engine;
 
-import io.akka.human.api.Action;
-import io.akka.human.api.Pattern;
-import io.akka.human.api.SubjectKind;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * What a closed event concludes about the oversight, not about the AI's action: a reviewer who denies
- * an unsafe action has made the control work. The rules are the contract's "Settling and verdicts".
+ * an unsafe action has made the control work. The rules are the contract's "Settling and verdicts";
+ * {@link Json#verdict} writes the verdict as Verify's verdict schema records it.
  */
 public final class Verdicts {
 
@@ -21,24 +19,12 @@ public final class Verdicts {
   /**
    * A human verdict.
    *
+   * @param reasons the codes behind a conclusion other than upheld: late, below-minimum, fail-open,
+   *     missed-deadline, killed, not-applied
    * @param source runtime, simulated or rehearsal; only runtime counts as evidence
    * @param at when the outcome was applied, or when the event closed
    */
-  public record Verdict(
-      String id,
-      String eventId,
-      ControlSettings.ControlRef control,
-      Pattern pattern,
-      SubjectKind subjectKind,
-      String boundaryRef,
-      String conclusion,
-      List<String> reasons,
-      String source,
-      String service,
-      Action action,
-      List<String> deciders,
-      Instant appliedAt,
-      Instant at) {}
+  public record Verdict(String id, String eventId, String conclusion, List<String> reasons, String source, Instant at) {}
 
   private Verdicts() {}
 
@@ -75,15 +61,20 @@ public final class Verdicts {
       conclusion = reasons.isEmpty() ? UPHELD : BREACHED;
     }
     var at = o.appliedAt() != null ? o.appliedAt() : e.closedAt();
-    return new Verdict("vd-" + e.id(), e.id(), e.settings().control(), e.settings().pattern(), e.subject().kind(),
-        e.queue() + " · " + e.id(), conclusion, List.copyOf(reasons), source(e), e.service(), o.action(), e.deciders(),
-        o.appliedAt(), at);
+    return new Verdict("vd-" + e.id(), e.id(), conclusion, List.copyOf(reasons), source(e), at);
   }
 
   /** simulated for a simulated event, rehearsal when a settling vote was rehearsed, runtime otherwise. */
   public static String source(HumanEvent e) {
     if (e.simulated()) return "simulated";
-    if (e.settlingVote() != null && e.roundVotes().stream().anyMatch(v -> v.reviewer().rehearsal())) return "rehearsal";
+    if (rehearsedBy(e) != null) return "rehearsal";
     return "runtime";
+  }
+
+  /** Who cast the rehearsed vote that settled the event, or null. */
+  static String rehearsedBy(HumanEvent e) {
+    if (e.settlingVote() == null) return null;
+    return e.roundVotes().stream().filter(v -> v.reviewer().rehearsal()).map(v -> v.reviewer().subject()).findFirst()
+        .orElse(null);
   }
 }

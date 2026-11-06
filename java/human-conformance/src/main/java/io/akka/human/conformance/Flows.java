@@ -302,12 +302,16 @@ final class Flows {
   static void verifyVerdict(Run run, JsonNode event, String conclusion, String reason, boolean rehearsal) {
     JsonNode verdict = event.path("verdict");
     String shown = "verdict " + Json.abbreviate(verdict.toString());
-    run.check("the verdict names the event", event.path("id").asText().equals(verdict.path("eventId").asText()), shown);
+    run.check("the verdict names the event as its work item",
+        event.path("id").asText().equals(verdict.path("detail").path("workItem").path("id").asText()), shown);
+    run.check("the verdict's digest covers the record",
+        Json.verdictDigest(verdict).equals(verdict.path("integrity").path("digest").asText()), shown);
     if (conclusion != null) {
       run.check("the verdict is " + conclusion, conclusion.equals(verdict.path("conclusion").asText()), shown);
     }
     if (reason != null) {
-      run.check("the verdict gives the reason " + reason, Json.strings(verdict.path("reasons")).contains(reason), shown);
+      run.check("the verdict gives the reason " + reason, reason.equals(verdict.path("reason").path("code").asText()),
+          shown);
     }
     if (rehearsal) {
       run.check("the verdict's source is rehearsal",
@@ -328,7 +332,8 @@ final class Flows {
     String id = event.path("id").asText();
     String path = "/oversight/verdicts?eventId=" + Http.encode(id);
     JsonNode page = run.await("GET /oversight/verdicts lists the verdict", path, "verdicts[]:Verdict",
-        p -> Json.find(p.path("verdicts"), v -> id.equals(v.path("eventId").asText())).isPresent(),
+        p -> Json.find(p.path("verdicts"), v -> id.equals(v.path("detail").path("workItem").path("id").asText()))
+            .isPresent(),
         "a verdict for " + id);
     run.check("the verdict page counts what it matches and says whether more follow",
         page.path("total").asInt(-1) >= page.path("verdicts").size() && page.path("hasMore").isBoolean()

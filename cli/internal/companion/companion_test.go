@@ -202,10 +202,10 @@ func newFake(t *testing.T, name string, events [][]byte, controls, standing []st
 				continue
 			}
 			v := object(t, example(t, "Verdict.upheld"))
-			v["id"], v["at"] = fmt.Sprintf("vd-%s-%d", name, i), when
+			v["verdictId"], v["observedAt"], v["subject"] = fmt.Sprintf("vd-%s-%d", name, i), when, map[string]any{"service": name}
 			matching = append(matching, v)
 		}
-		slices.SortStableFunc(matching, func(a, b any) int { return strings.Compare(b.(map[string]any)["at"].(string), a.(map[string]any)["at"].(string)) })
+		slices.SortStableFunc(matching, func(a, b any) int { return strings.Compare(b.(map[string]any)["observedAt"].(string), a.(map[string]any)["observedAt"].(string)) })
 		offset, _ := strconv.Atoi(q.Get("offset"))
 		limit, err := strconv.Atoi(q.Get("limit"))
 		if err != nil {
@@ -310,7 +310,7 @@ func newWorld(t *testing.T, opts Options) *world {
 	betaEvents[1] = marshal(t, flow)
 
 	w := &world{home: t.TempDir()}
-	w.alpha = newFake(t, "alpha", alphaEvents, []string{"pt-0001"}, []string{"sd-a"})
+	w.alpha = newFake(t, "alpha", alphaEvents, []string{"pt-00001"}, []string{"sd-a"})
 	w.beta = newFake(t, "beta", betaEvents, []string{"lo-0012"}, []string{"sd-b"})
 	w.beta.conflict = "b1"
 	register(t, w.home, "alpha", w.alpha.srv.URL)
@@ -510,7 +510,7 @@ func TestControlWritesGoToTheDeclaringService(t *testing.T) {
 		!reflect.DeepEqual(got.body["reviewer"], stampedTyler) {
 		t.Fatalf("halt %d %+v", status, got)
 	}
-	w.do(t, "POST", "/api/companion/human/contests", map[string]any{"control": "pt-0001", "ref": "x", "grounds": "y"})
+	w.do(t, "POST", "/api/companion/human/contests", map[string]any{"control": "pt-00001", "ref": "x", "grounds": "y"})
 	if got := w.alpha.lastPost(t); got.path != "/oversight/contests" {
 		t.Fatalf("contest went to %+v", got)
 	}
@@ -557,7 +557,9 @@ func TestStandingRevokeAndLists(t *testing.T) {
 		Verdicts []map[string]any `json:"verdicts"`
 	}
 	w.get(t, "/api/companion/human/verdicts?limit=1", &verdicts)
-	if v := verdicts.Verdicts; len(v) != 1 || v[0]["id"] != "vd-beta-0" || v[0]["service"] != "beta" {
+	// A verdict's digest covers every field, so the companion adds none.
+	if v := verdicts.Verdicts; len(v) != 1 || v[0]["verdictId"] != "vd-beta-0" ||
+		v[0]["subject"].(map[string]any)["service"] != "beta" || v[0]["service"] != nil {
 		t.Fatalf("verdicts %v", v)
 	}
 }
@@ -590,7 +592,7 @@ func TestVerdictsPageAcrossServices(t *testing.T) {
 	ids := func(p page) []string {
 		var out []string
 		for _, v := range p.Verdicts {
-			out = append(out, v["id"].(string))
+			out = append(out, v["verdictId"].(string))
 		}
 		return out
 	}

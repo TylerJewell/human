@@ -192,6 +192,16 @@ public final class Rules {
     return Checked.ok(events);
   }
 
+  /**
+   * Whether settling with {@code action} takes more than one vote, as {@link #tally} counts them: one
+   * person may halt, and where a split vote denies, one person may deny.
+   */
+  static boolean takesSeveralVotes(ControlSettings s, Action action) {
+    var routing = s.routing();
+    if (routing.required() < 2 || action == Action.HALT || routing.reviewMode().equals("SINGLE")) return false;
+    return action.proceeds() || routing.reviewMode().equals("CONSENSUS") || !"DENY".equals(routing.splitVote());
+  }
+
   /** Where a vote leaves the event under its review mode. */
   static HumanEventEvent tally(HumanEvent e, Vote vote, Instant now) {
     var routing = e.settings().routing();
@@ -228,7 +238,7 @@ public final class Rules {
         ? action.name().equals(String.valueOf(e.aiRecommendation().get("action"))) : null;
     var outcome = new Outcome(action, sticky, agreed, own ? vote.edits() : null, own ? vote.replacement() : null,
         vote.rationale(), standingId, false, HumanEvent.COMPLETED, null, null, null, null,
-        own ? vote.conditions() : List.of());
+        own ? vote.conditions() : List.of(), null);
     return new HumanEventEvent.Decided(vote, outcome, note);
   }
 
@@ -406,9 +416,11 @@ public final class Rules {
     return Checked.events(new HumanEventEvent.Repeated(trigger, now));
   }
 
-  public static Checked<List<HumanEventEvent>> settleByStanding(HumanEvent e, String standingId, Action action, Instant now) {
+  public static Checked<List<HumanEventEvent>> settleByStanding(HumanEvent e, StandingDecision.Grant grant, Action action,
+      Instant now) {
     if (!e.pending() || !e.decisions().isEmpty()) return Checked.refuse(notPending(e));
-    return Checked.events(new HumanEventEvent.StandingApplied(standingId, action, now));
+    return Checked.events(new HumanEventEvent.StandingApplied(grant.id(), action, now, grant.kind(), grant.grantedBy(),
+        grant.grantedAt()));
   }
 
   // ---- the clock
@@ -449,7 +461,7 @@ public final class Rules {
           Outcome.timedOut(e.settings().timeoutDefault(), behaviour), now);
       case "ABANDON" -> new HumanEventEvent.Closed(State.ABANDONED, SYSTEM, "Timed out; abandoned",
           new Outcome(null, null, null, null, null, "", null, false, HumanEvent.ABANDONED, behaviour, null, null, null,
-              List.of()), now);
+              List.of(), null), now);
       default -> new HumanEventEvent.Closed(State.TIMED_OUT, SYSTEM, "Timed out; whoever waits is told",
           Outcome.timedOut(null, behaviour), now);
     };

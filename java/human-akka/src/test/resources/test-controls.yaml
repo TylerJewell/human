@@ -1,7 +1,7 @@
 # Controls only the library's own tests use, beside spec/fixtures/controls-patterns.yaml.
 schema_version: 1
 controls:
-  - id: t-0001
+  - id: test-0001
     name: A short deadline, so real timers act within a test
     flavor: human-system-authorization
     human_config:
@@ -11,7 +11,7 @@ controls:
       accountable_owner: ai-system-owner
       sla_target: PT3S
 
-  - id: t-0002
+  - id: test-0002
     name: A halt-restart control with a minimum review time
     flavor: human-halt
     human_config:

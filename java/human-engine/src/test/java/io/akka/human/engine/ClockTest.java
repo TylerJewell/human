@@ -34,7 +34,7 @@ class ClockTest {
 
   @Test
   void anEventTurnsAtRiskAtThreeQuartersOfItsWindow() {
-    var e = raise(control("pt-0001"));
+    var e = raise(control("pt-00001"));
     assertEquals(List.of(), Rules.tick(e, seconds(1349)));
     assertEquals("running", e.slaState(seconds(1349)));
     assertEquals("at-risk", e.slaState(seconds(1350)));
@@ -47,7 +47,7 @@ class ClockTest {
 
   @Test
   void theNextCheckIsTheEarlierOfTheClaimLapsingAndTheWindow() {
-    var e = claim(raise(control("pt-0002")), LIND, T0);
+    var e = claim(raise(control("pt-00002")), LIND, T0);
     assertEquals(minutes(30), e.nextCheckAt());
     var lapsed = Rules.tick(e, minutes(30));
     assertEquals(1, lapsed.size());
@@ -61,7 +61,7 @@ class ClockTest {
 
   @Test
   void resumeWithDefaultDenyTimesOutInconclusive() {
-    var e = tick(raise(control("pt-0001")), minutes(30));
+    var e = tick(raise(control("pt-00001")), minutes(30));
     assertEquals(State.TIMED_OUT, e.state());
     assertFalse(e.pending());
     assertEquals(Action.DENY, e.outcome().action());
@@ -70,7 +70,7 @@ class ClockTest {
     assertEquals("missed", e.slaState(minutes(31)));
     assertEquals(Verdicts.INCONCLUSIVE, Verdicts.of(e).conclusion());
     assertNull(e.nextCheckAt());
-    assertEquals(2, Rules.tick(raise(control("pt-0001")), minutes(30)).size());
+    assertEquals(2, Rules.tick(raise(control("pt-00001")), minutes(30)).size());
   }
 
   @Test
@@ -86,7 +86,7 @@ class ClockTest {
 
   @Test
   void raiseTimeoutClosesWithoutAnAction() {
-    var e = tick(raise(control("pt-0013")), at(Duration.ofDays(14)));
+    var e = tick(raise(control("pt-00013")), at(Duration.ofDays(14)));
     assertEquals(State.TIMED_OUT, e.state());
     assertNull(e.outcome().action());
     assertEquals("RAISE_TIMEOUT", e.outcome().timeoutBehaviour());
@@ -95,7 +95,7 @@ class ClockTest {
 
   @Test
   void escalateMovesToTheNextQueueThenTimesOutAtTheLast() {
-    var e = raise(control("pt-0002"));
+    var e = raise(control("pt-00002"));
     var escalated = tick(e, at(Duration.ofHours(4)));
     assertEquals(State.ESCALATED, escalated.state());
     assertEquals(1, escalated.level());
@@ -116,7 +116,7 @@ class ClockTest {
 
   @Test
   void abandonClosesTheEventAbandoned() {
-    var e = tick(raise(control("pt-0009")), at(Duration.ofDays(3)));
+    var e = tick(raise(control("pt-00009")), at(Duration.ofDays(3)));
     assertEquals(State.ABANDONED, e.state());
     assertEquals(HumanEvent.ABANDONED, e.outcome().slaOutcome());
     assertEquals(Verdicts.INCONCLUSIVE, Verdicts.of(e).conclusion());
@@ -124,7 +124,7 @@ class ClockTest {
 
   @Test
   void anEventWithoutADeadlineHasNoClock() {
-    var e = raise(control("pt-0008"));
+    var e = raise(control("pt-00008"));
     assertNull(e.dueAt());
     assertNull(e.nextCheckAt());
     assertEquals("none", e.slaState(T0));
@@ -133,7 +133,7 @@ class ClockTest {
 
   @Test
   void aPersonEscalatesToTheNextQueueWhoseRolesThenDecide() {
-    var e = raise(control("pt-0001"));
+    var e = raise(control("pt-00001"));
     refused(Rules.escalate(e, actor(TYLER), " ", minutes(1)), 422);
     var escalated = ok(e, Rules.escalate(e, actor(TYLER), "Above my limit", minutes(1)));
     assertEquals(1, escalated.level());
@@ -149,7 +149,7 @@ class ClockTest {
     var viaDecision = new Rules.DecisionRequest(reviewer(TYLER), Action.ESCALATE, "Above my limit", null, null, null,
         List.of(), null);
     assertEquals(State.ESCALATED, ok(e, Rules.decide(e, actor(TYLER), viaDecision, Map.of(), minutes(1))).state());
-    var change = raise(control("pt-0003"));
+    var change = raise(control("pt-00003"));
     assertEquals(1, ok(change, Rules.escalate(change, Fx.actor(TYLER, "model-risk-owner"), "why", minutes(1))).level());
   }
 
@@ -176,7 +176,7 @@ class ClockTest {
 
   @Test
   void aRunningClockKeepsTheDeadlineWhileSentBack() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     var e = raise(s, request(s).proposedBy("agent:rollouts").build());
     var sentBack = ok(e, Rules.sendBack(e, actor(TYLER), "Add the offline eval", at(Duration.ofHours(1))));
     assertNull(sentBack.pausedAt());
@@ -188,7 +188,7 @@ class ClockTest {
 
   @Test
   void aDeadlineIsExtendedOnceByAtMostSevenDays() {
-    var e = raise(control("pt-0001"));
+    var e = raise(control("pt-00001"));
     var extended = ok(e, Rules.extend(e, actor(TYLER), "PT1H", "Waiting for the invoice", minutes(5)));
     assertEquals(minutes(90), extended.dueAt());
     assertEquals(1, extended.slaExtensions().size());
@@ -201,20 +201,20 @@ class ClockTest {
     refused(Rules.extend(e, actor(TYLER), "PT1H", " ", minutes(5)), 422);
     assertEquals(minutes(30).plus(Duration.ofDays(7)),
         ok(e, Rules.extend(e, actor(TYLER), "P7D", "longest", minutes(5))).dueAt());
-    refused(Rules.extend(raise(control("pt-0008")), actor(TYLER), "PT1H", "no deadline", minutes(5)), 422);
+    refused(Rules.extend(raise(control("pt-00008")), actor(TYLER), "PT1H", "no deadline", minutes(5)), 422);
     refused(Rules.extend(e, actor(OSEI), "PT1H", "not mine", minutes(5)), 403);
   }
 
   @Test
   void theAccountableOwnerMayExtendWithoutTheQueuesRole() {
-    var e = raise(control("pt-0002"));
+    var e = raise(control("pt-00002"));
     var byOwner = Fx.actor(TYLER, "head-of-operations");
     assertEquals(at(Duration.ofHours(5)), ok(e, Rules.extend(e, byOwner, "PT1H", "Busy week", minutes(1))).dueAt());
   }
 
   @Test
   void anOverdueEventIsOverdueUntilTheTickActs() {
-    var e = claim(raise(control("pt-0011")), Fx.MOREAU, T0);
+    var e = claim(raise(control("pt-00011")), Fx.MOREAU, T0);
     assertTrue(e.overdue(minutes(5)));
     assertEquals("overdue", e.slaState(minutes(6)));
     var decided = decide(e, Fx.MOREAU, Action.DECLINE_SYSTEM, minutes(6));

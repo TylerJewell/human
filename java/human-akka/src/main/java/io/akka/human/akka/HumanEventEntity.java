@@ -2,7 +2,6 @@ package io.akka.human.akka;
 
 import akka.javasdk.annotations.Component;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
-import io.akka.human.api.Action;
 import io.akka.human.api.Reviewer;
 import io.akka.human.engine.Checked;
 import io.akka.human.engine.HumanEvent;
@@ -10,6 +9,7 @@ import io.akka.human.engine.HumanEventEvent;
 import io.akka.human.engine.Qualification.Actor;
 import io.akka.human.engine.Refusal;
 import io.akka.human.engine.Rules;
+import io.akka.human.engine.StandingDecision;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +35,9 @@ public class HumanEventEntity extends EventSourcedEntity<HumanEvent, HumanEventE
   /**
    * Raises the event. A standing decision that matches settles it at once.
    *
-   * @param standingId the matching standing decision, or null
+   * @param standing the matching standing decision, or null
    */
-  public record Raise(HumanEvent event, String standingId, Action standingAction) {}
+  public record Raise(HumanEvent event, StandingDecision standing) {}
 
   public record Act(Actor actor, Instant now) {}
 
@@ -87,8 +87,10 @@ public class HumanEventEntity extends EventSourcedEntity<HumanEvent, HumanEventE
     if (current == null) {
       var events = new ArrayList<HumanEventEvent>();
       events.add(new HumanEventEvent.Raised(raised));
-      if (command.standingId() != null) {
-        events.add(new HumanEventEvent.StandingApplied(command.standingId(), command.standingAction(), raised.detectedAt()));
+      var standing = command.standing();
+      if (standing != null) {
+        events.add(new HumanEventEvent.StandingApplied(standing.id(), standing.action(), raised.detectedAt(),
+            standing.kind(), standing.grantedBy(), standing.grantedAt()));
       }
       return effects().persistAll(events).thenReply(state -> new Answer(state, null));
     }

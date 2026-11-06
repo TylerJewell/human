@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -23,21 +25,19 @@ class SchemaCheckTest {
 
   @Test
   void validatesAgainstTheTypeTheContractNames() {
-    assertEquals(List.of(), schema.validate("ServiceInfo", info(2)));
-    assertFalse(schema.validate("ServiceInfo", info(1)).isEmpty());
+    assertEquals(List.of(), schema.validate("ServiceInfo", info(3)));
+    assertFalse(schema.validate("ServiceInfo", info(2)).isEmpty());
   }
 
   @Test
-  void assertsFormats() {
-    ObjectNode verdict = Json.object();
-    verdict.put("id", "v1").put("eventId", "e1").put("conclusion", "upheld").put("mechanism", "human")
-        .put("at", "yesterday");
-    verdict.putObject("source").put("kind", "rehearsal");
-    verdict.putObject("boundary").put("kind", "work-item").put("ref", "q · e1");
+  void assertsFormats() throws IOException {
+    ObjectNode verdict = (ObjectNode) Json.MAPPER.readTree(Path.of("../../spec/examples/Verdict.upheld.json").toFile());
+    assertEquals(List.of(), schema.validate("Verdict", verdict));
+    verdict.put("observedAt", "yesterday");
 
     List<String> problems = schema.validate("Verdict", verdict);
     assertEquals(1, problems.size(), problems.toString());
-    assertTrue(problems.getFirst().contains("at"), problems.toString());
+    assertTrue(problems.getFirst().contains("observedAt"), problems.toString());
   }
 
   @Test

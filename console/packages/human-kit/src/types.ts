@@ -1,4 +1,4 @@
-// The oversight contract, version 2, as TypeScript: the JSON `/oversight/*` and
+// The oversight contract, version 3, as TypeScript: the JSON `/oversight/*` and
 // `/api/companion/human/*` serve (spec/oversight.schema.json, spec/CONTRACT.md).
 //
 // Enumerations are typed as the contract names them. A newer service may send a
@@ -381,21 +381,69 @@ export interface Outcome {
   applyError?: string | null;
 }
 
+/**
+ * A human verdict as Verify's verdict schema v1 records it
+ * (spec/verify/verdict.schema.yaml). Its digest covers every other field, so a
+ * reader passes it on unchanged.
+ */
 export interface Verdict {
-  id: string;
-  eventId: string;
-  control?: ControlRef;
-  pattern?: PatternId;
-  subjectKind?: SubjectKind;
+  schemaVersion: 1;
+  verdictId: string;
+  control: { rowId: string; corpusRef?: string; bundle: VerdictBundle };
   mechanism: "human";
-  boundary: { kind: "work-item"; ref: string };
+  environment: "documents" | "pre-production" | "production";
+  observedAt: Instant;
+  recordedAt?: Instant;
   conclusion: Conclusion;
-  reasons?: string[];
-  source: { kind: VerdictSource; service?: string };
-  action?: Action | null;
-  deciders?: string[];
-  appliedAt?: Instant | null;
-  at: Instant;
+  /** The decision, or the status when nothing was decided. */
+  outcome?: string;
+  reason: { code?: string; text: string };
+  subject: { systemId?: string; service?: string; agent?: string; session?: string; traceId?: string; flowId?: string };
+  evidence?: { kind: string; ref: string; digest?: string }[];
+  source: { kind: VerdictSource; componentId?: string; generator?: string; by?: string };
+  integrity: { digest: string; signature?: string };
+  detail: HumanVerdictDetail;
+}
+
+/** A signed contract, or a draft for a check run before anything is signed. */
+export type VerdictBundle =
+  | { systemId: string; govVersion: number; manifestDigest: string; trust: "identity" | "local" }
+  | { systemId: string; draftRevision: number };
+
+/** A decision of the registry written lower-case with hyphens: REQUEST_MORE_INFO is request-more-info. */
+export type VerdictDecision = Hyphenated<Lowercase<Action>>;
+type Hyphenated<S extends string> = S extends `${infer Head}_${infer Tail}` ? `${Head}-${Hyphenated<Tail>}` : S;
+
+export interface HumanVerdictDetail {
+  status: "decided" | "abandoned" | "timed-out" | "killed" | "not-applied";
+  flavor: Flavor;
+  mode: "hitl" | "hotl";
+  pattern?: PatternId;
+  workItem?: { id: string; queue?: string };
+  authorized?: boolean;
+  twoPerson?: { required: boolean; satisfied: boolean };
+  rationaleRequired?: boolean;
+  reviewer?: { subject: string; roles?: string[]; identityProvider?: string };
+  presentedAt?: Instant;
+  claimedAt?: Instant;
+  submittedAt?: Instant;
+  reviewSeconds?: number;
+  minimumSeconds?: number;
+  belowMinimum?: boolean;
+  /** The decision that settled the item. */
+  action?: VerdictDecision;
+  rationale?: string;
+  /** Each reviewer's vote, where the control takes more than one decision. */
+  votes?: { subject: string; roles?: string[]; action: VerdictDecision; submittedAt: Instant; reviewSeconds?: number }[];
+  /** The standing decision that settled the item when nobody reviewed it. */
+  standing?: {
+    decisionId: string;
+    mode: "approve-for-session" | "approve-for-pattern" | "deny-for-pattern";
+    grantedBy: string;
+    grantedAt: Instant;
+  };
+  sla?: { target?: Duration; outcome?: "met" | "missed" | "escalated" };
+  timeout?: { behaviour?: "fail-open" | "fail-closed" | "escalate"; defaultApplied?: string; exhausted?: boolean };
 }
 
 export interface HistoryStep {

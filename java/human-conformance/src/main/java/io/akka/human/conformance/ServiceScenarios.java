@@ -15,7 +15,7 @@ final class ServiceScenarios {
 
   static JsonNode info(Run run) {
     JsonNode info = run.get("service info", "/oversight/info", "ServiceInfo");
-    run.check("contract version 2", info.path("contract").asInt() == 2, "contract " + info.path("contract"));
+    run.check("contract version 3", info.path("contract").asInt() == 3, "contract " + info.path("contract"));
     run.check("dev routes are on", info.path("devRoutes").asBoolean(false),
         "devRoutes is false; the suite raises events and moves time through the dev routes"
             + " (akka.human.dev-routes = true)");

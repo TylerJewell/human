@@ -7,7 +7,7 @@
   "pattern": "triage",
   "patternName": "Triage of alerts, cases and incidents",
   "control": {
-    "rowId": "pt-0010",
+    "rowId": "pt-00010",
     "name": "Referral drift is triaged by the model risk owner",
     "corpusRef": "eu-ai-act.art26.4",
     "revision": 1

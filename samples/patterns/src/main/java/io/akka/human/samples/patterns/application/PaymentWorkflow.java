@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A payment an agent asks to make. Above 1,000 it waits for action approval (pt-0001); a payment whose
- * result comes back unknown waits for a person to reconcile it (pt-0006), and nothing retries it on
+ * A payment an agent asks to make. Above 1,000 it waits for action approval (pt-00001); a payment whose
+ * result comes back unknown waits for a person to reconcile it (pt-00006), and nothing retries it on
  * its own. Each wait is a pause with a backstop timeout past the control's last escalation, so the
  * workflow hears the outcome from the library exactly once.
  */
@@ -27,7 +27,7 @@ public class PaymentWorkflow extends Workflow<PaymentWorkflow.Payment> {
 
   public static final String RESUMER = "payment";
   static final int LIMIT = 1000;
-  /** pt-0001 has 30 minutes and an escalation queue of 30 more; pt-0006 has 2 hours and 2 more. */
+  /** pt-00001 has 30 minutes and an escalation queue of 30 more; pt-00006 has 2 hours and 2 more. */
   static final Duration APPROVAL_BACKSTOP = Duration.ofHours(2);
   static final Duration RECONCILIATION_BACKSTOP = Duration.ofHours(6);
 
@@ -88,7 +88,7 @@ public class PaymentWorkflow extends Workflow<PaymentWorkflow.Payment> {
     var p = currentState();
     var raised = human.raise(Patterns.actionApproval(
             "Should the agent pay supplier " + p.supplier() + " " + money(p) + "?")
-        .control("pt-0001")
+        .control("pt-00001")
         .subject(Subject.action("Pay " + p.supplier() + " " + money(p), "pay",
                 Map.of("supplier", p.supplier(), "amount", p.amount(), "currency", p.currency()))
             .with("authority", Map.of("missing", List.of("amount > " + LIMIT), "required", Map.of("role", "ai-system-owner")))
@@ -120,7 +120,7 @@ public class PaymentWorkflow extends Workflow<PaymentWorkflow.Payment> {
     }
     var raised = human.raise(Patterns.outcomeReconciliation(
             "Did the payment of " + money(p) + " to " + p.supplier() + " go through?")
-        .control("pt-0006")
+        .control("pt-00006")
         .subject(Subject.action("Unknown result: pay " + p.supplier() + " " + money(p), "pay",
                 Map.of("supplier", p.supplier(), "amount", p.amount(), "currency", p.currency()))
             .with("sentAt", Instant.now().toString())

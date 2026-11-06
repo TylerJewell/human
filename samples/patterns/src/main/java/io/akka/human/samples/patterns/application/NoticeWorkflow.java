@@ -17,13 +17,13 @@ import java.util.Map;
 
 /**
  * An adverse notice an agent drafts about a person, held until a case reviewer confirms, amends or
- * withholds it: decision review before effect (pt-0002).
+ * withholds it: decision review before effect (pt-00002).
  */
 @Component(id = "notice")
 public class NoticeWorkflow extends Workflow<NoticeWorkflow.Notice> {
 
   public static final String RESUMER = "notice";
-  /** pt-0002 has 4 hours, then 4 more at head-of-operations. */
+  /** pt-00002 has 4 hours, then 4 more at head-of-operations. */
   static final Duration BACKSTOP = Duration.ofHours(10);
 
   public record Start(String applicant, String text, String decisionRef) {}
@@ -59,7 +59,7 @@ public class NoticeWorkflow extends Workflow<NoticeWorkflow.Notice> {
   private StepEffect askReview() {
     var n = currentState();
     var raised = human.raise(Patterns.decisionReview("Should this adverse notice go to " + n.applicant() + "?")
-        .control("pt-0002")
+        .control("pt-00002")
         .subject(Subject.output("Adverse notice to " + n.applicant(), n.text())
             .with("decision", Subject.fields("ref", n.decisionRef(), "summary", "Benefit claim denied", "affects", n.applicant()))
             .withAgent("notices").withWorkflow(id).withRef(n.decisionRef()))

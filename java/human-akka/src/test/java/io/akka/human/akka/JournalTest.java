@@ -129,7 +129,7 @@ public class JournalTest {
 
     var read = assertInstanceOf(HumanEventEvent.Raised.class,
         serializer().fromBytes(new Entry(raised.entityId(), raised.contentType(), payload).bytes()));
-    assertEquals("pt-0001", read.event().settings().control().rowId());
+    assertEquals("pt-00001", read.event().settings().control().rowId());
     assertEquals(State.OPEN, read.event().state());
     assertEquals(10, read.event().settings().minimumReviewSeconds());
     assertFalse(read.event().settings().blockDecisions());

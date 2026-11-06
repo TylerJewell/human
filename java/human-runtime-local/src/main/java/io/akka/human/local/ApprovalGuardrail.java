@@ -33,7 +33,7 @@ import java.util.TreeMap;
  * <pre>{@code
  * "payment approval" {
  *   class = "io.akka.human.local.ApprovalGuardrail", agents = ["*"], tools = ["pay"]
- *   control = "pt-0001", match = "tool-arguments"
+ *   control = "pt-00001", match = "tool-arguments"
  * }
  * }</pre>
  */

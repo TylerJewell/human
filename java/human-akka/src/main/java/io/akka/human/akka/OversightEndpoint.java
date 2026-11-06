@@ -26,7 +26,6 @@ import io.akka.human.engine.Json;
 import io.akka.human.engine.Refusal;
 import io.akka.human.engine.Rules;
 import io.akka.human.engine.StandingDecision;
-import io.akka.human.engine.Verdicts;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,7 +38,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 /**
- * The oversight contract, version 2 (spec/CONTRACT.md): every {@code /oversight/*} route a console or
+ * The oversight contract, version 3 (spec/CONTRACT.md): every {@code /oversight/*} route a console or
  * the companion reads and writes. The development routes answer 404 unless the service turns them on.
  *
  * <p>Every call passes the service's {@code AccessPolicy} first, with the reviewer the body carries
@@ -169,7 +168,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       int limit = Math.max(1, Math.min(MAX_LIMIT, q.getInteger("limit").orElse(DEFAULT_LIMIT)));
       int offset = Math.max(0, q.getInteger("offset").orElse(0));
       var page = HumanQueries.verdictPage(client, key, since, until, offset, limit);
-      var verdicts = page.rows().stream().map(r -> (Object) Json.verdict(Verdicts.of(r.event()))).toList();
+      var verdicts = page.rows().stream().map(r -> (Object) Json.verdict(r.event())).toList();
       int next = offset + verdicts.size();
       return ok(map("verdicts", verdicts, "total", page.total(), "hasMore", next < page.total(),
           "nextOffset", next < page.total() ? next : null));
@@ -223,7 +222,7 @@ public class OversightEndpoint extends AbstractHttpEndpoint {
       var plugins = library.plugins();
       var info = new LinkedHashMap<String, Object>();
       info.put("service", plugins.service());
-      info.put("contract", 2);
+      info.put("contract", 3);
       info.put("library", HumanLibrary.NAME);
       info.put("patterns", library.controls().patterns().stream().map(Pattern::id).toList());
       info.put("controls", library.controls().all().size());

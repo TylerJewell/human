@@ -4,7 +4,7 @@
   "recordedAt": "2026-10-29T14:00:00Z",
   "service": "patterns",
   "payload": {
-    "control_id": "pt-0012",
+    "control_id": "pt-00012",
     "exerciser_id": "s.patel@example.com",
     "exerciser_roles": [
       "safety-officer"

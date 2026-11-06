@@ -7,7 +7,7 @@
   "pattern": "change-authorization",
   "patternName": "Change authorization",
   "control": {
-    "rowId": "pt-0003",
+    "rowId": "pt-00003",
     "name": "Model rollouts need an approver who did not build them",
     "corpusRef": "soc2.cc8.1",
     "revision": 1

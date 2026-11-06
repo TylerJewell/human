@@ -151,7 +151,7 @@ public class PatternsIntegrationTest extends TestKitSupport {
   @Test
   public void aHaltStopsEligibilityUntilTwoOfficersRestartIt() {
     assertEquals(200, post("/eligibility/assess", Map.of("applicant", "A-1", "income", 20000)).status());
-    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "pt-0012", "lift", false,
+    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "pt-00012", "lift", false,
         "reason", "Referral drift"));
     assertEquals(200, halt.status(), halt.body()::toString);
     assertEquals(503, post("/eligibility/assess", Map.of("applicant", "A-2", "income", 20000)).status());
@@ -159,7 +159,7 @@ public class PatternsIntegrationTest extends TestKitSupport {
         instanceof akka.javasdk.agent.Decision.Deny);
 
     put("/eligibility/safe-state", Map.of("backlogDrained", false));
-    var lift = post("/oversight/halts", Map.of("reviewer", TYLER, "control", "pt-0012", "lift", true,
+    var lift = post("/oversight/halts", Map.of("reviewer", TYLER, "control", "pt-00012", "lift", true,
         "reason", "Backlog drained"));
     var liftId = lift.body().get("id").asText();
     assertEquals(409, post("/oversight/events/" + liftId + "/decision", decision(PATEL, "APPROVE", "ok")).status());

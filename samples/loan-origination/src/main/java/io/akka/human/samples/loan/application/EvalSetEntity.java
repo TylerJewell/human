@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * The applicant support assistant's evaluation set: each flagged reply a triager accepted under
- * hl-0007, as a failing case. One instance, {@link #ID}.
+ * custom-4c293fe7fd2e, as a failing case. One instance, {@link #ID}.
  */
 @Component(id = "eval-set")
 public class EvalSetEntity extends KeyValueEntity<EvalSetEntity.EvalSet> {

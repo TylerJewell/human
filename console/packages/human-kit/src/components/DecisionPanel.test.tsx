@@ -271,8 +271,8 @@ describe("DecisionPanel: refusals and server errors", () => {
   });
 
   it("shows a 403 as what the reviewer may not do", async () => {
-    const shown = await send(new OversightError(403, "not qualified for pt-0001", { error: "not qualified for pt-0001" }));
-    expect(shown).toHaveTextContent("You cannot do this: not qualified for pt-0001.");
+    const shown = await send(new OversightError(403, "not qualified for pt-00001", { error: "not qualified for pt-00001" }));
+    expect(shown).toHaveTextContent("You cannot do this: not qualified for pt-00001.");
   });
 
   it("refuses someone the registry does not list", () => {

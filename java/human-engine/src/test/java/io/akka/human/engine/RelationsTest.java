@@ -30,7 +30,7 @@ class RelationsTest {
 
   @Test
   void aRequestRefusesAnUnknownRelation() {
-    var settings = control("pt-0001");
+    var settings = control("pt-00001");
     var ok = request(settings).related("he-0", Relations.RERAISED_AFTER).related("he-1", "x-follows").build();
     assertEquals(2, ok.related().size());
     assertThrows(IllegalArgumentException.class, () -> request(settings).related("he-0", "follows").build());

@@ -64,7 +64,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "action-approval",
     name: "Action approval",
-    control: "pt-0001",
+    control: "pt-00001",
     flavor: "human-system-authorization",
     hook: "workflow",
     summary: "A person approves an action before the system takes it.",
@@ -78,7 +78,7 @@ export const PATTERNS: PatternTour[] = [
           {
             label: "Workflow step",
             key: "payment.ask",
-            focus: ["Patterns.actionApproval", '.control("pt-0001")', ".proposedBy(", ".resumes(Resume.workflow", ".thenPause("]
+            focus: ["Patterns.actionApproval", '.control("pt-00001")', ".proposedBy(", ".resumes(Resume.workflow", ".thenPause("]
           },
           { label: "Agent task", key: "agent.task", focus: ["client.forTask", "Resume.task(taskId)"] },
           { label: "Tool call", key: "agent.guardrail", focus: ["ApprovalGuardrail", "control =", "tools ="] }
@@ -91,7 +91,7 @@ export const PATTERNS: PatternTour[] = [
         code: [
           {
             label: "Control",
-            key: "control.pt-0001",
+            key: "control.pt-00001",
             focus: ["routing:", "sla_target", "escalation_chain", "minimum_review_seconds"]
           }
         ]
@@ -117,7 +117,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "decision-review",
     name: "Decision review",
-    control: "pt-0002",
+    control: "pt-00002",
     flavor: "human-domain-decision",
     hook: "workflow",
     summary: "A person reviews a decision about someone before it takes effect.",
@@ -139,7 +139,7 @@ export const PATTERNS: PatternTour[] = [
         label: "A reviewer reads it",
         title: "A case reviewer confirms, amends or stops the notice after reading it for at least twenty seconds.",
         text: "The minimum review time is enforced: the decision panel opens its actions only once the reviewer has held the event for twenty seconds.",
-        code: [{ label: "Control", key: "control.pt-0002", focus: ["routing:", "minimum_review_seconds", "sla_target"] }]
+        code: [{ label: "Control", key: "control.pt-00002", focus: ["routing:", "minimum_review_seconds", "sla_target"] }]
       },
       effect: {
         label: "The letter goes out",
@@ -156,7 +156,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "change-authorization",
     name: "Change authorization",
-    control: "pt-0003",
+    control: "pt-00003",
     flavor: "human-system-authorization",
     hook: "workflow",
     summary: "Two people who neither proposed nor built a change approve it before it reaches production.",
@@ -178,7 +178,7 @@ export const PATTERNS: PatternTour[] = [
         label: "Two people approve",
         title: "Two model risk owners approve in turn, and neither the proposer nor the builder may.",
         text: "The first approval moves the event to awaiting a second. The tour switches to the next eligible person after each vote.",
-        code: [{ label: "Control", key: "control.pt-0003", focus: ["review_mode: TWO_PERSON", "routing:", "escalation_chain"] }]
+        code: [{ label: "Control", key: "control.pt-00003", focus: ["review_mode: TWO_PERSON", "routing:", "escalation_chain"] }]
       },
       effect: {
         label: "The rollout starts",
@@ -192,7 +192,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "exception",
     name: "Exception",
-    control: "pt-0004",
+    control: "pt-00004",
     flavor: "human-system-authorization",
     hook: "handler",
     summary: "A person grants a time-limited exception to a rule, with a reason.",
@@ -214,7 +214,7 @@ export const PATTERNS: PatternTour[] = [
         label: "The compliance lead decides",
         title: "The compliance lead grants the waiver until it expires, or refuses it.",
         text: "The proposer can never decide their own exception; the control bars them.",
-        code: [{ label: "Control", key: "control.pt-0004", focus: ["routing:", "sla_target"] }]
+        code: [{ label: "Control", key: "control.pt-00004", focus: ["routing:", "sla_target"] }]
       },
       effect: {
         label: "The waiver is recorded",
@@ -231,7 +231,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "match-adjudication",
     name: "Match and adjudication",
-    control: "pt-0005",
+    control: "pt-00005",
     flavor: "human-domain-decision",
     hook: "handler",
     summary: "A person decides whether two records describe the same thing.",
@@ -249,7 +249,7 @@ export const PATTERNS: PatternTour[] = [
         label: "A steward compares them",
         title: "A data steward says whether they are the same, different, or need relabelling.",
         text: "The decision panel shows the two records field by field, with the fields that differ marked.",
-        code: [{ label: "Control", key: "control.pt-0005", focus: ["routing:", "subject_kind: records"] }]
+        code: [{ label: "Control", key: "control.pt-00005", focus: ["routing:", "subject_kind: records"] }]
       },
       effect: {
         label: "The match is recorded",
@@ -263,7 +263,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "outcome-reconciliation",
     name: "Outcome reconciliation",
-    control: "pt-0006",
+    control: "pt-00006",
     flavor: "human-system-authorization",
     hook: "workflow",
     summary: "A person establishes what happened when the system cannot tell.",
@@ -285,7 +285,7 @@ export const PATTERNS: PatternTour[] = [
         label: "Operations checks",
         title: "An operator checks with the provider and says it happened, it did not, or retry.",
         text: "System owners and the head of operations may answer; the agent that made the payment may not.",
-        code: [{ label: "Control", key: "control.pt-0006", focus: ["routing:", "sla_target", "escalation_chain"] }]
+        code: [{ label: "Control", key: "control.pt-00006", focus: ["routing:", "sla_target", "escalation_chain"] }]
       },
       effect: {
         label: "The workflow settles",
@@ -299,7 +299,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "contest-appeal",
     name: "Contest and appeal",
-    control: "pt-0007",
+    control: "pt-00007",
     flavor: "human-domain-decision",
     hook: "person",
     summary: "A person affected by a decision appeals it to someone independent of it.",
@@ -318,7 +318,7 @@ export const PATTERNS: PatternTour[] = [
         label: "An independent officer hears it",
         title: "An appeals officer upholds, modifies or overturns the decision after at least thirty seconds.",
         text: "Whoever made the first decision, and their line, cannot hear the appeal.",
-        code: [{ label: "Control", key: "control.pt-0007", focus: ["routing:", "minimum_review_seconds", "escalation_chain"] }]
+        code: [{ label: "Control", key: "control.pt-00007", focus: ["routing:", "minimum_review_seconds", "escalation_chain"] }]
       },
       effect: {
         label: "The applicant hears back",
@@ -332,7 +332,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "override",
     name: "Override",
-    control: "pt-0008",
+    control: "pt-00008",
     flavor: "human-system-authorization",
     hook: "person",
     summary: "A person sets aside or replaces an output the system produced, and says why.",
@@ -351,7 +351,7 @@ export const PATTERNS: PatternTour[] = [
         code: [
           { label: "Route", key: "override.route", focus: ["human.override("] },
           { label: "Library", key: "override.library", focus: ["Qualification.refusal", "HumanEventEntity::decide"] },
-          { label: "Control", key: "control.pt-0008", focus: ["routing:"] }
+          { label: "Control", key: "control.pt-00008", focus: ["routing:"] }
         ]
       },
       effect: {
@@ -366,7 +366,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "flag-feedback",
     name: "Flag and feedback",
-    control: "pt-0009",
+    control: "pt-00009",
     flavor: "human-feedback",
     hook: "person",
     summary: "Anyone can flag an output as wrong, and a triager decides whether it becomes an evaluation case.",
@@ -385,7 +385,7 @@ export const PATTERNS: PatternTour[] = [
         label: "A triager decides",
         title: "A feedback triager accepts the flag as an evaluation case, or dismisses it.",
         text: "A flag that nobody answers is abandoned at its deadline, so the queue does not grow without end.",
-        code: [{ label: "Control", key: "control.pt-0009", focus: ["routing:", "sla_target"] }]
+        code: [{ label: "Control", key: "control.pt-00009", focus: ["routing:", "sla_target"] }]
       },
       effect: {
         label: "An eval case is created",
@@ -399,7 +399,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "triage",
     name: "Triage",
-    control: "pt-0010",
+    control: "pt-00010",
     flavor: "human-monitoring",
     hook: "monitor",
     summary: "A monitor raises a signal, and a person decides whether it is a problem while the work carries on.",
@@ -415,7 +415,7 @@ export const PATTERNS: PatternTour[] = [
         label: "The risk owner triages",
         title: "A model risk owner resolves, dismisses or reports the drift.",
         text: "Reporting escalates it to compliance.",
-        code: [{ label: "Control", key: "control.pt-0010", focus: ["trigger:", "routing:", "escalation_chain"] }]
+        code: [{ label: "Control", key: "control.pt-00010", focus: ["trigger:", "routing:", "escalation_chain"] }]
       },
       effect: {
         label: "The finding is recorded",
@@ -429,7 +429,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "hand-off",
     name: "Hand-off",
-    control: "pt-0011",
+    control: "pt-00011",
     flavor: "human-domain-decision",
     hook: "workflow",
     summary: "The agent hands a conversation to a person, who takes it over.",
@@ -445,7 +445,7 @@ export const PATTERNS: PatternTour[] = [
         label: "The duty officer takes over",
         title: "The duty officer takes the conversation over, returns it to the agent, or closes it.",
         text: "The duty officer has five minutes before the hand-off escalates to the head of operations.",
-        code: [{ label: "Control", key: "control.pt-0011", focus: ["sla_target: PT5M", "escalation_chain"] }]
+        code: [{ label: "Control", key: "control.pt-00011", focus: ["sla_target: PT5M", "escalation_chain"] }]
       },
       effect: {
         label: "A person joins",
@@ -459,7 +459,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "halt-restart",
     name: "Halt and restart",
-    control: "pt-0012",
+    control: "pt-00012",
     flavor: "human-halt",
     hook: "halt",
     summary: "An authorized person stops a capability at once, and restarting it takes two people and a safe state.",
@@ -481,7 +481,7 @@ export const PATTERNS: PatternTour[] = [
         text: "A restart takes two approvals, the pattern's default. The service supplies the safe-state checks; here the restart needs the assessment backlog drained.",
         code: [
           { label: "Safe-state checks", key: "halt.scope", focus: ["safeStateChecks", '"backlog drained"'] },
-          { label: "Control", key: "control.pt-0012", focus: ["halt_config:", "target:", "emits_on_exercise", "emits_on_lift"] }
+          { label: "Control", key: "control.pt-00012", focus: ["halt_config:", "target:", "emits_on_exercise", "emits_on_lift"] }
         ]
       },
       effect: {
@@ -500,7 +500,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "attestation",
     name: "Attestation",
-    control: "pt-0013",
+    control: "pt-00013",
     flavor: "human-monitoring",
     hook: "monitor",
     summary: "A person confirms on a schedule that a system is still fit for use.",
@@ -516,7 +516,7 @@ export const PATTERNS: PatternTour[] = [
         label: "The risk owner attests",
         title: "A model risk owner attests, attests with findings, or refuses to attest.",
         text: "The evidence list shows each document the attestation rests on and whether it is stale.",
-        code: [{ label: "Control", key: "control.pt-0013", focus: ["trigger:", "routing:", "sla_target: P14D"] }]
+        code: [{ label: "Control", key: "control.pt-00013", focus: ["trigger:", "routing:", "sla_target: P14D"] }]
       },
       effect: {
         label: "The attestation is recorded",
@@ -530,7 +530,7 @@ export const PATTERNS: PatternTour[] = [
   {
     id: "oversight-quality",
     name: "Oversight quality",
-    control: "pt-0014",
+    control: "pt-00014",
     flavor: "human-monitoring",
     hook: "monitor",
     summary: "The oversight itself is watched, and its accountable owner acts when people review too quickly.",
@@ -546,7 +546,7 @@ export const PATTERNS: PatternTour[] = [
         label: "The owner acts",
         title: "The accountable owner resets the reviewers, retrains them, or reassigns the work.",
         text: "The finding names the control, the figure and the limit it crossed.",
-        code: [{ label: "Control", key: "control.pt-0014", focus: ["trigger:", "metric:", "routing:"] }]
+        code: [{ label: "Control", key: "control.pt-00014", focus: ["trigger:", "metric:", "routing:"] }]
       },
       effect: {
         label: "The response is recorded",

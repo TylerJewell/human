@@ -18,13 +18,13 @@ import java.util.Map;
 
 /**
  * A conversation in which the user asks for a person. The agent stops and the person on duty takes it
- * over, returns it to the agent, or closes it (pt-0011, hand-off).
+ * over, returns it to the agent, or closes it (pt-00011, hand-off).
  */
 @Component(id = "handoff")
 public class HandOffWorkflow extends Workflow<HandOffWorkflow.Conversation> {
 
   public static final String RESUMER = "handoff";
-  /** pt-0011 has 5 minutes, then 5 more at head-of-operations. */
+  /** pt-00011 has 5 minutes, then 5 more at head-of-operations. */
   static final Duration BACKSTOP = Duration.ofMinutes(20);
 
   /** {@code reason}: user-asked, crisis, step-failed or policy. */
@@ -65,7 +65,7 @@ public class HandOffWorkflow extends Workflow<HandOffWorkflow.Conversation> {
     for (var line : c.userSaid()) transcript.add(Map.of("at", now, "role", "user", "text", line));
     transcript.add(Map.of("at", now, "role", "agent", "text", "I will bring in a person now."));
     var raised = human.raise(Patterns.handOff("Take over this conversation?")
-        .control("pt-0011")
+        .control("pt-00011")
         .subject(Subject.conversation("The user asked for a person on " + c.channel(), c.channel(), c.reason(),
                 List.copyOf(transcript))
             .with("takenOverBy", null).withSession(id).withWorkflow(id).withRef(id))

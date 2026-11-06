@@ -113,7 +113,7 @@ describe("governance views", () => {
     fireEvent.click(screen.getByTestId("halt-exercise"));
     fireEvent.change(screen.getByTestId("write-reason"), { target: { value: "Drift" } });
     fireEvent.click(screen.getByTestId("hk-confirm-run"));
-    expect(await screen.findByRole("status")).toHaveTextContent("Halted; the event is he-pt-0012-false-Drift.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Halted; the event is he-pt-00012-false-Drift.");
   });
 
   it("lists standing decisions and revokes one with a reason", async () => {

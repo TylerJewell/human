@@ -27,7 +27,7 @@ import java.util.Map;
  *
  * <pre>{@code
  * var kit = new HumanTestKit(componentClient, plugins);
- * var event = kit.raise(Patterns.actionApproval("Pay S-77?").control("pt-0001")...build());
+ * var event = kit.raise(Patterns.actionApproval("Pay S-77?").control("pt-00001")...build());
  * kit.claimAndDecide(event.id(), HumanTestKit.reviewer("tyler.jewell@akka.io", "ai-system-owner"), Action.APPROVE, "ok");
  * kit.awaitApplied(event.id());
  * }</pre>

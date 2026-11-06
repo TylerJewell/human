@@ -53,7 +53,7 @@
       "scope": "capability",
       "target": "eligibility-assessment",
       "control": {
-        "rowId": "pt-0012",
+        "rowId": "pt-00012",
         "name": "Eligibility can be halted",
         "corpusRef": "eu-ai-act.art14.4.e",
         "revision": 1

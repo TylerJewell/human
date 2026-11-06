@@ -4,6 +4,7 @@ import {
   parseDuration,
   rowOf,
   votesOf,
+  type Action,
   type Decision,
   type DecisionInput,
   type EventsList,
@@ -16,7 +17,9 @@ import {
   type Quality,
   type Reviewer,
   type StandingDecision,
-  type Summary
+  type Summary,
+  type Verdict,
+  type VerdictDecision
 } from "@akka-human/kit";
 
 // An oversight service held in memory, for the gallery: the spec's examples as
@@ -34,6 +37,26 @@ export interface MemoryData {
 }
 
 const CLAIMABLE = new Set(["OPEN", "ESCALATED", "REOPENED"]);
+
+const decisionOf = (action: Action) => action.toLowerCase().replaceAll("_", "-") as VerdictDecision;
+
+/** JSON with names sorted: with JSON.stringify's escaping and numbers, the RFC 8785 form. */
+const canonical = (value: unknown): string =>
+  Array.isArray(value)
+    ? `[${value.map(canonical).join(",")}]`
+    : value !== null && typeof value === "object"
+      ? `{${Object.entries(value)
+          .filter(([, v]) => v !== undefined)
+          .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`)
+          .join(",")}}`
+      : JSON.stringify(value);
+
+/** The verdict with its digest, the SHA-256 of its canonical JSON, as Verify computes it. */
+async function sealed(body: Omit<Verdict, "integrity">): Promise<Verdict> {
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical(body))));
+  return { ...body, integrity: { digest: `sha256:${[...hash].map((b) => b.toString(16).padStart(2, "0")).join("")}` } };
+}
 
 export function createMemoryClient(data: MemoryData, reviewer: Reviewer): OversightClient {
   const events = new Map(data.events.map((e) => [e.id, structuredClone(e)]));
@@ -72,7 +95,7 @@ export function createMemoryClient(data: MemoryData, reviewer: Reviewer): Oversi
       refuse(409, "claimed by another reviewer", { state: e.state });
   };
 
-  function decide(e: HumanEvent, body: DecisionInput) {
+  async function decide(e: HumanEvent, body: DecisionInput) {
     mayAct(e);
     const errors: string[] = [];
     if (!e.allowedActions.includes(body.action)) errors.push(`${body.action} is not allowed on this event`);
@@ -146,22 +169,52 @@ export function createMemoryClient(data: MemoryData, reviewer: Reviewer): Oversi
     };
     e.conclusion = conclusion;
     e.verdictId = `vd-${e.id}`;
-    e.verdict = {
-      id: `vd-${e.id}`,
-      eventId: e.id,
-      control: e.control,
-      pattern: e.pattern,
-      subjectKind: e.subject.kind,
+    const last = votes[votes.length - 1];
+    e.verdict = await sealed({
+      schemaVersion: 1,
+      verdictId: `vd-${e.id}`,
+      control: {
+        rowId: e.control.rowId,
+        ...(e.control.corpusRef ? { corpusRef: e.control.corpusRef } : {}),
+        bundle: { systemId: e.owner.service, draftRevision: e.control.revision ?? 1 }
+      },
       mechanism: "human",
-      boundary: { kind: "work-item", ref: `${e.routing.queue} · ${e.id}` },
+      environment: "pre-production",
+      observedAt: iso(),
       conclusion,
-      reasons: late ? ["late"] : below ? ["below-minimum"] : [],
-      source: { kind: "rehearsal", service: e.owner.service },
-      action,
-      deciders: votes.map((v) => v.reviewer.subject),
-      appliedAt: iso(),
-      at: iso()
-    };
+      outcome: decisionOf(action),
+      reason: late
+        ? { code: "late", text: "The decision came after the deadline." }
+        : below
+          ? { code: "below-minimum", text: "The reviewer decided before the minimum review time." }
+          : { text: "A qualified reviewer decided in time." },
+      subject: { service: e.owner.service },
+      evidence: [{ kind: "record", ref: e.id }],
+      source: { kind: "rehearsal", by: me.subject },
+      detail: {
+        status: "decided",
+        flavor: e.flavor,
+        mode: e.mode === "HOTL" ? "hotl" : "hitl",
+        pattern: e.pattern,
+        workItem: { id: e.id, queue: e.routing.queue },
+        authorized: true,
+        reviewer: { subject: last.reviewer.subject, roles: last.reviewer.roles, identityProvider: "playground-gallery" },
+        submittedAt: last.submittedAt ?? iso(),
+        reviewSeconds: last.reviewSeconds ?? 0,
+        belowMinimum: below,
+        action: decisionOf(action),
+        ...(required > 1
+          ? {
+              votes: votes.map((v) => ({
+                subject: v.reviewer.subject,
+                roles: v.reviewer.roles,
+                action: decisionOf(v.action),
+                submittedAt: v.submittedAt ?? iso()
+              }))
+            }
+          : {})
+      }
+    });
     if (body.sticky === "APPROVE_FOR_PATTERN" || body.sticky === "DENY_FOR_PATTERN") {
       const id = `sd-${standing.length + 1}`;
       e.outcome.standingDecisionId = id;
@@ -184,7 +237,7 @@ export function createMemoryClient(data: MemoryData, reviewer: Reviewer): Oversi
     }
   }
 
-  function apply(e: HumanEvent, w: EventWrite) {
+  async function apply(e: HumanEvent, w: EventWrite) {
     switch (w.kind) {
       case "claim":
         mayAct(e);
@@ -199,7 +252,7 @@ export function createMemoryClient(data: MemoryData, reviewer: Reviewer): Oversi
         step(e, "OPEN", "Released to the queue");
         return;
       case "decision":
-        decide(e, w.body);
+        await decide(e, w.body);
         return;
       case "escalate": {
         mayAct(e);
@@ -264,7 +317,7 @@ export function createMemoryClient(data: MemoryData, reviewer: Reviewer): Oversi
 
   const write = async (id: string, w: EventWrite) => {
     const e = structuredClone(get(id));
-    apply(e, w);
+    await apply(e, w);
     return save(e);
   };
 

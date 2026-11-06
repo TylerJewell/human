@@ -1,5 +1,5 @@
 {
-  "about" : "Journal entries of the event entity as akka-human 0.1.0 (b6e70be) wrote them on Akka SDK 3.7.0, before the events had type names: each content type is the class name. Four events: pt-0001 claimed, released, asked about, extended, decided and applied; pt-0003 voted, sent back, resubmitted, recused, escalated, timed out and reopened; pt-0008 settled by a standing decision; pt-0012 restarted with its safe-state checks.",
+  "about" : "Journal entries of the event entity as akka-human 0.1.0 (b6e70be) wrote them on Akka SDK 3.7.0, before the events had type names: each content type is the class name. Four events: pt-00001 claimed, released, asked about, extended, decided and applied; pt-00003 voted, sent back, resubmitted, recused, escalated, timed out and reopened; pt-00008 settled by a standing decision; pt-00012 restarted with its safe-state checks.",
   "journal" : [ {
     "entityId" : "he-20261030-a1b2c3d4",
     "contentType" : "json.akka.io/io.akka.human.engine.HumanEventEvent$Raised",
@@ -11,7 +11,7 @@
         "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
         "settings" : {
           "control" : {
-            "rowId" : "pt-0001",
+            "rowId" : "pt-00001",
             "name" : "Payments above the limit need the system owner",
             "corpusRef" : "aws-agentic-scoping.scope2-human-approval",
             "revision" : 1
@@ -326,7 +326,7 @@
         "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
         "settings" : {
           "control" : {
-            "rowId" : "pt-0003",
+            "rowId" : "pt-00003",
             "name" : "Model rollouts need an approver who did not build them",
             "corpusRef" : "soc2.cc8.1",
             "revision" : 1
@@ -621,7 +621,7 @@
         "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
         "settings" : {
           "control" : {
-            "rowId" : "pt-0008",
+            "rowId" : "pt-00008",
             "name" : "Oversight persons can override an output, with a reason",
             "corpusRef" : "eu-ai-act.art14.4.d",
             "revision" : 1
@@ -768,7 +768,7 @@
         "catalogDigest" : "sha256:cd9628bcd379bb67cba9ba4f9d905ed6e7c8b1a1eb9eee9953958ccaed50d1b7",
         "settings" : {
           "control" : {
-            "rowId" : "pt-0012",
+            "rowId" : "pt-00012",
             "name" : "Automated eligibility assessment can be halted",
             "corpusRef" : "eu-ai-act.art14.4.e",
             "revision" : 1

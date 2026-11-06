@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -83,7 +84,7 @@ public final class Json {
     m.put("outcome", outcome(e.outcome()));
     m.put("verdictId", verdict == null ? null : verdict.id());
     m.put("conclusion", verdict == null ? null : verdict.conclusion());
-    m.put("verdict", verdict == null ? null : verdict(verdict));
+    m.put("verdict", verdict(e));
     m.put("related", e.related().stream().map(r -> (Object) map("eventId", r.eventId(), "relation", r.relation()))
         .toList());
     m.put("history", e.history().stream().map(h -> (Object) map("at", str(h.at()), "state", h.state().name(),
@@ -131,22 +132,171 @@ public final class Json {
     return m;
   }
 
-  public static Map<String, Object> verdict(Verdicts.Verdict v) {
+  /**
+   * The event's verdict as Verify's verdict schema v1 records it (spec/verify/verdict.schema.yaml), or
+   * null while the event is pending. Nobody has signed the controls a service declares, so the verdict
+   * names a draft bundle: the service and the control's revision. Absent fields are left out, never
+   * null, and {@code integrity.digest} covers every other field.
+   */
+  public static Map<String, Object> verdict(HumanEvent e) {
+    var v = Verdicts.of(e);
+    if (v == null) return null;
+    var s = e.settings();
+    var control = new LinkedHashMap<String, Object>();
+    control.put("rowId", s.control().rowId());
+    if (s.control().corpusRef() != null) control.put("corpusRef", s.control().corpusRef());
+    control.put("bundle", map("systemId", e.service(), "draftRevision", s.control().revision()));
+    var subject = new LinkedHashMap<String, Object>();
+    subject.put("service", e.service());
+    if (e.subject().sessionId() != null) subject.put("session", e.subject().sessionId());
+    var detail = humanDetail(e);
     var m = new LinkedHashMap<String, Object>();
-    m.put("id", v.id());
-    m.put("eventId", v.eventId());
-    m.put("control", control(v.control()));
-    m.put("pattern", v.pattern().id());
-    m.put("subjectKind", v.subjectKind().id());
+    m.put("schemaVersion", 1);
+    m.put("verdictId", v.id());
+    m.put("control", control);
     m.put("mechanism", "human");
-    m.put("boundary", map("kind", "work-item", "ref", v.boundaryRef()));
+    m.put("environment", "production".equals(e.environment()) ? "production" : "pre-production");
+    m.put("observedAt", str(v.at()));
     m.put("conclusion", v.conclusion());
-    m.put("reasons", v.reasons());
-    m.put("source", map("kind", v.source(), "service", v.service()));
-    m.put("action", v.action() == null ? null : v.action().name());
-    m.put("deciders", v.deciders());
-    m.put("appliedAt", str(v.appliedAt()));
-    m.put("at", str(v.at()));
+    m.put("outcome", detail.containsKey("action") ? detail.get("action") : detail.get("status"));
+    m.put("reason", reason(e, v));
+    m.put("subject", subject);
+    m.put("evidence", List.of(map("kind", "record", "ref", e.id())));
+    m.put("source", source(e, v));
+    m.put("detail", detail);
+    m.put("integrity", map("digest", Canonical.digest(m)));
+    return m;
+  }
+
+  private static Map<String, Object> humanDetail(HumanEvent e) {
+    var s = e.settings();
+    var o = e.outcome();
+    var d = new LinkedHashMap<String, Object>();
+    d.put("status", status(o));
+    d.put("flavor", s.flavor());
+    // A halt's restart waits for its approval, as an in-the-loop decision does.
+    d.put("mode", "HOTL".equals(s.mode()) ? "hotl" : "hitl");
+    d.put("pattern", s.pattern().id());
+    d.put("workItem", map("id", e.id(), "queue", e.queue()));
+    var vote = e.settlingVote();
+    if (vote != null) {
+      var round = e.roundVotes();
+      // Every recorded vote passed the qualification and independence checks.
+      d.put("authorized", true);
+      if (Rules.takesSeveralVotes(s, o.action())) {
+        d.put("twoPerson", map("required", true,
+            "satisfied", round.stream().map(r -> r.reviewer().subject()).distinct().count() > 1));
+      }
+      d.put("rationaleRequired", s.rationaleRequired());
+      d.put("reviewer", verdictReviewer(vote.reviewer()));
+      if (vote.presentedAt() != null) d.put("presentedAt", str(vote.presentedAt()));
+      if (e.claimedAt() != null) d.put("claimedAt", str(e.claimedAt()));
+      d.put("submittedAt", str(vote.submittedAt()));
+      d.put("reviewSeconds", vote.reviewSeconds());
+      d.put("minimumSeconds", s.minimumReviewSeconds());
+      d.put("belowMinimum", round.stream().anyMatch(HumanEvent.Vote::belowMinimum));
+      d.put("action", decision(o.action()));
+      if (!o.rationale().isBlank()) d.put("rationale", o.rationale());
+      if (round.size() > 1) {
+        d.put("votes", round.stream().map(r -> (Object) map("subject", r.reviewer().subject(), "roles",
+            r.reviewer().roles(), "action", decision(r.action()), "submittedAt", str(r.submittedAt()),
+            "reviewSeconds", r.reviewSeconds())).toList());
+      }
+    } else if (o.byStanding()) {
+      // The grantor's authority was checked when their decision was recorded.
+      d.put("authorized", true);
+      d.put("action", decision(o.action()));
+      var g = o.grant();
+      if (g != null) {
+        d.put("standing", map("decisionId", g.id(), "mode", standingMode(g.kind()), "grantedBy", g.grantedBy(),
+            "grantedAt", str(g.grantedAt())));
+      }
+    }
+    var sla = e.slaState(e.closedAt());
+    if (sla.equals("met") || sla.equals("missed")) d.put("sla", map("target", s.slaTarget(), "outcome", sla));
+    if (HumanEvent.TIMED_OUT.equals(o.slaOutcome())) d.put("timeout", timeout(o));
+    return d;
+  }
+
+  private static String status(HumanEvent.Outcome o) {
+    return switch (o.slaOutcome()) {
+      case HumanEvent.KILLED -> "killed";
+      case HumanEvent.ABANDONED -> "abandoned";
+      case HumanEvent.TIMED_OUT -> "timed-out";
+      default -> o.applyError() != null ? "not-applied" : "decided";
+    };
+  }
+
+  private static Map<String, Object> timeout(HumanEvent.Outcome o) {
+    var t = new LinkedHashMap<String, Object>();
+    switch (o.timeoutBehaviour()) {
+      // An event times out under ESCALATE only at the last queue of its chain.
+      case "ESCALATE" -> {
+        t.put("behaviour", "escalate");
+        t.put("exhausted", true);
+      }
+      case "RESUME_WITH_DEFAULT" -> t.put("behaviour", o.action() != null && o.action().proceeds() ? "fail-open"
+          : "fail-closed");
+      default -> t.put("behaviour", "fail-closed");
+    }
+    if (o.action() != null) t.put("defaultApplied", decision(o.action()));
+    return t;
+  }
+
+  private static String standingMode(String kind) {
+    return switch (kind) {
+      case "pattern-denial" -> "deny-for-pattern";
+      case "session-approval" -> "approve-for-session";
+      default -> "approve-for-pattern";
+    };
+  }
+
+  /** A decision of the registry as a verdict writes it: REQUEST_MORE_INFO is request-more-info. */
+  private static String decision(Action action) {
+    return action.name().toLowerCase(Locale.ROOT).replace('_', '-');
+  }
+
+  /** The reviewer as a verdict names them: no display name, and the identity provider only when known. */
+  private static Map<String, Object> verdictReviewer(io.akka.human.api.Reviewer r) {
+    var m = map("subject", r.subject(), "roles", r.roles());
+    if (!r.identityProvider().isBlank()) m.put("identityProvider", r.identityProvider());
+    return m;
+  }
+
+  private static Map<String, Object> source(HumanEvent e, Verdicts.Verdict v) {
+    return switch (v.source()) {
+      case "simulated" -> map("kind", "simulated", "generator", e.service());
+      case "rehearsal" -> map("kind", "rehearsal", "by", Verdicts.rehearsedBy(e));
+      default -> map("kind", "runtime", "componentId", e.service());
+    };
+  }
+
+  private static final Map<String, String> REASONS = Map.of(
+      "late", "The decision came after the deadline.",
+      "below-minimum", "The reviewer decided before the minimum review time.",
+      "fail-open", "The review timed out and the default let the subject go ahead.",
+      "missed-deadline", "The review timed out at the last queue of its escalation chain, and nobody decided.",
+      "killed", "The item was cancelled before anyone decided.");
+
+  /** The first reason's code, and a sentence for every reason or for the outcome when there is none. */
+  private static Map<String, Object> reason(HumanEvent e, Verdicts.Verdict v) {
+    var o = e.outcome();
+    String text;
+    if (v.reasons().contains("not-applied")) {
+      text = "The decision was not carried out: " + o.applyError();
+    } else if (!v.reasons().isEmpty()) {
+      text = String.join(" ", v.reasons().stream().map(REASONS::get).toList());
+    } else {
+      text = switch (status(o)) {
+        case "abandoned" -> "The item closed without a decision.";
+        case "timed-out" -> "The review timed out without a decision, and the subject did not go ahead.";
+        default -> o.byStanding() ? "A standing decision settled the item, and nobody reviewed it."
+            : "A qualified reviewer decided in time.";
+      };
+    }
+    var m = new LinkedHashMap<String, Object>();
+    if (!v.reasons().isEmpty()) m.put("code", v.reasons().getFirst());
+    m.put("text", text);
     return m;
   }
 

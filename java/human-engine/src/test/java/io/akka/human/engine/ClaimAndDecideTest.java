@@ -38,7 +38,7 @@ class ClaimAndDecideTest {
 
   @Test
   void aRaisedEventIsRoutedToTheFirstQueueWithItsDeadline() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     var e = raise(s, request(s).proposedBy("agent:payments").dedupeKey("pay-1").matchKey("pay:S-77").build());
     assertEquals(State.OPEN, e.state());
     assertTrue(e.pending());
@@ -61,7 +61,7 @@ class ClaimAndDecideTest {
 
   @Test
   void aClaimHoldsTheEventForTheClaimTtl() {
-    var e = claim(raise(control("pt-0002")), LIND, T0);
+    var e = claim(raise(control("pt-00002")), LIND, T0);
     assertEquals(State.CLAIMED, e.state());
     assertEquals(LIND, e.holder().subject());
     assertEquals(minutes(30), e.holder().expiresAt());
@@ -75,7 +75,7 @@ class ClaimAndDecideTest {
 
   @Test
   void anEventHeldByAnotherCannotBeClaimedUntilTheClaimLapses() {
-    var e = claim(raise(control("pt-0002")), LIND, T0);
+    var e = claim(raise(control("pt-00002")), LIND, T0);
     var refusal = refused(Rules.claim(e, actor(OKAFOR), minutes(5)), 409);
     assertEquals("claimed by another reviewer", refusal.error());
     assertEquals("CLAIMED", refusal.state());
@@ -88,7 +88,7 @@ class ClaimAndDecideTest {
 
   @Test
   void theHolderOrAnAdminReleases() {
-    var e = claim(raise(control("pt-0002")), LIND, T0);
+    var e = claim(raise(control("pt-00002")), LIND, T0);
     refused(Rules.release(e, reviewer(OKAFOR), minutes(1)), 403);
     var released = ok(e, Rules.release(e, reviewer(LIND), minutes(1)));
     assertEquals(State.OPEN, released.state());
@@ -100,14 +100,14 @@ class ClaimAndDecideTest {
 
   @Test
   void aDecisionNeedsAClaimWhenTheControlMeasuresReviewTime() {
-    var e = raise(control("pt-0001"));
+    var e = raise(control("pt-00001"));
     var refusal = refused(Rules.decide(e, actor(TYLER), ruling(TYLER, Action.APPROVE, "ok"), Map.of(), seconds(20)), 409);
     assertEquals("claim the event first", refusal.error());
   }
 
   @Test
   void theMinimumReviewTimeIsEnforced() {
-    var e = claim(raise(control("pt-0001")), TYLER, T0);
+    var e = claim(raise(control("pt-00001")), TYLER, T0);
     var refusal = refused(Rules.decide(e, actor(TYLER), ruling(TYLER, Action.APPROVE, "ok"), Map.of(), seconds(5)), 422);
     assertTrue(refusal.error().contains("minimum review time is 10 seconds"));
 
@@ -143,7 +143,7 @@ class ClaimAndDecideTest {
 
   @Test
   void aControlWithoutAMinimumNeedsNoClaim() {
-    var decided = decide(raise(control("pt-0004")), CHEN, Action.APPROVE, minutes(1));
+    var decided = decide(raise(control("pt-00004")), CHEN, Action.APPROVE, minutes(1));
     assertEquals(State.DECIDED, decided.state());
     assertEquals(minutes(1), decided.decisions().getFirst().presentedAt());
     assertEquals(0, decided.decisions().getFirst().reviewSeconds());
@@ -151,7 +151,7 @@ class ClaimAndDecideTest {
 
   @Test
   void aLaterVoterOrAControlWithoutMinimumMaySayWhenTheyWereShownTheEvent() {
-    var e = raise(control("pt-0004"));
+    var e = raise(control("pt-00004"));
     var r = new Rules.DecisionRequest(reviewer(CHEN), Action.APPROVE, "ok", null, null, minutes(1), List.of(), null);
     var decided = ok(e, Rules.decide(e, actor(CHEN), r, Map.of(), minutes(3)));
     assertEquals(120, decided.decisions().getFirst().reviewSeconds());
@@ -159,11 +159,11 @@ class ClaimAndDecideTest {
 
   @Test
   void aRationaleIsRequiredUnlessTheControlWaivesIt() {
-    var e = claim(raise(control("pt-0001")), TYLER, T0);
+    var e = claim(raise(control("pt-00001")), TYLER, T0);
     var refusal = refused(Rules.decide(e, actor(TYLER), ruling(TYLER, Action.APPROVE, "  "), Map.of(), seconds(15)), 422);
     assertEquals(List.of("a rationale is required"), refusal.errors());
 
-    var flag = raise(control("pt-0009"));
+    var flag = raise(control("pt-00009"));
     var accepted = ok(flag, Rules.decide(flag, actor(MOREAU), ruling(MOREAU, Action.APPROVE, null), Map.of(), minutes(1)));
     assertEquals(State.DECIDED, accepted.state());
     assertEquals("", accepted.decisions().getFirst().rationale());
@@ -171,7 +171,7 @@ class ClaimAndDecideTest {
 
   @Test
   void tickedChecksMustBeTheEventsOwn() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     var e = claim(raise(s, request(s).check("The invoice matches the purchase order.", "subject").build()), TYLER, T0);
     var wrong = new Rules.DecisionRequest(reviewer(TYLER), Action.APPROVE, "ok", null, null, null,
         List.of("Something else"), null);
@@ -186,7 +186,7 @@ class ClaimAndDecideTest {
 
   @Test
   void anEditNeedsItsEditsAndAnOverrideItsReplacement() {
-    var e = claim(raise(control("pt-0001")), TYLER, T0);
+    var e = claim(raise(control("pt-00001")), TYLER, T0);
     var noEdits = ruling(TYLER, Action.EDIT, "Pay less");
     assertTrue(refused(Rules.decide(e, actor(TYLER), noEdits, Map.of(), seconds(15)), 422).errors()
         .contains("an edit needs edits"));
@@ -197,7 +197,7 @@ class ClaimAndDecideTest {
     assertEquals(Action.EDIT, edited.outcome().action());
     assertEquals(edits, edited.outcome().edits());
 
-    var o = raise(control("pt-0008"));
+    var o = raise(control("pt-00008"));
     var noReplacement = ruling(PATEL, Action.OVERRIDE, "Wrong figure");
     assertTrue(refused(Rules.decide(o, actor(PATEL), noReplacement, Map.of(), minutes(1)), 422).errors()
         .contains("an override needs the replacement output"));
@@ -210,7 +210,7 @@ class ClaimAndDecideTest {
 
   @Test
   void anActionTheEventDoesNotAllowIsInvalid() {
-    var e = claim(raise(control("pt-0001")), TYLER, T0);
+    var e = claim(raise(control("pt-00001")), TYLER, T0);
     assertTrue(refused(Rules.decide(e, actor(TYLER), ruling(TYLER, Action.REVERSE, "x"), Map.of(), seconds(15)), 422)
         .error().contains("does not allow REVERSE"));
     refused(Rules.decide(e, actor(TYLER), ruling(TYLER, null, "x"), Map.of(), seconds(15)), 422);
@@ -218,7 +218,7 @@ class ClaimAndDecideTest {
 
   @Test
   void aDecisionOnAClosedEventConflicts() {
-    var decided = decide(claim(raise(control("pt-0001")), TYLER, T0), TYLER, Action.DENY, seconds(15));
+    var decided = decide(claim(raise(control("pt-00001")), TYLER, T0), TYLER, Action.DENY, seconds(15));
     var refusal = refused(Rules.decide(decided, actor(TYLER), ruling(TYLER, Action.APPROVE, "x"), Map.of(), seconds(20)),
         409);
     assertEquals("DECIDED", refusal.state());
@@ -227,7 +227,7 @@ class ClaimAndDecideTest {
 
   @Test
   void aLateDecisionIsAcceptedAndBreached() {
-    var e = claim(raise(control("pt-0001")), TYLER, minutes(25));
+    var e = claim(raise(control("pt-00001")), TYLER, minutes(25));
     var decided = decide(e, TYLER, Action.APPROVE, minutes(31));
     assertTrue(decided.decisions().getFirst().late());
     assertEquals("missed", decided.slaState(minutes(32)));
@@ -249,7 +249,7 @@ class ClaimAndDecideTest {
   @Test
   void aSingleVoteSettlesTheEventWhateverItDecides() {
     for (var action : List.of(Action.APPROVE, Action.DENY)) {
-      var decided = decide(claim(raise(control("pt-0001")), TYLER, T0), TYLER, action, seconds(15));
+      var decided = decide(claim(raise(control("pt-00001")), TYLER, T0), TYLER, action, seconds(15));
       assertEquals(action, decided.outcome().action());
       assertEquals(Verdicts.UPHELD, Verdicts.of(decided).conclusion());
     }
@@ -257,7 +257,7 @@ class ClaimAndDecideTest {
 
   @Test
   void anAiRecommendationIsComparedWithTheOutcome() {
-    var s = control("pt-0002");
+    var s = control("pt-00002");
     var e = raise(s, request(s).aiRecommendation("judge", Action.APPROVE, 0.9, "Looks right").build());
     var agreed = decide(claim(e, LIND, T0), LIND, Action.APPROVE, seconds(30));
     assertEquals(Boolean.TRUE, agreed.outcome().agreedWithAi());

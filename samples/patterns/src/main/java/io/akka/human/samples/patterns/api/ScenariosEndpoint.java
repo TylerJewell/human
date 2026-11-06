@@ -155,7 +155,7 @@ public class ScenariosEndpoint extends AbstractHttpEndpoint {
     var until = Instant.parse(request.until());
     return raised(human.raise(Patterns.exception("Set aside " + request.ruleId() + " for " + request.scope() + " until "
             + request.until() + "?")
-        .control("pt-0004")
+        .control("pt-00004")
         .subject(Subject.exception("Waive " + request.ruleId() + " for " + request.scope(), request.ruleId(),
                 request.ruleText(), request.scope(), until)
             .with("requestedBy", request.requestedBy())
@@ -173,7 +173,7 @@ public class ScenariosEndpoint extends AbstractHttpEndpoint {
   public Raised match(MatchRequest request) {
     var id = "match-" + UUID.randomUUID();
     return raised(human.raise(Patterns.matchAdjudication("Are these two " + request.entityType() + " records one?")
-        .control("pt-0005")
+        .control("pt-00005")
         .subject(Subject.records("Possible duplicate " + request.entityType(), request.entityType(),
                 side(request.left(), request.loadedBy()), side(request.right(), request.loadedBy()))
             .with("score", request.score()).with("method", "name and address similarity").withRef(id))
@@ -188,19 +188,19 @@ public class ScenariosEndpoint extends AbstractHttpEndpoint {
   @Post("/decisions/{ref}/contest")
   public HttpResponse contest(String ref, ContestRequest request) {
     var appellant = new Reviewer(request.appellant(), request.appellant(), List.of(), "patterns", false);
-    return answer(human.contest(appellant, "pt-0007", ref, request.grounds(), request.appellant()));
+    return answer(human.contest(appellant, "pt-00007", ref, request.grounds(), request.appellant()));
   }
 
   @Post("/outputs/{ref}/override")
   public HttpResponse override(String ref, OverrideRequest request) {
-    return answer(human.override(request.reviewer(), "pt-0008", ref, Action.valueOf(request.action()),
+    return answer(human.override(request.reviewer(), "pt-00008", ref, Action.valueOf(request.action()),
         request.rationale(), request.replacement()));
   }
 
   @Post("/replies/{flowId}/flag")
   public HttpResponse flag(String flowId, FlagRequest request) {
     var by = new Reviewer(request.by(), request.by(), List.of(), "patterns", false);
-    return answer(human.flag(by, request.note(), flowId, null, request.output(), "pt-0009"));
+    return answer(human.flag(by, request.note(), flowId, null, request.output(), "pt-00009"));
   }
 
   // ---- raised and carried on
@@ -248,7 +248,7 @@ public class ScenariosEndpoint extends AbstractHttpEndpoint {
     var taskId = "approval-" + UUID.randomUUID();
     client.forTask(taskId).create(HumanTasks.DECISION.instructions("A person approves the call to " + request.tool()));
     var raised = human.raise(Patterns.actionApproval("Should " + request.agentId() + " call " + request.tool() + "?")
-        .control("pt-0001")
+        .control("pt-00001")
         .subject(Subject.action("Call " + request.tool(), request.tool(), request.arguments()).withAgent(request.agentId()))
         .trigger(Trigger.rule("tool-policy", request.tool(), request.agentId() + " asked to call " + request.tool()))
         .proposedBy("agent:" + request.agentId())
@@ -266,7 +266,7 @@ public class ScenariosEndpoint extends AbstractHttpEndpoint {
   /** What the tool-call approval guardrail decides for this call, as an agent's tool loop would see it. */
   @Post("/tool-calls")
   public ToolCallDecision toolCall(ToolCall call) {
-    var decision = new ApprovalGuardrail("pt-0001", true).decide(call.agentId(), call.sessionId(), call.tool(),
+    var decision = new ApprovalGuardrail("pt-00001", true).decide(call.agentId(), call.sessionId(), call.tool(),
         call.arguments());
     return switch (decision) {
       case akka.javasdk.agent.Decision.Allow a -> new ToolCallDecision("allow", a.reason());

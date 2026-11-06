@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
- * What a halt of the automated eligibility assessment means (hl-0006). While halted the
+ * What a halt of the automated eligibility assessment means (custom-d04d2229e3f9). While halted the
  * underwriting workflow asks no assessor and approves nothing alone, so the underwriters' queue fills;
  * a restart may be approved only once no application is between its documents and routing, and the
  * queue is back to {@code maxBacklog}.

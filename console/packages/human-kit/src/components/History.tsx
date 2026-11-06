@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { verdictDeciders } from "../parse";
 import type { Decision, HumanEvent } from "../types";
 import {
   actionLabel,
@@ -247,7 +248,7 @@ export function journeyOf(event: HumanEvent): Journey {
 
   // A closed event with a verdict but no CLOSED step still ends in its verdict.
   if (!event.pending && !closed && event.conclusion) {
-    const at = event.verdict?.at ?? event.closedAt ?? undefined;
+    const at = event.verdict?.observedAt ?? event.closedAt ?? undefined;
     main.push({
       key: `verdict-${round}-final`,
       label: "Verdict",
@@ -487,7 +488,7 @@ function Proof({ event, nameOf }: { event: HumanEvent; nameOf?: NameOf }) {
   const verdict = event.verdict;
   const facts: Fact[] = [];
   if (event.conclusion) facts.push({ label: "Verdict", value: <ConclusionChip conclusion={event.conclusion} /> });
-  if (verdict?.reasons?.length) facts.push({ label: "Reasons", value: verdict.reasons.map(readable).join(", ") });
+  if (verdict?.reason) facts.push({ label: "Reason", value: verdict.reason.text });
   if (verdict?.source)
     facts.push({
       label: "Source",
@@ -500,7 +501,8 @@ function Proof({ event, nameOf }: { event: HumanEvent; nameOf?: NameOf }) {
           readable(verdict.source.kind)
         )
     });
-  if (verdict?.deciders?.length) facts.push({ label: "Decided by", value: verdict.deciders.map((d) => actorText(d, nameOf)).join(", ") });
+  const deciders = verdict ? verdictDeciders(verdict) : [];
+  if (deciders.length) facts.push({ label: "Decided by", value: deciders.map((d) => actorText(d, nameOf)).join(", ") });
   if (event.outcome?.slaOutcome) facts.push({ label: "Deadline", value: readable(event.outcome.slaOutcome) });
   if (event.outcome?.applied) facts.push({ label: "Applied", value: event.outcome.applied });
   if (event.outcome?.applyError) facts.push({ label: "Not applied", value: event.outcome.applyError });
@@ -511,7 +513,7 @@ function Proof({ event, nameOf }: { event: HumanEvent; nameOf?: NameOf }) {
     });
   if (event.outcome?.standingDecisionId)
     facts.push({ label: "Standing decision", value: <code className="hk-code">{event.outcome.standingDecisionId}</code> });
-  if (verdict?.boundary) facts.push({ label: "Boundary", value: verdict.boundary.ref });
+  if (verdict?.detail.workItem?.queue) facts.push({ label: "Queue", value: readable(verdict.detail.workItem.queue) });
   if (event.verdictId) facts.push({ label: "Verdict id", value: <code className="hk-code">{event.verdictId}</code> });
   if (event.evidence?.length)
     facts.push({

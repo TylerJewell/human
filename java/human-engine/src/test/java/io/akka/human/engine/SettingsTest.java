@@ -52,7 +52,7 @@ class SettingsTest {
 
   @Test
   void actionApprovalTakesThePatternDefaultsAndTheControlsSettings() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     assertEquals(Pattern.ACTION_APPROVAL, s.pattern());
     assertEquals("Action approval", s.patternName());
     assertEquals("HITL", s.mode());
@@ -90,7 +90,7 @@ class SettingsTest {
 
   @Test
   void changeAuthorizationIsTwoPersonIndependentOfProposerAndBuilder() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     assertEquals("TWO_PERSON", s.routing().reviewMode());
     assertEquals(2, s.routing().required());
     assertEquals(List.of("proposer", "builder"), s.routing().independence());
@@ -103,24 +103,24 @@ class SettingsTest {
 
   @Test
   void patternSpecificDefaults() {
-    var flag = control("pt-0009");
+    var flag = control("pt-00009");
     assertFalse(flag.rationaleRequired());
     assertEquals("ABANDON", flag.timeoutBehaviour());
     assertEquals("HOTL", flag.mode());
 
-    assertEquals("WARN", control("pt-0011").minimumReview());
-    assertEquals("RAISE_TIMEOUT", control("pt-0013").timeoutBehaviour());
-    assertEquals(List.of("builder"), control("pt-0013").routing().independence());
-    assertEquals(List.of("first-reviewer", "first-reviewer-line"), control("pt-0007").routing().independence());
-    assertEquals(List.of("builder"), control("pt-0005").routing().independence());
-    assertNull(control("pt-0008").timeoutBehaviour());
-    assertNull(control("pt-0008").deadline());
-    assertEquals("ESCALATE", control("pt-0014").timeoutBehaviour());
+    assertEquals("WARN", control("pt-00011").minimumReview());
+    assertEquals("RAISE_TIMEOUT", control("pt-00013").timeoutBehaviour());
+    assertEquals(List.of("builder"), control("pt-00013").routing().independence());
+    assertEquals(List.of("first-reviewer", "first-reviewer-line"), control("pt-00007").routing().independence());
+    assertEquals(List.of("builder"), control("pt-00005").routing().independence());
+    assertNull(control("pt-00008").timeoutBehaviour());
+    assertNull(control("pt-00008").deadline());
+    assertEquals("ESCALATE", control("pt-00014").timeoutBehaviour());
   }
 
   @Test
   void haltRestartIsTwoPersonAndNamesItsExercisers() {
-    var s = control("pt-0012");
+    var s = control("pt-00012");
     assertTrue(s.haltRestart());
     assertEquals("HALT", s.mode());
     assertFalse(s.patternBlocks());
@@ -137,7 +137,7 @@ class SettingsTest {
 
   @Test
   void aControlWithoutAChainQueuesUnderItsFirstRole() {
-    var s = control("pt-0004");
+    var s = control("pt-00004");
     assertEquals("compliance-lead", s.routing().queue());
     assertEquals(1, s.levels());
     assertEquals(List.of("compliance-lead"), s.rolesAt(0));
@@ -146,7 +146,7 @@ class SettingsTest {
 
   @Test
   void controlsFindTheFirstOfAPattern() {
-    assertEquals("pt-0009", Fx.CONTROLS.firstOf(Pattern.FLAG_FEEDBACK).orElseThrow().control().rowId());
+    assertEquals("pt-00009", Fx.CONTROLS.firstOf(Pattern.FLAG_FEEDBACK).orElseThrow().control().rowId());
     assertTrue(Fx.CONTROLS.find("nope").isEmpty());
   }
 

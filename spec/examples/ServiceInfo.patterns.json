@@ -1,6 +1,6 @@
 {
   "service": "patterns",
-  "contract": 2,
+  "contract": 3,
   "library": "akka-human 0.1.0",
   "patterns": [
     "action-approval",

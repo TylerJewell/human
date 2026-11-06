@@ -26,7 +26,7 @@ class ConditionsTest {
 
   @Test
   void anApprovalsConditionsReachTheOutcomeAndTheStandingDecision() {
-    var settings = control("pt-0001");
+    var settings = control("pt-00001");
     var event = Fx.claim(Fx.raise(settings, Fx.request(settings).matchKey("pay:S-77").proposedBy("agent:payments").build()),
         TYLER, seconds(1));
     var decided = Fx.ok(event, Rules.decide(event, Fx.actor(TYLER), approve(Action.APPROVE, Sticky.APPROVE_FOR_PATTERN,
@@ -42,7 +42,7 @@ class ConditionsTest {
 
   @Test
   void conditionsGoWithAnApprovalAndNeedTheirText() {
-    var settings = control("pt-0001");
+    var settings = control("pt-00001");
     var event = Fx.claim(Fx.raise(settings), TYLER, seconds(1));
     Fx.refused(Rules.decide(event, Fx.actor(TYLER), approve(Action.DENY, null, CONDITIONS), Map.of(), seconds(15)), 422);
     Fx.refused(Rules.decide(event, Fx.actor(TYLER), approve(Action.APPROVE, null, List.of(Map.of("text", " "))), Map.of(),
@@ -53,7 +53,7 @@ class ConditionsTest {
 
   @Test
   void anAiRecommendationNamesItsActionAndIsStampedWhenMade() {
-    var settings = control("pt-0001");
+    var settings = control("pt-00001");
     var missing = Fx.request(settings).build();
     var withoutAction = new io.akka.human.api.RaiseRequest(missing.pattern(), missing.control(), missing.ask(),
         missing.subject(), null, null, null, null, null, null, Map.of("agent", "judge"), null, null, null, null, false);

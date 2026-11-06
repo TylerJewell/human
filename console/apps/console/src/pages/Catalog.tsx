@@ -12,7 +12,9 @@ import {
   Section,
   subjectKindLabel,
   Tag,
-  type Fact
+  verdictDeciders,
+  type Fact,
+  type Verdict
 } from "@akka-human/kit";
 import { Fragment, useState } from "react";
 import { runConformance, useControls, useServices, useVerdicts } from "../api";
@@ -22,8 +24,7 @@ import {
   scenarioOrder,
   verdictsOf,
   type ConformanceReport,
-  type ServiceControl,
-  type ServiceVerdict
+  type ServiceControl
 } from "../logic";
 
 // What every service declares and has proved: its human controls with their
@@ -129,33 +130,37 @@ export function ControlsPage() {
   );
 }
 
-function VerdictProof({ v }: { v: ServiceVerdict }) {
+function VerdictProof({ v }: { v: Verdict }) {
+  const event = v.detail.workItem?.id;
   const facts: Fact[] = [
-    { label: "Boundary", value: v.boundary.ref },
+    { label: "Reason", value: v.reason.text },
     { label: "Source", value: v.source.kind === "rehearsal" ? "Rehearsal: not counted as evidence" : readable(v.source.kind) },
-    { label: "Reasons", value: v.reasons?.length ? v.reasons.map(readable).join(", ") : "None" },
-    { label: "Applied", value: v.appliedAt ? formatMoment(v.appliedAt) : "Not applied" },
-    { label: "Verdict", value: <span className="cs-mono">{v.id}</span> },
-    {
+    { label: "Queue", value: v.detail.workItem?.queue ? readable(v.detail.workItem.queue) : "—" },
+    { label: "Verdict", value: <span className="cs-mono">{v.verdictId}</span> },
+    { label: "Digest", value: <span className="cs-mono">{v.integrity.digest}</span> }
+  ];
+  if (event)
+    facts.push({
       label: "Event",
       value: (
-        <a className="hk-link" href={`#/events/${encodeURIComponent(v.eventId)}`}>
-          {v.eventId}: its history and proof
+        <a className="hk-link" href={`#/events/${encodeURIComponent(event)}`}>
+          {event}: its history and proof
         </a>
       )
-    }
-  ];
+    });
   return <Facts facts={facts} testId="verdict-proof" />;
 }
 
 /** Every verdict the services gave, newest first, each opening onto its proof. */
 export function VerdictsPage() {
   const read = useVerdicts();
+  const controls = useControls().data ?? [];
+  const controlName = (rowId: string) => controls.find((c) => c.control.rowId === rowId)?.control.name ?? rowId;
   const [conclusion, setConclusion] = useState<string>();
   const [service, setService] = useState<string>();
   const [open, setOpen] = useState<string>();
   const all = read.data ?? [];
-  const services = [...new Set(all.map((v) => v.service ?? v.source.service).filter((s): s is string => Boolean(s)))].sort();
+  const services = [...new Set(all.map((v) => v.subject.service).filter((s): s is string => Boolean(s)))].sort();
   const shown = verdictsOf(all, { conclusion, service });
   return (
     <div className="hk-stack" data-testid="verdicts">
@@ -202,7 +207,7 @@ export function VerdictsPage() {
             </thead>
             <tbody>
               {shown.map((v) => (
-                <Fragment key={v.id}>
+                <Fragment key={v.verdictId}>
                   <tr data-testid="verdict-row">
                     <td>
                       <span className="hk-inline-list">
@@ -210,19 +215,24 @@ export function VerdictsPage() {
                         {v.source.kind === "rehearsal" ? <Chip tone="quiet" icon={false}>Rehearsal</Chip> : null}
                       </span>
                     </td>
-                    <td>{v.control?.name ?? "—"}</td>
-                    <td>{v.pattern ? patternName(v.pattern) : "—"}</td>
-                    <td>{v.action ? readable(v.action) : "—"}</td>
-                    <td>{v.deciders?.join(", ") || "—"}</td>
-                    <td>{v.service ?? v.source.service ?? "—"}</td>
-                    <td className="hk-nums hk-nowrap">{formatMoment(v.at)}</td>
+                    <td>{controlName(v.control.rowId)}</td>
+                    <td>{v.detail.pattern ? patternName(v.detail.pattern) : "—"}</td>
+                    <td>{v.detail.action ? readable(v.detail.action) : "—"}</td>
+                    <td>{verdictDeciders(v).join(", ") || "—"}</td>
+                    <td>{v.subject.service ?? "—"}</td>
+                    <td className="hk-nums hk-nowrap">{formatMoment(v.observedAt)}</td>
                     <td className="hk-num">
-                      <button type="button" className="hk-link" aria-expanded={open === v.id} onClick={() => setOpen(open === v.id ? undefined : v.id)}>
-                        {open === v.id ? "Hide" : "Proof"}
+                      <button
+                        type="button"
+                        className="hk-link"
+                        aria-expanded={open === v.verdictId}
+                        onClick={() => setOpen(open === v.verdictId ? undefined : v.verdictId)}
+                      >
+                        {open === v.verdictId ? "Hide" : "Proof"}
                       </button>
                     </td>
                   </tr>
-                  {open === v.id ? (
+                  {open === v.verdictId ? (
                     <tr className="cs-detail-row">
                       <td colSpan={8}>
                         <VerdictProof v={v} />

@@ -43,6 +43,7 @@ Done:
 | The Human page of the local console | Replace the generic parts with `human-kit`. The Overseers, Standing, Halts and Quality tabs stay and use the components. Remove the loan sample's wording |
 | The policies page's `HumanConfigForm` | Edit `pattern` and each pattern's settings |
 | The cloud console | Later, and the platform team's: the production inbox in Control tower, on the same components |
+| Its use of the contract | Move to version 3, whose verdict is Verify's verdict record; the last section of the contract lists what changed |
 
 ## akka CLI companion
 

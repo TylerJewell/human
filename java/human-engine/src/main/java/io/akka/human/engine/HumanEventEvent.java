@@ -20,10 +20,15 @@ public sealed interface HumanEventEvent {
   @Migration(Journal.Repeated.class)
   record Repeated(HumanEvent.Trigger trigger, Instant at) implements HumanEventEvent {}
 
-  /** An active standing decision on the event's control and match key settled it as it was raised. */
+  /**
+   * An active standing decision on the event's control and match key settled it as it was raised.
+   * {@code kind}, {@code grantedBy} and {@code grantedAt} are the standing decision's, null where the
+   * journal does not record them.
+   */
   @TypeName("human-event-standing-applied")
   @Migration(Journal.StandingApplied.class)
-  record StandingApplied(String standingId, Action action, Instant at) implements HumanEventEvent {}
+  record StandingApplied(String standingId, Action action, Instant at, String kind, String grantedBy,
+      Instant grantedAt) implements HumanEventEvent {}
 
   @TypeName("human-event-claimed")
   @Migration(Journal.Claimed.class)

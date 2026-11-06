@@ -1,34 +1,94 @@
 {
   "verdicts": [
     {
-      "id": "vd-he-20261029-00099",
-      "eventId": "he-20261029-00099",
+      "schemaVersion": 1,
+      "verdictId": "vd-he-20261029-00099",
       "control": {
-        "rowId": "pt-0012",
-        "name": "Automated eligibility assessment can be halted",
+        "rowId": "pt-00012",
         "corpusRef": "eu-ai-act.art14.4.e",
-        "revision": 1
+        "bundle": {
+          "systemId": "patterns",
+          "draftRevision": 1
+        }
       },
-      "pattern": "halt-restart",
-      "subjectKind": "system",
       "mechanism": "human",
-      "boundary": {
-        "kind": "work-item",
-        "ref": "system-owners · he-20261029-00099"
-      },
+      "environment": "pre-production",
+      "observedAt": "2026-10-29T14:05:01Z",
       "conclusion": "upheld",
-      "reasons": [],
-      "source": {
-        "kind": "rehearsal",
+      "outcome": "approve",
+      "reason": {
+        "text": "A qualified reviewer decided in time."
+      },
+      "subject": {
         "service": "patterns"
       },
-      "action": "APPROVE",
-      "deciders": [
-        "tyler.jewell@akka.io",
-        "s.patel@example.com"
+      "evidence": [
+        {
+          "kind": "record",
+          "ref": "he-20261029-00099"
+        }
       ],
-      "appliedAt": "2026-10-29T14:05:01Z",
-      "at": "2026-10-29T14:05:01Z"
+      "source": {
+        "kind": "rehearsal",
+        "by": "tyler.jewell@akka.io"
+      },
+      "detail": {
+        "status": "decided",
+        "flavor": "human-halt",
+        "mode": "hitl",
+        "pattern": "halt-restart",
+        "workItem": {
+          "id": "he-20261029-00099",
+          "queue": "system-owners"
+        },
+        "authorized": true,
+        "twoPerson": {
+          "required": true,
+          "satisfied": true
+        },
+        "rationaleRequired": true,
+        "reviewer": {
+          "subject": "s.patel@example.com",
+          "roles": [
+            "safety-officer"
+          ],
+          "identityProvider": "human-companion"
+        },
+        "presentedAt": "2026-10-29T14:00:00Z",
+        "submittedAt": "2026-10-29T14:05:00Z",
+        "reviewSeconds": 120,
+        "minimumSeconds": 10,
+        "belowMinimum": false,
+        "action": "approve",
+        "rationale": "Backlog drained.",
+        "votes": [
+          {
+            "subject": "tyler.jewell@akka.io",
+            "roles": [
+              "ai-system-owner"
+            ],
+            "action": "approve",
+            "submittedAt": "2026-10-29T14:02:00Z",
+            "reviewSeconds": 120
+          },
+          {
+            "subject": "s.patel@example.com",
+            "roles": [
+              "safety-officer"
+            ],
+            "action": "approve",
+            "submittedAt": "2026-10-29T14:05:00Z",
+            "reviewSeconds": 120
+          }
+        ],
+        "sla": {
+          "target": "PT30M",
+          "outcome": "met"
+        }
+      },
+      "integrity": {
+        "digest": "sha256:c89d4212f3221f32eef51ca25cf87facd26f719ccbe4b1eb844b2773a1ab926a"
+      }
     }
   ],
   "total": 3,

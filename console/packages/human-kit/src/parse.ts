@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import type {
+  Action,
   ControlSettings,
   HumanEvent,
   HumanEventRow,
@@ -11,7 +12,8 @@ import type {
   Subject,
   SubjectDetails,
   SubjectKind,
-  Summary
+  Summary,
+  Verdict
 } from "./types";
 
 // Reading what a server sends. The envelope of an event is read leniently:
@@ -297,6 +299,18 @@ export function votesOf(event: Pick<HumanEvent, "history" | "decisions">) {
   if (reopened < 0) return event.decisions;
   const since = Date.parse(event.history[reopened].at);
   return event.decisions.filter((d) => d.submittedAt && Date.parse(d.submittedAt) > since);
+}
+
+/** The verdict's settling decision as the contract names actions: request-more-info is REQUEST_MORE_INFO. */
+export const verdictAction = (verdict: Verdict) =>
+  verdict.detail.action ? (verdict.detail.action.toUpperCase().replaceAll("-", "_") as Action) : undefined;
+
+/** Who decided: each voter, the one reviewer, or the standing decision that settled the item. */
+export function verdictDeciders(verdict: Verdict): string[] {
+  const d = verdict.detail;
+  if (d.votes?.length) return d.votes.map((vote) => vote.subject);
+  if (d.reviewer) return [d.reviewer.subject];
+  return d.standing ? [`standing:${d.standing.decisionId}`] : [];
 }
 
 // ---------------------------------------------------------------- subject details

@@ -15,7 +15,7 @@ class ReportTest {
   private static final Report.Step BROKEN = new Report.Step("decide", Report.FAILED, "POST /oversight/events/e1/decision", 200, "expected 422, got 200");
 
   private static Report report(Report.Result... results) {
-    JsonNode info = Json.object().put("service", "patterns").put("contract", 2);
+    JsonNode info = Json.object().put("service", "patterns").put("contract", 3);
     return new Report("http://localhost:9164", info, Instant.parse("2026-10-29T14:00:00Z"),
         Instant.parse("2026-10-29T14:01:00Z"), List.of(results));
   }
@@ -23,10 +23,10 @@ class ReportTest {
   @Test
   void totalsCountEachStatusAndOnlyAFailureFailsTheRun() {
     Report passing = report(
-        new Report.Result("action-approval", "claim", "pt-0001", Report.PASSED, null, List.of(OK, SKIPPED_STEP), 5),
-        new Report.Result("action-approval", "send-back", "pt-0001", Report.SKIPPED, "no SEND_BACK", List.of(), 0));
+        new Report.Result("action-approval", "claim", "pt-00001", Report.PASSED, null, List.of(OK, SKIPPED_STEP), 5),
+        new Report.Result("action-approval", "send-back", "pt-00001", Report.SKIPPED, "no SEND_BACK", List.of(), 0));
     Report failing = report(
-        new Report.Result("action-approval", "decide", "pt-0001", Report.FAILED, "decide: expected 422", List.of(OK, BROKEN), 7));
+        new Report.Result("action-approval", "decide", "pt-00001", Report.FAILED, "decide: expected 422", List.of(OK, BROKEN), 7));
 
     assertEquals(new Report.Totals(1, 0, 1), passing.totals());
     assertTrue(passing.passed());
@@ -36,7 +36,7 @@ class ReportTest {
   @Test
   void theJsonCarriesEveryScenarioWithItsStepsAndTheTotals() {
     Report r = report(
-        new Report.Result("action-approval", "decide", "pt-0001", Report.FAILED, "decide: expected 422", List.of(OK, BROKEN), 7));
+        new Report.Result("action-approval", "decide", "pt-00001", Report.FAILED, "decide: expected 422", List.of(OK, BROKEN), 7));
 
     JsonNode json = r.toJson();
     assertEquals("patterns", json.path("service").asText());

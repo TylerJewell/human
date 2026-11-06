@@ -17,14 +17,14 @@ import java.util.Map;
 
 /**
  * A model rollout that two model-risk owners, neither its proposer nor its builder, must authorise
- * (pt-0003, change authorization). A reviewer may send it back; the proposer resubmits through
+ * (pt-00003, change authorization). A reviewer may send it back; the proposer resubmits through
  * {@code POST /oversight/events/{id}/resubmit} and the review starts again.
  */
 @Component(id = "rollout")
 public class RolloutWorkflow extends Workflow<RolloutWorkflow.Rollout> {
 
   public static final String RESUMER = "rollout";
-  /** pt-0003 has a day, then a day at head-of-operations. */
+  /** pt-00003 has a day, then a day at head-of-operations. */
   static final Duration BACKSTOP = Duration.ofDays(3);
 
   public record Start(String model, String from, String to, String proposedBy, String builtBy, double trafficShare) {}
@@ -62,7 +62,7 @@ public class RolloutWorkflow extends Workflow<RolloutWorkflow.Rollout> {
     var r = currentState();
     var raised = human.raise(Patterns.changeAuthorization(
             "Roll out " + r.to() + " to " + Math.round(r.trafficShare() * 100) + "% of " + r.model() + " traffic?")
-        .control("pt-0003")
+        .control("pt-00003")
         .subject(Subject.change("Roll out " + r.to() + " for " + r.model(), "model-registry", "rollout", id,
                 Map.of("model", r.from()), Map.of("model", r.to()))
             .with("proposedBy", r.proposedBy())

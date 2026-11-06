@@ -63,24 +63,24 @@ class FiguresTest {
   @Test
   void theSummaryCountsWhatWaitsByLoopStatePatternAndClock() {
     var now = minutes(25);
-    var atRisk = raise(control("pt-0001"));
-    var overdue = raise(control("pt-0011"));
-    var flag = raise(control("pt-0009"));
-    var halted = decide(raise(control("pt-0012")), PATEL, Action.HALT, minutes(1));
-    var yesterday = raise(control("pt-0004"), request(control("pt-0004")).build(), T0.minus(Duration.ofDays(1)));
+    var atRisk = raise(control("pt-00001"));
+    var overdue = raise(control("pt-00011"));
+    var flag = raise(control("pt-00009"));
+    var halted = decide(raise(control("pt-00012")), PATEL, Action.HALT, minutes(1));
+    var yesterday = raise(control("pt-00004"), request(control("pt-00004")).build(), T0.minus(Duration.ofDays(1)));
     var shadow = raise(Fx.custom("triage", "human-monitoring", "behaviour",
         "routing", Map.of("roles", List.of("model-risk-owner")), "shadow", true));
     var events = List.of(atRisk, overdue, flag, halted, yesterday, shadow);
 
-    var pending = claim(raise(control("pt-0001"), request(control("pt-0001")).matchKey("k").build()), TYLER, T0);
+    var pending = claim(raise(control("pt-00001"), request(control("pt-00001")).matchKey("k").build()), TYLER, T0);
     var granted = Fx.ok(pending, Rules.decide(pending, Fx.actor(TYLER), new Rules.DecisionRequest(Fx.reviewer(TYLER),
         Action.APPROVE, "Known supplier", null, Sticky.APPROVE_FOR_PATTERN, null, List.of(), null), Map.of(), seconds(15)));
     var active = StandingDecision.from(granted);
-    var expiring = new StandingDecision("sd-x", "pattern-approval", "he-x", control("pt-0001").control(), "k2", null,
+    var expiring = new StandingDecision("sd-x", "pattern-approval", "he-x", control("pt-00001").control(), "k2", null,
         "approve", TYLER, T0.minus(Duration.ofDays(25)), T0.plus(Duration.ofDays(5)), Action.APPROVE, List.of(), null,
         List.of());
     var revoked = active.revokedBy(TYLER, T0, "no");
-    var halts = List.<Map<String, Object>>of(Json.halt(HaltState.notHalted(control("pt-0012")), Map.of(), null, "patterns"));
+    var halts = List.<Map<String, Object>>of(Json.halt(HaltState.notHalted(control("pt-00012")), Map.of(), null, "patterns"));
 
     var summary = Figures.summary(events, Fx.CONTROLS, halts, List.of(active, expiring, revoked), now);
     var loop = map(summary.get("loop"));
@@ -169,9 +169,9 @@ class FiguresTest {
   @Test
   void theFixtureSignalWatchesEveryControlWithAMinimumReviewTime() {
     var signals = Figures.signals(List.of(), Fx.CONTROLS, T0);
-    assertEquals(List.of("pt-0001", "pt-0002", "pt-0007"), signals.stream().map(Figures.Signal::control).toList());
+    assertEquals(List.of("pt-00001", "pt-00002", "pt-00007"), signals.stream().map(Figures.Signal::control).toList());
     for (var s : signals) {
-      assertEquals("pt-0014", s.qualityControl());
+      assertEquals("pt-00014", s.qualityControl());
       assertEquals(0.0, s.value());
       assertEquals(0.2, s.limit());
       assertFalse(s.breached());
@@ -180,10 +180,10 @@ class FiguresTest {
 
   @Test
   void twoPersonAgreementAndReviewersWhoHoldEvents() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     var agreed = decide(decide(raise(s), TYLER, Action.APPROVE, minutes(1)), DEVOS, Action.APPROVE, minutes(2));
-    var held = claim(raise(control("pt-0002")), Fx.LIND, minutes(3));
-    var lindVote = decide(claim(raise(control("pt-0002")), Fx.LIND, T0), Fx.LIND, Action.APPROVE, minutes(1));
+    var held = claim(raise(control("pt-00002")), Fx.LIND, minutes(3));
+    var lindVote = decide(claim(raise(control("pt-00002")), Fx.LIND, T0), Fx.LIND, Action.APPROVE, minutes(1));
     var q = Figures.quality(List.of(agreed, held, lindVote), Fx.CONTROLS, x -> null, "P30D", minutes(10));
     assertEquals(Json.map("twoPersonEvents", 1, "agreed", 1L), q.get("agreement"));
     var lind = list(q.get("reviewers")).stream().map(FiguresTest::map)

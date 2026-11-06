@@ -36,6 +36,9 @@ public record StandingDecision(
 
   public record Revocation(String by, Instant at, String reason) {}
 
+  /** The standing decision an event was settled by, as the event's verdict names it. */
+  public record Grant(String id, String kind, String grantedBy, Instant grantedAt) {}
+
   public static final Duration TERM = Duration.ofDays(30);
   public static final Duration EXPIRING = Duration.ofDays(7);
 
@@ -63,6 +66,10 @@ public record StandingDecision(
     if (revoked != null) return "REVOKED";
     if (!now.isBefore(expiresAt)) return "EXPIRED";
     return now.isBefore(expiresAt.minus(EXPIRING)) ? "ACTIVE" : "EXPIRING";
+  }
+
+  public Grant grant() {
+    return new Grant(id, kind, grantedBy, grantedAt);
   }
 
   public boolean activeAt(Instant now) {

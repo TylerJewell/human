@@ -7,7 +7,7 @@
   "pattern": "decision-review",
   "patternName": "Decision review before effect",
   "control": {
-    "rowId": "pt-0002",
+    "rowId": "pt-00002",
     "name": "Adverse notices are reviewed before they are sent",
     "corpusRef": "gdpr-art22.art22.3",
     "revision": 1

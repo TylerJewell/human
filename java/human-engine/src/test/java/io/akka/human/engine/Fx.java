@@ -62,7 +62,7 @@ final class Fx {
 
   /** A control built in the test, checked against the registries before it is resolved. */
   static ControlSettings custom(String pattern, String flavor, String kind, Object... settings) {
-    var control = humanControl("x-" + IDS.incrementAndGet(), pattern, flavor, kind, settings);
+    var control = humanControl("custom-x" + IDS.incrementAndGet(), pattern, flavor, kind, settings);
     var problems = Settings.problems(control);
     assertTrue(problems.isEmpty(), problems.toString());
     return Settings.resolve(control);
@@ -107,6 +107,11 @@ final class Fx {
 
   static HumanEvent raise(ControlSettings s, RaiseRequest r, Instant at) {
     return Raise.event("he-test-" + IDS.incrementAndGet(), s, r, CONTEXT, at);
+  }
+
+  /** A standing approval Tyler granted the day before T0. */
+  static StandingDecision.Grant grant(String id) {
+    return new StandingDecision.Grant(id, "pattern-approval", TYLER, T0.minus(Duration.ofDays(1)));
   }
 
   static Overseer overseer(String subject) {

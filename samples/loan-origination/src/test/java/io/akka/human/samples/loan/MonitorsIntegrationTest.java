@@ -55,7 +55,7 @@ public class MonitorsIntegrationTest extends LoanTestSupport {
 
   @Test
   public void rushedUnderwritingReviewsGoToTheRiskOfficer() {
-    var watched = Monitors.RUSHED + ":hl-0009";
+    var watched = Monitors.RUSHED + ":custom-b406265b0443";
     var reading = until(watched, () -> {
       var reviewId = awaitReview(apply(BORDERLINE));
       HumanTestKit.ok(kit.claim(reviewId, MOREAU), "claim");
@@ -65,7 +65,7 @@ public class MonitorsIntegrationTest extends LoanTestSupport {
     var eventId = reading.get("eventId").asText();
     var event = kit.event(eventId);
     assertEquals("oversight-quality", event.settings().pattern().id());
-    assertEquals("hl-0009", event.subject().ref());
+    assertEquals("custom-b406265b0443", event.subject().ref());
     assertEquals(403, kit.claim(eventId, OSEI).refusal().status());
 
     kit.claimAndDecide(eventId, DEVOS, Action.APPROVE, "Underwriters reminded to read the case file first.");
@@ -90,7 +90,7 @@ public class MonitorsIntegrationTest extends LoanTestSupport {
     kit.claimAndDecide(eventId, CHEN, Action.APPROVE, "Underwriters told to keep health out of rationales.");
     var answer = Awaitility.await().atMost(WAIT).until(() -> monitor(Monitors.BLOCKS).answer(), a -> a != null);
     assertEquals("acknowledged by " + CHEN.subject(), answer);
-    assertNotNull(pendingOf("hl-0008"));
+    assertNotNull(pendingOf("custom-00d5b5cdf6bc"));
   }
 
   // ---- helpers

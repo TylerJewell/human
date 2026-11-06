@@ -7,7 +7,7 @@
   "pattern": "attestation",
   "patternName": "Scheduled attestation",
   "control": {
-    "rowId": "pt-0013",
+    "rowId": "pt-00013",
     "name": "The eligibility model is attested every quarter",
     "corpusRef": "sr11-7.s4.validation",
     "revision": 1

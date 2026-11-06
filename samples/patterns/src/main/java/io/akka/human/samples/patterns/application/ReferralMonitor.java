@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Watches the share of eligibility assessments referred to a person. Below 20% against a baseline of
- * 35% it raises a triage event for the model-risk owner (pt-0010); while that event is pending, a
+ * 35% it raises a triage event for the model-risk owner (pt-00010); while that event is pending, a
  * repeated reading adds an occurrence to it.
  */
 @Component(id = "referral-monitor")
@@ -32,7 +32,7 @@ public class ReferralMonitor extends TimedAction {
     if (reading.referralShare() >= THRESHOLD) return effects().done();
     var value = reading.referralShare();
     human.raise(Patterns.triage("Referral share fell to " + value + "%. Resolve, dismiss or report it?")
-        .control("pt-0010")
+        .control("pt-00010")
         .subject(Subject.behaviour("Referral share " + value + "% against a baseline of " + BASELINE + "%",
                 "referral-share", value, THRESHOLD, "<")
             .with("unit", "%").with("window", "PT24H").with("baseline", BASELINE)

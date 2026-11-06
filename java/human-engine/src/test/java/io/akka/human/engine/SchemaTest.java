@@ -116,7 +116,7 @@ class SchemaTest {
     var out = new ArrayList<HumanEvent>();
     for (var s : Fx.CONTROLS.all()) out.add(raise(s));
 
-    var pay = control("pt-0001");
+    var pay = control("pt-00001");
     var payment = raise(pay, request(pay).proposedBy("agent:payments").dedupeKey("pay-1").matchKey("pay:S-77")
         .check("The invoice matches the purchase order.", "subject").check("No section", null)
         .resumes(Resume.workflow("payment", "pay-1")).effect(Action.APPROVE, "The payment is sent")
@@ -143,11 +143,11 @@ class SchemaTest {
     out.add(tick(payment, minutes(30)));
     out.add(ok(payment, Rules.withdraw(payment, Reviewer.of("agent:payments"), "Not needed", minutes(2))));
     out.add(ok(payment, Rules.kill(payment, "dev", "reset", minutes(2))));
-    out.add(ok(payment, Rules.settleByStanding(payment, "sd-1", Action.APPROVE, T0)));
+    out.add(ok(payment, Rules.settleByStanding(payment, Fx.grant("sd-1"), Action.APPROVE, T0)));
     var reopened = ok(edited, Rules.reopen(edited, Reviewer.of("o", "ai-system-owner"), "New facts", "he-new", minutes(3)));
     out.add(reopened);
 
-    var change = control("pt-0003");
+    var change = control("pt-00003");
     var rollout = raise(change, request(change).proposedBy("agent:rollouts").builtBy("trainer").build());
     var firstVote = decide(rollout, TYLER, Action.APPROVE, minutes(1));
     out.add(firstVote);
@@ -157,7 +157,7 @@ class SchemaTest {
     out.add(ok(sentBack, Rules.resubmit(sentBack, Reviewer.of("agent:rollouts"), "Done", minutes(2))));
     out.add(tick(rollout, at(Duration.ofDays(1))));
 
-    var halt = control("pt-0012");
+    var halt = control("pt-00012");
     out.add(decide(raise(halt), PATEL, Action.HALT, minutes(1)));
     var lift = raise(halt, request(halt).subject(Subject.system("Restart", "capability", "eligibility-assessment",
         "all-runtime-operations", true)).build());
@@ -167,24 +167,24 @@ class SchemaTest {
     out.add(ok(liftVote, Rules.decide(liftVote, actor(PATEL), Fx.decision(reviewer(PATEL), Action.APPROVE),
         Map.of("backlog drained", true), minutes(2))));
 
-    var appeal = control("pt-0007");
+    var appeal = control("pt-00007");
     var appealed = claim(raise(appeal, request(appeal).firstReviewer(Fx.OKAFOR).build()), LIND, T0);
     out.add(ok(appealed, Rules.recuse(appealed, reviewer(LIND), "Conflict", minutes(1))));
     out.add(decide(appealed, LIND, Action.REVERSE, minutes(1)));
 
-    var override = control("pt-0008");
+    var override = control("pt-00008");
     out.add(ok(raise(override), Rules.decide(raise(override), actor(PATEL), new Rules.DecisionRequest(reviewer(PATEL),
         Action.OVERRIDE, "Wrong figure", null, null, null, List.of(), "The corrected output"), Map.of(), minutes(1))));
 
-    out.add(tick(raise(control("pt-0009")), at(Duration.ofDays(3))));
-    out.add(tick(tick(raise(control("pt-0002")), at(Duration.ofHours(4))), at(Duration.ofHours(8))));
-    out.add(tick(raise(control("pt-0013")), at(Duration.ofDays(14))));
-    out.add(decide(claim(raise(control("pt-0011")), MOREAU, T0), MOREAU, Action.DECLINE_SYSTEM, minutes(6)));
-    out.add(decide(raise(control("pt-0005")), MOREAU, Action.APPROVE, minutes(1)));
-    out.add(decide(raise(control("pt-0010")), DEVOS, Action.DISREGARD, minutes(1)));
-    out.add(decide(raise(control("pt-0014")), TYLER, Action.REPLAN, minutes(1)));
-    out.add(decide(raise(control("pt-0006")), LIND, Action.REPLAN, minutes(1)));
-    out.add(decide(raise(control("pt-0004")), CHEN, Action.APPROVE, minutes(1)));
+    out.add(tick(raise(control("pt-00009")), at(Duration.ofDays(3))));
+    out.add(tick(tick(raise(control("pt-00002")), at(Duration.ofHours(4))), at(Duration.ofHours(8))));
+    out.add(tick(raise(control("pt-00013")), at(Duration.ofDays(14))));
+    out.add(decide(claim(raise(control("pt-00011")), MOREAU, T0), MOREAU, Action.DECLINE_SYSTEM, minutes(6)));
+    out.add(decide(raise(control("pt-00005")), MOREAU, Action.APPROVE, minutes(1)));
+    out.add(decide(raise(control("pt-00010")), DEVOS, Action.DISREGARD, minutes(1)));
+    out.add(decide(raise(control("pt-00014")), TYLER, Action.REPLAN, minutes(1)));
+    out.add(decide(raise(control("pt-00006")), LIND, Action.REPLAN, minutes(1)));
+    out.add(decide(raise(control("pt-00004")), CHEN, Action.APPROVE, minutes(1)));
     out.add(raise(Fx.custom("triage", "human-monitoring", "behaviour", "routing", Map.of("roles", List.of("model-risk-owner")),
         "shadow", true)));
     return out;
@@ -200,8 +200,8 @@ class SchemaTest {
       for (var e : events) {
         assertConforms("HumanEvent", Json.event(e, now));
         assertConforms("HumanEventRow", Json.row(e, now));
-        var verdict = Verdicts.of(e);
-        if (verdict != null) assertConforms("Verdict", Json.verdict(verdict));
+        var verdict = Json.verdict(e);
+        if (verdict != null) assertConforms("Verdict", verdict);
       }
     }
     var page = Json.map("events", events.stream().map(e -> Json.event(e, T0)).toList(), "total", events.size());
@@ -219,7 +219,7 @@ class SchemaTest {
 
   @Test
   void standingHaltsRegistryAndErrorsConform() {
-    var pay = control("pt-0001");
+    var pay = control("pt-00001");
     var e = claim(raise(pay, request(pay).matchKey("pay:S-77").build()), TYLER, T0);
     var decided = ok(e, Rules.decide(e, actor(TYLER), new Rules.DecisionRequest(reviewer(TYLER), Action.APPROVE, "ok",
         null, Sticky.APPROVE_FOR_PATTERN, null, List.of(), null), Map.of(), seconds(15)));
@@ -229,7 +229,7 @@ class SchemaTest {
     assertConforms("StandingDecision", Json.standing(standing.usedFor("he-2").revokedBy(TYLER, minutes(2), "no"), "payments",
         minutes(3)));
 
-    var halt = control("pt-0012");
+    var halt = control("pt-00012");
     var none = HaltState.notHalted(halt);
     assertConforms("Halt", Json.halt(none, Map.of(), null, "patterns"));
     assertConforms("Halt", Json.halt(none.exercised(PATEL, "Drift", "he-1", "pr-he-1-halt", T0).liftRaised("he-2"),
@@ -248,16 +248,16 @@ class SchemaTest {
 
   @Test
   void proofRecordsConform() {
-    var decided = decide(claim(raise(control("pt-0001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
+    var decided = decide(claim(raise(control("pt-00001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
     assertConforms("ProofRecord", Json.proof(Proofs.decision(decided, seconds(16))));
-    var timedOut = tick(raise(control("pt-0001")), minutes(30));
+    var timedOut = tick(raise(control("pt-00001")), minutes(30));
     assertConforms("ProofRecord", Json.proof(Proofs.decision(timedOut, minutes(30))));
 
-    var halt = decide(raise(control("pt-0012")), PATEL, Action.HALT, minutes(1));
+    var halt = decide(raise(control("pt-00012")), PATEL, Action.HALT, minutes(1));
     var exercised = Proofs.haltExercised(halt, minutes(1));
     assertConforms("ProofRecord", Json.proof(exercised));
     assertConforms("ProofRecord", Json.proof(Proofs.decision(halt, minutes(1))));
-    var s = control("pt-0012");
+    var s = control("pt-00012");
     var lift = raise(s, request(s).subject(Subject.system("Restart", "capability", "eligibility-assessment",
         "all-runtime-operations", true)).build());
     var checks = Map.of("backlog drained", true);
@@ -270,7 +270,7 @@ class SchemaTest {
   @Test
   void summaryAndQualityConform() {
     var events = events();
-    var halts = List.<Map<String, Object>>of(Json.halt(HaltState.notHalted(control("pt-0012")), Map.of(), null, "patterns"));
+    var halts = List.<Map<String, Object>>of(Json.halt(HaltState.notHalted(control("pt-00012")), Map.of(), null, "patterns"));
     assertConforms("Summary", Figures.summary(events, Fx.CONTROLS, halts, List.of(), minutes(25)));
     assertConforms("Summary", Figures.summary(List.of(), Fx.CONTROLS, List.of(), List.of(), T0));
     assertConforms("Quality", Figures.quality(events, Fx.CONTROLS, s -> Fx.OVERSEERS.find(s).map(o -> o.name()).orElse(null),

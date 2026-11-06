@@ -4,7 +4,7 @@
 schema_version: 1
 service: patterns
 controls:
-  - id: pt-0001
+  - id: pt-00001
     name: Payments above the limit need the system owner
     corpus_ref: aws-agentic-scoping.scope2-human-approval
     flavor: human-system-authorization
@@ -20,7 +20,7 @@ controls:
         - { queue: head-of-operations, roles: [head-of-operations], after: PT30M }
       minimum_review_seconds: 10
 
-  - id: pt-0002
+  - id: pt-00002
     name: Adverse notices are reviewed before they are sent
     corpus_ref: gdpr-art22.art22.3
     flavor: human-domain-decision
@@ -36,7 +36,7 @@ controls:
         - { queue: head-of-operations, roles: [head-of-operations], after: PT4H }
       minimum_review_seconds: 20
 
-  - id: pt-0003
+  - id: pt-00003
     name: Model rollouts need an approver who did not build them
     corpus_ref: soc2.cc8.1
     flavor: human-system-authorization
@@ -51,7 +51,7 @@ controls:
         - { queue: ai-change-board, roles: [model-risk-owner] }
         - { queue: head-of-operations, roles: [head-of-operations], after: P1D }
 
-  - id: pt-0004
+  - id: pt-00004
     name: Rule waivers are granted by the second line with an expiry
     corpus_ref: nist-ai-rmf.govern-1.4
     flavor: human-system-authorization
@@ -63,7 +63,7 @@ controls:
       accountable_owner: compliance-lead
       sla_target: P2D
 
-  - id: pt-0005
+  - id: pt-00005
     name: Possible duplicate customers are matched by a data steward
     corpus_ref: eu-ai-act.art14.5
     flavor: human-domain-decision
@@ -75,7 +75,7 @@ controls:
       accountable_owner: data-steward
       sla_target: P1D
 
-  - id: pt-0006
+  - id: pt-00006
     name: Payments with an unknown result are reconciled by a person
     flavor: human-system-authorization
     human_config:
@@ -89,7 +89,7 @@ controls:
         - { queue: operations, roles: [ai-system-owner, head-of-operations] }
         - { queue: head-of-operations, roles: [head-of-operations], after: PT2H }
 
-  - id: pt-0007
+  - id: pt-00007
     name: Applicants can appeal an automated decision to a person
     corpus_ref: colorado-sb26-189.6-1-1705.human-review
     flavor: human-domain-decision
@@ -105,7 +105,7 @@ controls:
         - { queue: compliance, roles: [compliance-lead], after: P5D }
       minimum_review_seconds: 30
 
-  - id: pt-0008
+  - id: pt-00008
     name: Oversight persons can override an output, with a reason
     corpus_ref: eu-ai-act.art14.4.d
     flavor: human-system-authorization
@@ -116,7 +116,7 @@ controls:
       routing: { roles: [ai-system-owner, oversight-officer] }
       accountable_owner: ai-system-owner
 
-  - id: pt-0009
+  - id: pt-00009
     name: Flagged replies are triaged into evaluation cases
     corpus_ref: finos-aigf.mi-11
     flavor: human-feedback
@@ -128,7 +128,7 @@ controls:
       accountable_owner: feedback-triager
       sla_target: P3D
 
-  - id: pt-0010
+  - id: pt-00010
     name: Referral drift is triaged by the model risk owner
     corpus_ref: eu-ai-act.art26.4
     flavor: human-monitoring
@@ -143,7 +143,7 @@ controls:
         - { queue: model-risk, roles: [model-risk-owner] }
         - { queue: compliance, roles: [compliance-lead], after: PT8H }
 
-  - id: pt-0011
+  - id: pt-00011
     name: A person takes over a conversation when asked
     flavor: human-domain-decision
     human_config:
@@ -157,7 +157,7 @@ controls:
         - { queue: duty, roles: [duty-officer] }
         - { queue: head-of-operations, roles: [head-of-operations], after: PT5M }
 
-  - id: pt-0012
+  - id: pt-00012
     name: Automated eligibility assessment can be halted
     corpus_ref: eu-ai-act.art14.4.e
     flavor: human-halt
@@ -177,7 +177,7 @@ controls:
       emits_on_exercise: HaltExercised
       emits_on_lift: HaltLifted
 
-  - id: pt-0013
+  - id: pt-00013
     name: The eligibility model is attested every quarter
     corpus_ref: sr11-7.s4.validation
     flavor: human-monitoring
@@ -189,7 +189,7 @@ controls:
       accountable_owner: model-risk-owner
       sla_target: P14D
 
-  - id: pt-0014
+  - id: pt-00014
     name: Rushed approvals on payments go to the accountable owner
     corpus_ref: eu-ai-act.art14.5.rubber-stamp-rate
     flavor: human-monitoring

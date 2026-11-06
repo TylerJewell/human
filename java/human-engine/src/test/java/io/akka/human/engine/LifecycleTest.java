@@ -36,18 +36,18 @@ import org.junit.jupiter.api.Test;
 class LifecycleTest {
 
   private static HumanEvent change() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     return raise(s, request(s).proposedBy("agent:rollouts").build());
   }
 
   @Test
   void aSendBackNeedsAProposerAndWhatToChange() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     var noProposer = raise(s);
     assertEquals("there is no proposer to send this back to",
         refused(Rules.sendBack(noProposer, actor(TYLER), "More evals", minutes(1)), 422).error());
     refused(Rules.sendBack(change(), actor(TYLER), " ", minutes(1)), 422);
-    refused(Rules.sendBack(raise(control("pt-0001")), actor(TYLER), "x", minutes(1)), 422);
+    refused(Rules.sendBack(raise(control("pt-00001")), actor(TYLER), "x", minutes(1)), 422);
   }
 
   @Test
@@ -74,7 +74,7 @@ class LifecycleTest {
 
   @Test
   void theProposerOrAnAdminWithdraws() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     var e = raise(s, request(s).proposedBy("agent:payments").build());
     refused(Rules.withdraw(e, reviewer(TYLER), "no", minutes(1)), 403);
     var withdrawn = ok(e, Rules.withdraw(e, Reviewer.of("agent:payments"), "Paid by other means", minutes(1)));
@@ -91,7 +91,7 @@ class LifecycleTest {
 
   @Test
   void aSupersededEventClosesWithoutAPerson() {
-    var superseded = ok(raise(control("pt-0005")), Rules.supersede(raise(control("pt-0005")), "The records merged",
+    var superseded = ok(raise(control("pt-00005")), Rules.supersede(raise(control("pt-00005")), "The records merged",
         minutes(1)));
     assertEquals(State.WITHDRAWN, superseded.state());
     assertEquals("system:superseded", superseded.history().getLast().actor());
@@ -101,8 +101,8 @@ class LifecycleTest {
 
   @Test
   void theAccountableOwnerReopensAClosedEvent() {
-    var decided = decide(claim(raise(control("pt-0001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
-    refused(Rules.reopen(raise(control("pt-0001")), Reviewer.of("o", "ai-system-owner"), "why", "he-new", minutes(1)), 409);
+    var decided = decide(claim(raise(control("pt-00001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
+    refused(Rules.reopen(raise(control("pt-00001")), Reviewer.of("o", "ai-system-owner"), "why", "he-new", minutes(1)), 409);
     refused(Rules.reopen(decided, reviewer(Fx.CHEN), "why", "he-new", minutes(1)), 403);
     refused(Rules.reopen(decided, Reviewer.of("o", "ai-system-owner"), " ", "he-new", minutes(1)), 422);
     var reopened = ok(decided, Rules.reopen(decided, Reviewer.of("o", "ai-system-owner"), "New facts", "he-new",
@@ -116,7 +116,7 @@ class LifecycleTest {
 
   @Test
   void aKilledEventIsAnError() {
-    var killed = ok(raise(control("pt-0001")), Rules.kill(raise(control("pt-0001")), "dev", "reset", minutes(1)));
+    var killed = ok(raise(control("pt-00001")), Rules.kill(raise(control("pt-00001")), "dev", "reset", minutes(1)));
     assertEquals(State.KILLED, killed.state());
     assertEquals(HumanEvent.KILLED, killed.outcome().slaOutcome());
     var verdict = Verdicts.of(killed);
@@ -127,8 +127,8 @@ class LifecycleTest {
 
   @Test
   void applyingIsRecordedOnce() {
-    var decided = decide(claim(raise(control("pt-0001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
-    refused(Rules.applied(raise(control("pt-0001")), "x", minutes(1)), 409);
+    var decided = decide(claim(raise(control("pt-00001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
+    refused(Rules.applied(raise(control("pt-00001")), "x", minutes(1)), 409);
     var applied = ok(decided, Rules.applied(decided, "Resumed payment pay-1", minutes(1)));
     assertEquals(State.APPLIED, applied.state());
     assertEquals("Resumed payment pay-1", applied.outcome().applied());
@@ -136,9 +136,7 @@ class LifecycleTest {
     assertTrue(applied.outcome().delivered());
     assertEquals(List.of(), Rules.applied(applied, "again", minutes(2)).value());
     assertEquals(List.of(), Rules.applyFailed(applied, "late failure", minutes(2)).value());
-    var verdict = Verdicts.of(applied);
-    assertEquals(minutes(1), verdict.appliedAt());
-    assertEquals(minutes(1), verdict.at());
+    assertEquals(minutes(1), Verdicts.of(applied).at());
 
     var failed = ok(decided, Rules.applyFailed(decided, "workflow gone", minutes(1)));
     assertEquals(State.DECIDED, failed.state());
@@ -146,7 +144,7 @@ class LifecycleTest {
     assertEquals(Verdicts.ERROR, Verdicts.of(failed).conclusion());
     assertEquals(List.of("not-applied"), Verdicts.of(failed).reasons());
 
-    var timedOut = tick(raise(control("pt-0001")), minutes(30));
+    var timedOut = tick(raise(control("pt-00001")), minutes(30));
     var told = ok(timedOut, Rules.applied(timedOut, "Told the workflow", minutes(31)));
     assertEquals(State.TIMED_OUT, told.state());
     assertNotNull(told.outcome().appliedAt());
@@ -154,8 +152,8 @@ class LifecycleTest {
 
   @Test
   void raisingAgainAddsAnOccurrence() {
-    var e = raise(control("pt-0010"));
-    var latest = Raise.trigger(control("pt-0010"), new Trigger("monitor", "referral-share < 20", "Fell again",
+    var e = raise(control("pt-00010"));
+    var latest = Raise.trigger(control("pt-00010"), new Trigger("monitor", "referral-share < 20", "Fell again",
         List.of(new Trigger.Value("referral-share", 11, 20)), List.of()), minutes(10));
     var repeated = ok(e, Rules.repeat(e, latest, minutes(10)));
     assertEquals(2, repeated.trigger().occurrences());
@@ -168,7 +166,7 @@ class LifecycleTest {
 
   @Test
   void askingForMoreKeepsTheEventPending() {
-    var e = raise(control("pt-0001"));
+    var e = raise(control("pt-00001"));
     var asked = ok(e, Rules.requestMoreInfo(e, actor(TYLER), "Which purchase order?", minutes(1)));
     assertEquals(State.OPEN, asked.state());
     assertTrue(asked.pending());
@@ -177,7 +175,7 @@ class LifecycleTest {
         null, List.of(), null);
     assertEquals(1, ok(e, Rules.decide(e, actor(TYLER), viaDecision, Map.of(), minutes(1))).infoRequests().size());
     refused(Rules.requestMoreInfo(e, actor(TYLER), " ", minutes(1)), 422);
-    refused(Rules.requestMoreInfo(raise(control("pt-0003")), actor(TYLER), "why?", minutes(1)), 422);
+    refused(Rules.requestMoreInfo(raise(control("pt-00003")), actor(TYLER), "why?", minutes(1)), 422);
   }
 
   @Test
@@ -205,19 +203,19 @@ class LifecycleTest {
 
   @Test
   void aRaiseIsCheckedAgainstTheControlsPatternAndSubjectKind() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     assertNull(Raise.check(s, request(s).build()));
-    var wrongPattern = io.akka.human.api.RaiseRequest.of(Pattern.TRIAGE, "q").control("pt-0001")
+    var wrongPattern = io.akka.human.api.RaiseRequest.of(Pattern.TRIAGE, "q").control("pt-00001")
         .subject(Fx.subjectFor(io.akka.human.api.SubjectKind.ACTION)).build();
     assertEquals(422, Raise.check(s, wrongPattern).status());
-    var wrongKind = io.akka.human.api.RaiseRequest.of(null, "q").control("pt-0001")
+    var wrongKind = io.akka.human.api.RaiseRequest.of(null, "q").control("pt-00001")
         .subject(Subject.output("x", "y")).build();
     assertTrue(Raise.check(s, wrongKind).error().contains("judges a action subject"));
   }
 
   @Test
   void aRaiseKeepsWhatTheServiceSaid() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     var e = raise(s, request(s).dedupeKey("pay-3141").matchKey("pay:S-77").resumes(Resume.workflow("payment", "pay-3141"))
         .effect(Action.APPROVE, "The payment is sent").evidence("invoice", "inv-9").related("he-0", "x-follows")
         .simulated(true).trigger(new Trigger(null, null, "The agent asked to pay 4,200 EUR.",

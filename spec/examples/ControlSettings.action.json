@@ -1,6 +1,6 @@
 {
   "control": {
-    "rowId": "pt-0001",
+    "rowId": "pt-00001",
     "name": "Payments above the limit need the system owner",
     "corpusRef": "aws-agentic-scoping.scope2-human-approval",
     "revision": 1

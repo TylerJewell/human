@@ -62,7 +62,12 @@ describe("gallery memory service", () => {
     expect(await client.decide("he-two", { action: "APPROVE", rationale: "Again." }).catch((e: OversightError) => e.status)).toBe(409);
     await client.setReviewer(patel);
     const second = await client.decide("he-two", { action: "APPROVE", rationale: "Agreed." });
-    expect(second).toMatchObject({ state: "APPLIED", pending: false, verdict: { deciders: [tyler.subject, patel.subject] } });
+    expect(second).toMatchObject({
+      state: "APPLIED",
+      pending: false,
+      verdict: { detail: { votes: [{ subject: tyler.subject }, { subject: patel.subject }] } }
+    });
+    expect(second.verdict?.integrity.digest).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 });
 
@@ -73,7 +78,7 @@ describe("raise samples", () => {
       const control = example<ControlSettings>("ControlSettings.action");
       const settings = { ...control, pattern, subjectKind: kind ?? (exampleKind(pattern) as ControlSettings["subjectKind"]) };
       const raise = sampleFor(settings, "patterns");
-      expect(raise.control).toBe("pt-0001");
+      expect(raise.control).toBe("pt-00001");
       expect(raise.ask.question.length, pattern).toBeGreaterThan(10);
       expect(raise.subject.kind, pattern).toBe(settings.subjectKind);
       expect(raise.subject.service).toBe("patterns");

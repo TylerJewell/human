@@ -2,7 +2,7 @@
   "window": "P30D",
   "reviewTimes": [
     {
-      "control": "pt-0001",
+      "control": "pt-00001",
       "name": "Payments above the limit need the system owner",
       "minimumSeconds": 10,
       "buckets": [
@@ -55,7 +55,7 @@
   },
   "signals": [
     {
-      "control": "pt-0001",
+      "control": "pt-00001",
       "signal": "below-minimum-share",
       "value": 0.08,
       "limit": 0.2,

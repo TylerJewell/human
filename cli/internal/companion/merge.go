@@ -341,6 +341,8 @@ const (
 // verdicts merges the services' verdicts newest first and pages the result like a service does:
 // limit and offset choose the page, until and since bound the times, total counts every verdict
 // the services matched. Each service is asked for the first offset+limit verdicts, a page at a time.
+// A verdict is passed on unchanged: its digest covers every field, and subject.service names its
+// service.
 func (s *Server) verdicts(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
 	limit, offset := defaultVerdicts, 0
@@ -384,7 +386,6 @@ func (s *Server) verdicts(w http.ResponseWriter, r *http.Request) error {
 			if err := json.Unmarshal(rep.body, &m); err != nil || m == nil {
 				return errorf(http.StatusBadGateway, "the answer of %s to /verdicts is not a JSON object", rep.svc.Service)
 			}
-			tag(m["verdicts"], rep.svc.Service)
 			items, _ := m["verdicts"].([]any)
 			f := feeds[rep.svc.Service]
 			f.items = append(f.items, items...)
@@ -410,7 +411,7 @@ func (s *Server) verdicts(w http.ResponseWriter, r *http.Request) error {
 	}
 	at := func(v any) string {
 		m, _ := v.(map[string]any)
-		s, _ := m["at"].(string)
+		s, _ := m["observedAt"].(string)
 		return s
 	}
 	sort.SliceStable(all, func(i, j int) bool { return later(at(all[i]), at(all[j])) })

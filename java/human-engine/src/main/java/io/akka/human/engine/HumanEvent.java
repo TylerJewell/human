@@ -143,6 +143,8 @@ public record HumanEvent(
    * @param standingDecisionId the standing decision that settled the event, or the one this decision creates
    * @param timeoutBehaviour the behaviour applied when the event timed out
    * @param applied what resumed or carried out the outcome said it did
+   * @param grant the standing decision that settled the event and who granted it; null when another
+   *     decision settled it, or the journal does not record the grant
    */
   public record Outcome(
       Action action,
@@ -158,29 +160,31 @@ public record HumanEvent(
       Instant appliedAt,
       String applied,
       String applyError,
-      List<Map<String, Object>> conditions) {
+      List<Map<String, Object>> conditions,
+      StandingDecision.Grant grant) {
 
     public Outcome {
       conditions = conditions == null ? List.of() : List.copyOf(conditions);
     }
 
     public static Outcome closedWithout(String slaOutcome) {
-      return new Outcome(null, null, null, null, null, "", null, false, slaOutcome, null, null, null, null, List.of());
+      return new Outcome(null, null, null, null, null, "", null, false, slaOutcome, null, null, null, null, List.of(),
+          null);
     }
 
     public static Outcome timedOut(Action action, String timeoutBehaviour) {
       return new Outcome(action, null, null, null, null, "", null, false, TIMED_OUT, timeoutBehaviour, null, null,
-          null, List.of());
+          null, List.of(), null);
     }
 
     Outcome withApplied(String note, Instant at) {
       return new Outcome(action, sticky, agreedWithAi, edits, replacement, rationale, standingDecisionId, byStanding,
-          slaOutcome, timeoutBehaviour, at, note, applyError, conditions);
+          slaOutcome, timeoutBehaviour, at, note, applyError, conditions, grant);
     }
 
     Outcome withApplyError(String error) {
       return new Outcome(action, sticky, agreedWithAi, edits, replacement, rationale, standingDecisionId, byStanding,
-          slaOutcome, timeoutBehaviour, appliedAt, applied, error, conditions);
+          slaOutcome, timeoutBehaviour, appliedAt, applied, error, conditions, grant);
     }
 
     /** Whether whoever waits has been told, successfully or not. */
@@ -339,8 +343,10 @@ public record HumanEvent(
       }
       case HumanEventEvent.StandingApplied e -> {
         d.state = State.DECIDED;
+        var grant = e.grantedBy() == null ? null
+            : new StandingDecision.Grant(e.standingId(), e.kind(), e.grantedBy(), e.grantedAt());
         d.outcome = new Outcome(e.action(), null, null, null, null, "", e.standingId(), true, COMPLETED, null, null,
-            null, null, List.of());
+            null, null, List.of(), grant);
         d.closedAt = e.at();
         d.step(e.at(), State.DECIDED, "standing:" + e.standingId(),
             "Settled by standing decision " + e.standingId() + ": " + e.action());

@@ -28,7 +28,7 @@ import java.util.UUID;
 @HttpEndpoint
 public class SupportEndpoint extends AbstractHttpEndpoint {
 
-  public static final String FLAG_CONTROL = "hl-0007";
+  public static final String FLAG_CONTROL = "custom-4c293fe7fd2e";
 
   /** {@code sessionId}: null starts a conversation. */
   public record TurnRequest(String sessionId, String applicationId, String message) {}

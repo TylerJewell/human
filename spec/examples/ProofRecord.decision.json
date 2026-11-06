@@ -5,7 +5,7 @@
   "service": "patterns",
   "payload": {
     "event_id": "he-20261029-00099",
-    "control_id": "pt-0012",
+    "control_id": "pt-00012",
     "pattern": "halt-restart",
     "subject_kind": "system",
     "reviewer_id": "s.patel@example.com",

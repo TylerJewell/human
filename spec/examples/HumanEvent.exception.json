@@ -7,7 +7,7 @@
   "pattern": "exception",
   "patternName": "Exception or waiver",
   "control": {
-    "rowId": "pt-0004",
+    "rowId": "pt-00004",
     "name": "Rule waivers are granted by the second line with an expiry",
     "corpusRef": "nist-ai-rmf.govern-1.4",
     "revision": 1

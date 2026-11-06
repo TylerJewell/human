@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * The support assistant's call of {@code extendDocumentDeadline} for more days than it may grant
- * alone: the call waits for the loan system owner's approval (hl-0001), with the deadline
+ * alone: the call waits for the loan system owner's approval (custom-042d5cb61624), with the deadline
  * extension judge's recommendation beside it. Approve moves the deadline by the days asked, an edit
  * by the days the owner sets; deny, taking the case off the system, or a timeout leaves it. An
  * approval for the pattern settles later calls for the same number of days at once.
@@ -30,8 +30,8 @@ import java.util.Map;
 public class DeadlineExtensionWorkflow extends Workflow<DeadlineExtensionWorkflow.Request> {
 
   public static final String RESUMER = "deadline-extension";
-  public static final String CONTROL = "hl-0001";
-  /** hl-0001 has 30 minutes, and 30 more at the head of credit when escalated. */
+  public static final String CONTROL = "custom-042d5cb61624";
+  /** custom-042d5cb61624 has 30 minutes, and 30 more at the head of credit when escalated. */
   static final Duration BACKSTOP = Duration.ofHours(2);
 
   public record Start(String applicationId, int days, String reason, String sessionId) {}

@@ -36,7 +36,7 @@ public final class HumanRegistration {
     entry.put("service", service);
     entry.put("url", url);
     entry.put("oversight", "/oversight");
-    entry.put("contract", 2);
+    entry.put("contract", 3);
     entry.put("startedAt", startedAt.toString());
     try {
       Files.createDirectories(file.getParent());

@@ -231,7 +231,7 @@ moves the development clock past the minimum review time, and approves it, all w
 
 | Path | What it is |
 |---|---|
-| `spec/` | The `/oversight/*` contract, its JSON schema and examples. `spec/verify/` holds the pattern, decision and overseer registries, copied from Akka Verify schema v2.8 |
+| `spec/` | The `/oversight/*` contract, its JSON schema and examples. `spec/verify/` holds the pattern, decision and overseer registries and the verdict schema, copied from Akka Verify schema v2.10 |
 | `java/human-api` | What a workflow, agent or endpoint calls: raising an event per pattern, decisions, subjects, the workflow and autonomous-task bridges |
 | `java/human-engine` | Plain Java: the lifecycle state machine, settings resolution, routing and independence, verdicts, quality figures |
 | `java/human-akka` | An Akka component library: the event entity, queue view, deadline timers, halt entity, the `/oversight/*` endpoint |

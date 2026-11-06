@@ -1,5 +1,5 @@
-// Validates every example against its type in oversight.schema.json, and the fixtures against the
-// pinned Verify schemas. An example is named <Type>.<case>.json; <Type> is a $defs entry.
+// Validates every example against its type in oversight.schema.json, every verdict in them against
+// Verify's verdict schema as well, and the fixtures against the pinned Verify schemas. An example is named <Type>.<case>.json; <Type> is a $defs entry.
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,7 @@ addFormats(ajv);
 ajv.addSchema(JSON.parse(read("oversight.schema.json")), "oversight");
 ajv.addSchema(parse(read("verify/overseer-registry.schema.yaml")), "overseers");
 ajv.addSchema(JSON.parse(read("verify/human-config.schema.json")), "human-config");
+ajv.addSchema(parse(read("verify/verdict.schema.yaml")), "verdict");
 
 let failures = 0;
 const check = (label, ref, value) => {
@@ -27,9 +28,17 @@ const check = (label, ref, value) => {
 };
 
 const examples = readdirSync(join(here, "examples")).filter((f) => f.endsWith(".json"));
+const verdictsIn = (type, doc) =>
+  type === "Verdict" ? [doc]
+  : type === "VerdictsPage" ? doc.verdicts
+  : type === "HumanEvent" ? [doc.verdict]
+  : type === "EventsPage" ? doc.events.map((e) => e.verdict)
+  : [];
 for (const file of examples) {
   const type = file.split(".")[0];
-  check(`examples/${file}`, `oversight#/$defs/${type}`, JSON.parse(read(`examples/${file}`)));
+  const doc = JSON.parse(read(`examples/${file}`));
+  check(`examples/${file}`, `oversight#/$defs/${type}`, doc);
+  for (const verdict of verdictsIn(type, doc).filter(Boolean)) check(`examples/${file} verdict`, "verdict", verdict);
 }
 
 const fixtures = readdirSync(join(here, "fixtures"));

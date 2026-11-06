@@ -30,7 +30,7 @@ class ProofsTest {
 
   @Test
   void aDecisionRecordCarriesTheVotesTheVerdictAndTheSource() {
-    var decided = decide(claim(raise(control("pt-0001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
+    var decided = decide(claim(raise(control("pt-00001")), TYLER, T0), TYLER, Action.APPROVE, seconds(15));
     var record = Proofs.decision(decided, seconds(16));
     assertEquals(ProofRecord.DECISION, record.type());
     assertEquals("pr-" + decided.id() + "-decision", record.recordId());
@@ -42,7 +42,7 @@ class ProofsTest {
       assertTrue(p.containsKey(field), field);
     }
     assertEquals(decided.id(), p.get("event_id"));
-    assertEquals("pt-0001", p.get("control_id"));
+    assertEquals("pt-00001", p.get("control_id"));
     assertEquals("action-approval", p.get("pattern"));
     assertEquals("action", p.get("subject_kind"));
     assertEquals(TYLER, p.get("reviewer_id"));
@@ -61,30 +61,30 @@ class ProofsTest {
 
   @Test
   void nothingIsRecordedForAnEventClosedWithoutADecision() {
-    assertNull(Proofs.decision(raise(control("pt-0001")), T0));
-    var s = control("pt-0001");
+    assertNull(Proofs.decision(raise(control("pt-00001")), T0));
+    var s = control("pt-00001");
     var e = raise(s, request(s).proposedBy("agent:payments").build());
     assertNull(Proofs.decision(ok(e, Rules.withdraw(e, Reviewer.of("agent:payments"), "", minutes(1))), minutes(1)));
   }
 
   @Test
   void aTimeoutDefaultAndAStandingDecisionNameWhatDecided() {
-    var timedOut = tick(raise(control("pt-0001")), minutes(30));
+    var timedOut = tick(raise(control("pt-00001")), minutes(30));
     assertEquals("system:timeout", Proofs.decision(timedOut, minutes(30)).payload().get("reviewer_id"));
     assertEquals("DENY", Proofs.decision(timedOut, minutes(30)).payload().get("action"));
-    var e = raise(control("pt-0001"));
-    var settled = ok(e, Rules.settleByStanding(e, "sd-3", Action.APPROVE, T0));
+    var e = raise(control("pt-00001"));
+    var settled = ok(e, Rules.settleByStanding(e, Fx.grant("sd-3"), Action.APPROVE, T0));
     assertEquals("standing:sd-3", Proofs.decision(settled, T0).payload().get("reviewer_id"));
   }
 
   @Test
   void aHaltAndItsLiftAreRecordedWithTheirReference() {
-    var halt = decide(raise(control("pt-0012")), PATEL, Action.HALT, minutes(1));
+    var halt = decide(raise(control("pt-00012")), PATEL, Action.HALT, minutes(1));
     var exercised = Proofs.haltExercised(halt, minutes(1));
     assertEquals(ProofRecord.HALT_EXERCISED, exercised.type());
     assertEquals(Proofs.haltRecordId(halt.id()), exercised.recordId());
     var p = exercised.payload();
-    assertEquals("pt-0012", p.get("control_id"));
+    assertEquals("pt-00012", p.get("control_id"));
     assertEquals(PATEL, p.get("exerciser_id"));
     assertEquals("capability", p.get("scope"));
     assertEquals("eligibility-assessment", p.get("target"));
@@ -93,7 +93,7 @@ class ProofsTest {
     assertEquals(minutes(1).toString(), p.get("halted_at"));
     assertEquals(false, p.get("safe_state_verified"));
 
-    var s = control("pt-0012");
+    var s = control("pt-00012");
     var lift = raise(s, request(s).subject(Subject.system("Restart", "capability", "eligibility-assessment",
         "all-runtime-operations", true)).build());
     var checks = Map.of("backlog drained", true);

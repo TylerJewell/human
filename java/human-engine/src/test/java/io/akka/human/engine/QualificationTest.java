@@ -34,18 +34,18 @@ class QualificationTest {
 
   @Test
   void anUnqualifiedOverseerIsRefused() {
-    var refusal = refused(Rules.claim(raise(control("pt-0002")), actor(OSEI), T0), 403);
+    var refusal = refused(Rules.claim(raise(control("pt-00002")), actor(OSEI), T0), 403);
     assertTrue(refusal.error().contains("is not qualified: EU AI Act oversight training expired"), refusal.error());
   }
 
   @Test
   void anAttestationMustBeValidOnTheDay() {
     var day = Instant.parse("2027-01-11T09:00:00Z");
-    var e = raise(control("pt-0001"), request(control("pt-0001")).build(), day);
+    var e = raise(control("pt-00001"), request(control("pt-00001")).build(), day);
     var refusal = refused(Rules.claim(e, actor(TYLER), day), 403);
     assertTrue(refusal.error().contains("eu-ai-act-oversight has expired"), refusal.error());
     var lastDay = Instant.parse("2027-01-10T23:00:00Z");
-    assertEquals(State.CLAIMED, claim(raise(control("pt-0001"), request(control("pt-0001")).build(), lastDay), TYLER,
+    assertEquals(State.CLAIMED, claim(raise(control("pt-00001"), request(control("pt-00001")).build(), lastDay), TYLER,
         lastDay).state());
   }
 
@@ -78,29 +78,29 @@ class QualificationTest {
 
   @Test
   void aRoleMustBeHeldInTheRegistryNotOnlyClaimed() {
-    var refusal = refused(Rules.claim(raise(control("pt-0001")), actor(CHEN, "ai-system-owner"), T0), 403);
+    var refusal = refused(Rules.claim(raise(control("pt-00001")), actor(CHEN, "ai-system-owner"), T0), 403);
     assertTrue(refusal.error().contains("does not hold [ai-system-owner] in the overseer registry"), refusal.error());
   }
 
   @Test
   void aPersonOutsideTheRegistryIsRefusedWhenTheServiceKeepsOne() {
     var ghost = new Actor(Reviewer.of("ghost@example.com", "ai-system-owner"), null, true);
-    assertTrue(refused(Rules.claim(raise(control("pt-0001")), ghost, T0), 403).error()
+    assertTrue(refused(Rules.claim(raise(control("pt-00001")), ghost, T0), 403).error()
         .contains("not in the overseer registry"));
     var noRegistry = Actor.unregistered(Reviewer.of("ghost@example.com", "ai-system-owner"));
-    assertEquals(State.CLAIMED, ok(raise(control("pt-0001")), Rules.claim(raise(control("pt-0001")), noRegistry, T0))
+    assertEquals(State.CLAIMED, ok(raise(control("pt-00001")), Rules.claim(raise(control("pt-00001")), noRegistry, T0))
         .state());
   }
 
   @Test
   void aReviewerWithoutTheQueuesRoleIsRefused() {
-    var refusal = refused(Rules.claim(raise(control("pt-0001")), actor(CHEN), T0), 403);
+    var refusal = refused(Rules.claim(raise(control("pt-00001")), actor(CHEN), T0), 403);
     assertTrue(refusal.error().contains("this needs one of [ai-system-owner]"), refusal.error());
   }
 
   @Test
   void theProposerMayNotDecide() {
-    var s = control("pt-0001");
+    var s = control("pt-00001");
     var e = raise(s, request(s).proposedBy(TYLER).build());
     assertEquals(List.of(TYLER), e.independentOf());
     assertTrue(refused(Rules.claim(e, actor(TYLER), T0), 403).error().contains("independence bars"));
@@ -108,7 +108,7 @@ class QualificationTest {
 
   @Test
   void theBuilderMayNotDecideAChange() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     var e = raise(s, request(s).proposedBy("agent:rollouts").builtBy(DEVOS).build());
     assertEquals(List.of("agent:rollouts", DEVOS), e.independentOf());
     refused(Rules.decide(e, actor(DEVOS), Fx.decision(reviewer(DEVOS), Action.APPROVE), Map.of(), T0), 403);
@@ -117,7 +117,7 @@ class QualificationTest {
 
   @Test
   void anAppealBarsTheFirstReviewerAndTheirReportingLine() {
-    var s = control("pt-0007");
+    var s = control("pt-00007");
     var e = raise(s, request(s).firstReviewer(OKAFOR).build());
     assertEquals(List.of(OKAFOR, CHEN), e.independentOf());
     assertEquals(List.of(OKAFOR, CHEN), e.subject().detail().get("excluded"));
@@ -131,7 +131,7 @@ class QualificationTest {
 
   @Test
   void routableKeepsOnlyWhatTheReviewerCanActOnNow() {
-    var e = raise(control("pt-0002"));
+    var e = raise(control("pt-00002"));
     assertTrue(Rules.routable(e, actor(LIND), T0));
     assertFalse(Rules.routable(e, actor(OSEI), T0));
     assertFalse(Rules.routable(e, actor(TYLER), T0));
@@ -140,7 +140,7 @@ class QualificationTest {
     assertFalse(Rules.routable(held, actor(OKAFOR), T0));
     assertTrue(Rules.routable(held, actor(OKAFOR), minutes(30)));
 
-    var change = raise(control("pt-0003"));
+    var change = raise(control("pt-00003"));
     var voted = decide(change, TYLER, Action.APPROVE, T0);
     assertFalse(Rules.routable(voted, actor(TYLER), T0));
     assertTrue(Rules.routable(voted, actor(DEVOS), T0));
@@ -148,7 +148,7 @@ class QualificationTest {
 
   @Test
   void aRecusedReviewerStepsAsideAndCannotComeBack() {
-    var e = claim(raise(control("pt-0002")), LIND, T0);
+    var e = claim(raise(control("pt-00002")), LIND, T0);
     var recuse = new Rules.DecisionRequest(reviewer(LIND), Action.RECUSE, "I know the applicant", null, null, null,
         List.of(), null);
     var recused = ok(e, Rules.decide(e, actor(LIND), recuse, Map.of(), minutes(1)));

@@ -1,4 +1,4 @@
-import type { CompanionService, Halt, HumanEventRow, OverseerRegistry, StandingDecision, Summary } from "@akka-human/kit";
+import type { CompanionService, Halt, HumanEventRow, OverseerRegistry, StandingDecision, Summary, Verdict } from "@akka-human/kit";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import page from "../../../../spec/examples/CompanionEventsPage.one.json";
@@ -21,8 +21,7 @@ import {
   takersOf,
   verdictsOf,
   type ConformanceReport,
-  type ServiceControl,
-  type ServiceVerdict
+  type ServiceControl
 } from "./logic";
 
 const NOW = Date.parse("2026-10-29T14:40:00Z");
@@ -31,7 +30,7 @@ const control = controlExample as unknown as ServiceControl;
 const row = page.rows[0] as unknown as HumanEventRow;
 
 const services: CompanionService[] = [
-  { service: "patterns", url: "http://localhost:9164", up: true, info: { service: "patterns", contract: 2, patterns: ["action-approval"], devRoutes: true, controls: 14 } },
+  { service: "patterns", url: "http://localhost:9164", up: true, info: { service: "patterns", contract: 3, patterns: ["action-approval"], devRoutes: true, controls: 14 } },
   { service: "contextlayer", url: "http://localhost:9165", up: false, info: null }
 ];
 
@@ -53,7 +52,7 @@ describe("attention", () => {
     const list = items();
     expect(list.map((i) => `${i.severity}:${i.id}`)).toEqual([
       "urgent:overdue:he-20261029-00001",
-      "urgent:halt:patterns:pt-0012",
+      "urgent:halt:patterns:pt-00012",
       "urgent:down:contextlayer",
       "risk:overseer:k.osei@example.com",
       "risk:unowned",
@@ -91,25 +90,25 @@ describe("overview sentence", () => {
 describe("controls, verdicts and reports", () => {
   it("groups controls by service, in name order", () => {
     const groups = controlsByService([
-      { ...control, service: "patterns", control: { rowId: "pt-0002", name: "b" } },
+      { ...control, service: "patterns", control: { rowId: "pt-00002", name: "b" } },
       { ...control, service: "loan-origination" },
       { ...control, service: "patterns" }
     ]);
     expect(groups.map(([s, list]) => [s, list.map((c) => c.control.rowId)])).toEqual([
-      ["loan-origination", ["pt-0001"]],
-      ["patterns", ["pt-0001", "pt-0002"]]
+      ["loan-origination", ["pt-00001"]],
+      ["patterns", ["pt-00001", "pt-00002"]]
     ]);
   });
 
   it("filters verdicts by conclusion and service, newest first", () => {
-    const v = verdictExample as unknown as ServiceVerdict;
+    const v = verdictExample as unknown as Verdict;
     const list = [
-      { ...v, id: "a", at: "2026-10-29T10:00:00Z", service: "patterns" },
-      { ...v, id: "b", at: "2026-10-29T12:00:00Z", service: "loan-origination", conclusion: "breached" as const },
-      { ...v, id: "c", at: "2026-10-29T11:00:00Z", service: "patterns" }
+      { ...v, verdictId: "a", observedAt: "2026-10-29T10:00:00Z", subject: { service: "patterns" } },
+      { ...v, verdictId: "b", observedAt: "2026-10-29T12:00:00Z", subject: { service: "loan-origination" }, conclusion: "breached" as const },
+      { ...v, verdictId: "c", observedAt: "2026-10-29T11:00:00Z", subject: { service: "patterns" } }
     ];
-    expect(verdictsOf(list, {}).map((x) => x.id)).toEqual(["b", "c", "a"]);
-    expect(verdictsOf(list, { service: "patterns", conclusion: "upheld" }).map((x) => x.id)).toEqual(["c", "a"]);
+    expect(verdictsOf(list, {}).map((x) => x.verdictId)).toEqual(["b", "c", "a"]);
+    expect(verdictsOf(list, { service: "patterns", conclusion: "upheld" }).map((x) => x.verdictId)).toEqual(["c", "a"]);
   });
 
   it("counts a report and puts its failures first", () => {

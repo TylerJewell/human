@@ -28,14 +28,14 @@ import java.util.UUID;
 
 /**
  * Changes to how notices are written, which wait for authorisation: the notice writer's model (S5)
- * and a decline letter template (hl-0011). And the monitors of S2 to S4, run on request.
+ * and a decline letter template (custom-40579578cb71). And the monitors of S2 to S4, run on request.
  */
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 @HttpEndpoint
 public class GovernanceEndpoint extends AbstractHttpEndpoint {
 
-  public static final String MODEL_CHANGE = "hl-0005";
-  public static final String TEMPLATE_REVIEW = "hl-0011";
+  public static final String MODEL_CHANGE = "custom-83bbe9c7cde5";
+  public static final String TEMPLATE_REVIEW = "custom-40579578cb71";
   static final String NOTICE_WRITER = "agent:" + NoticeWriter.AGENT;
 
   /** @param evaluation what the offline evaluation of the new model found, if any */

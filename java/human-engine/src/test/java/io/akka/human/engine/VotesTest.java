@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 class VotesTest {
 
   private static HumanEvent change() {
-    var s = control("pt-0003");
+    var s = control("pt-00003");
     return raise(s, request(s).proposedBy("agent:rollouts").builtBy("trainer").build());
   }
 
@@ -53,6 +53,12 @@ class VotesTest {
     assertEquals("APPROVE, 2 of 2", decided.history().getLast().note());
     assertEquals(List.of(TYLER, DEVOS), decided.deciders());
     assertEquals(Verdicts.UPHELD, Verdicts.of(decided).conclusion());
+
+    var detail = (Map<?, ?>) Json.verdict(decided).get("detail");
+    assertEquals(Map.of("required", true, "satisfied", true), detail.get("twoPerson"));
+    var votes = (List<?>) detail.get("votes");
+    assertEquals(List.of(TYLER, DEVOS), votes.stream().map(v -> ((Map<?, ?>) v).get("subject")).toList());
+    assertEquals(90L, ((Map<?, ?>) votes.getLast()).get("reviewSeconds"));
   }
 
   @Test

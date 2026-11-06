@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * Reads the oversight-quality signals every hour and raises an oversight-quality event for each figure
- * that crosses its limit (pt-0014: more than 20% of a control's decisions made under its minimum review
+ * that crosses its limit (pt-00014: more than 20% of a control's decisions made under its minimum review
  * time). The control's accountable owner answers it; while it is pending a repeated finding adds an
  * occurrence.
  */

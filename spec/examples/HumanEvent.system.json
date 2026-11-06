@@ -7,7 +7,7 @@
   "pattern": "halt-restart",
   "patternName": "Halt and restart",
   "control": {
-    "rowId": "pt-0012",
+    "rowId": "pt-00012",
     "name": "Automated eligibility assessment can be halted",
     "corpusRef": "eu-ai-act.art14.4.e",
     "revision": 1

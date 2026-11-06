@@ -66,9 +66,9 @@ function TriageTrigger({ run, setRun, event, go }: SceneProps) {
   const [start, busy, error] = useAction();
   const runIt = () =>
     start(async () => {
-      const before = await pendingOf("pt-0010");
+      const before = await pendingOf("pt-00010");
       await call("POST", "/monitor/referral-share", { referralShare: 12 });
-      const raised = await awaitRaised("pt-0010", before);
+      const raised = await awaitRaised("pt-00010", before);
       setRun(newRun({ eventId: raised.id, events: [raised.id], data: { reading: 12, occurrence: before.has(raised.id) } }));
     });
   return (
@@ -137,9 +137,9 @@ function AttestationTrigger({ run, setRun, event, go }: SceneProps) {
   const [start, busy, error] = useAction();
   const runIt = () =>
     start(async () => {
-      const before = await pendingOf("pt-0013");
+      const before = await pendingOf("pt-00013");
       await call("POST", "/attestations/run");
-      const raised = await awaitRaised("pt-0013", before);
+      const raised = await awaitRaised("pt-00013", before);
       setRun(newRun({ eventId: raised.id, events: [raised.id] }));
     });
   return (
@@ -171,23 +171,23 @@ export const attestation: Scene = { Trigger: AttestationTrigger, Effect: Attesta
 
 /** The finding the hourly quality monitor raises when payment approvals breach their minimum review time. */
 const FINDING = {
-  control: "pt-0014",
-  ask: { question: "The below-minimum-share of pt-0001 is 0.35. Reset, retrain or reassign?", checks: [] },
+  control: "pt-00014",
+  ask: { question: "The below-minimum-share of pt-00001 is 0.35. Reset, retrain or reassign?", checks: [] },
   subject: {
     kind: "behaviour",
-    summary: "below-minimum-share on pt-0001 is 0.35",
+    summary: "below-minimum-share on pt-00001 is 0.35",
     service: "patterns",
-    ref: "pt-0001",
+    ref: "pt-00001",
     detail: { metric: "below-minimum-share", value: 0.35, threshold: 0.2, comparison: ">", window: "P7D", unit: "share" }
   },
   trigger: {
     detector: "monitor",
     rule: "below-minimum-share > 0.2",
-    reason: "The oversight of pt-0001 is not working as it should.",
+    reason: "The oversight of pt-00001 is not working as it should.",
     values: [{ name: "below-minimum-share", value: 0.35, limit: 0.2 }],
     conditions: []
   },
-  dedupeKey: "oq:pt-0014:pt-0001"
+  dedupeKey: "oq:pt-00014:pt-00001"
 };
 
 function QualityFrame({ raised, record }: { raised: boolean; record?: { outcome: string } }) {
@@ -196,7 +196,7 @@ function QualityFrame({ raised, record }: { raised: boolean; record?: { outcome:
     <Frame
       role="Oversight quality"
       icon="eye"
-      title="Payment approvals (pt-0001), last 7 days"
+      title="Payment approvals (pt-00001), last 7 days"
       status={record ? <Pill tone="ok">{outcome === "approve" ? "Reset" : outcome === "replan" ? "Retraining" : "Reassigned"}</Pill> : raised ? <Pill tone="wait" pulse>Limit crossed</Pill> : <Pill>Watching</Pill>}
       testId="frame-quality"
     >

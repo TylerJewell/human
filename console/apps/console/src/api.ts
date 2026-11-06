@@ -4,9 +4,10 @@ import {
   useRead,
   type CompanionClient,
   type CompanionService,
-  type HumanEventRow
+  type HumanEventRow,
+  type Verdict
 } from "@akka-human/kit";
-import type { ConformanceReport, ServiceControl, ServiceVerdict } from "./logic";
+import type { ConformanceReport, ServiceControl } from "./logic";
 
 // The companion is the console's only server, on the origin the console is
 // served from. Everything the kit's companion client reads goes through it;
@@ -19,7 +20,7 @@ export const useServices = () =>
 
 export const useControls = () => useRead<ServiceControl[]>("controls", (c) => c.controls(), { pollMs: 0 });
 
-export const useVerdicts = () => useRead<ServiceVerdict[]>("verdicts", (c) => c.verdicts({ limit: 200 }));
+export const useVerdicts = () => useRead<Verdict[]>("verdicts", (c) => c.verdicts({ limit: 200 }));
 
 /** The pending events past their deadline across every service, read for the overview's attention list. */
 export const useOverdue = () =>

@@ -55,7 +55,7 @@ class FakeServiceTest {
     String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
     switch (path) {
       case "/oversight/info" -> json(exchange, 200,
-          "{\"service\":\"fake\",\"contract\":2,\"patterns\":[],\"devRoutes\":" + devRoutes + ",\"controls\":0}");
+          "{\"service\":\"fake\",\"contract\":3,\"patterns\":[],\"devRoutes\":" + devRoutes + ",\"controls\":0}");
       case "/oversight/registry" -> json(exchange, 200,
           "{\"overseers\":[{\"subject\":\"amy@x\",\"roles\":[\"owner\"],\"qualified\":true}]}");
       case "/oversight/controls" -> json(exchange, 200, "{\"controls\":[]}");

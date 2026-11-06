@@ -109,7 +109,7 @@ describe("service client", () => {
     const { fetch, calls } = fakeFetch(() => ({ json: event }));
     const client = createServiceClient({ baseUrl: "http://localhost:9164", reviewer: tyler, fetch });
     await client.decide("he-1", { action: "DENY", rationale: "No PO." });
-    await client.halt("pt-0012", false, "Drift");
+    await client.halt("pt-00012", false, "Drift");
     await client.revokeStanding("sd-1", "Supplier changed").catch(() => undefined);
     expect(calls[0].url).toBe("http://localhost:9164/oversight/events/he-1/decision");
     expect(calls[0].body).toEqual({
@@ -119,7 +119,7 @@ describe("service client", () => {
     });
     expect(calls[1]).toMatchObject({
       url: "http://localhost:9164/oversight/halts",
-      body: { control: "pt-0012", lift: false, reason: "Drift", reviewer: { subject: tyler.subject } }
+      body: { control: "pt-00012", lift: false, reason: "Drift", reviewer: { subject: tyler.subject } }
     });
     expect(calls[2]).toMatchObject({ url: "http://localhost:9164/oversight/standing/sd-1/revoke", body: { reason: "Supplier changed" } });
   });

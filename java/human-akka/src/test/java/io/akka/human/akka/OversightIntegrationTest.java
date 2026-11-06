@@ -133,12 +133,12 @@ public class OversightIntegrationTest extends TestKitSupport {
 
     Awaitility.await().atMost(WAIT).until(() -> {
       var verdicts = get("/oversight/verdicts").body().get("verdicts");
-      for (var v : verdicts) if (v.get("eventId").asText().equals(id)) return true;
+      for (var v : verdicts) if (v.at("/detail/workItem/id").asText().equals(id)) return true;
       return false;
     });
 
-    Awaitility.await().atMost(WAIT).until(() -> get("/oversight/events?state=resolved&control=pt-0001").body().get("total").asInt() > 0);
-    var page = get("/oversight/events?state=resolved&control=pt-0001").body();
+    Awaitility.await().atMost(WAIT).until(() -> get("/oversight/events?state=resolved&control=pt-00001").body().get("total").asInt() > 0);
+    var page = get("/oversight/events?state=resolved&control=pt-00001").body();
     assertConforms("EventsPage", page);
   }
 
@@ -166,7 +166,7 @@ public class OversightIntegrationTest extends TestKitSupport {
     // Timers run on real time; with the clock at real time the 3-second deadline acts within the test.
     TestPlugins.CLOCK.reset();
     var human = new HumanClient(componentClient, TestPlugins.PLUGINS);
-    var raised = human.raise(Patterns.actionApproval("A short one?").control("t-0001")
+    var raised = human.raise(Patterns.actionApproval("A short one?").control("test-0001")
         .subject(Subject.action("Pay 1 EUR", "pay", Map.of("amount", 1))).build()).toCompletableFuture().join();
     Awaitility.await().atMost(WAIT).until(() -> get("/oversight/events/" + raised.eventId()).body().get("state").asText()
         .equals("TIMED_OUT"));
@@ -188,7 +188,7 @@ public class OversightIntegrationTest extends TestKitSupport {
     var timedOut = get("/oversight/events/" + id).body();
     assertEquals("TIMED_OUT", timedOut.get("state").asText());
     assertEquals("breached", timedOut.at("/verdict/conclusion").asText());
-    assertEquals("missed-deadline", timedOut.at("/verdict/reasons/0").asText());
+    assertEquals("missed-deadline", timedOut.at("/verdict/reason/code").asText());
   }
 
   @Test
@@ -214,20 +214,20 @@ public class OversightIntegrationTest extends TestKitSupport {
     TestPlugins.BACKLOG_DRAINED.set(false);
     assertEquals(403, post("/oversight/halts", Map.of("reviewer", TYLER.entrySet().stream()
         .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> e.getKey().equals("roles")
-            ? List.of("ai-system-owner") : e.getValue())), "control", "pt-0012", "lift", false, "reason", "drift")).status());
-    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "pt-0012", "lift", false,
+            ? List.of("ai-system-owner") : e.getValue())), "control", "pt-00012", "lift", false, "reason", "drift")).status());
+    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "pt-00012", "lift", false,
         "reason", "Referral drift"));
     assertEquals(200, halt.status(), halt.body()::toString);
     assertEquals("DECIDED", halt.body().get("state").asText());
     var haltId = halt.body().get("id").asText();
     assertTrue(new HumanClient(componentClient, TestPlugins.PLUGINS).halted("eligibility-assessment")
         .toCompletableFuture().join());
-    assertEquals(409, post("/oversight/halts", Map.of("reviewer", PATEL, "control", "pt-0012", "lift", false,
+    assertEquals(409, post("/oversight/halts", Map.of("reviewer", PATEL, "control", "pt-00012", "lift", false,
         "reason", "again")).status());
     Awaitility.await().atMost(WAIT).until(() -> TestPlugins.LEDGER.records.containsKey("pr-" + haltId + "-halt"));
     Awaitility.await().atMost(WAIT).until(() -> TestPlugins.LEDGER.records.containsKey("pr-" + haltId + "-decision"));
 
-    var lift = post("/oversight/halts", Map.of("reviewer", TYLER, "control", "pt-0012", "lift", true,
+    var lift = post("/oversight/halts", Map.of("reviewer", TYLER, "control", "pt-00012", "lift", true,
         "reason", "Backlog drained"));
     assertEquals(200, lift.status(), lift.body()::toString);
     var liftId = lift.body().get("id").asText();
@@ -250,14 +250,14 @@ public class OversightIntegrationTest extends TestKitSupport {
 
   @Test
   public void aHaltIsExercisedAtOnceEvenUnderAMinimumReviewTime() {
-    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "t-0002", "lift", false,
+    var halt = post("/oversight/halts", Map.of("reviewer", PATEL, "control", "test-0002", "lift", false,
         "reason", "Stop it now"));
     assertEquals(200, halt.status(), halt.body()::toString);
     assertEquals("DECIDED", halt.body().get("state").asText());
     assertTrue(new HumanClient(componentClient, TestPlugins.PLUGINS).halted("review-time-capability")
         .toCompletableFuture().join());
 
-    var lift = post("/oversight/halts", Map.of("reviewer", TYLER, "control", "t-0002", "lift", true, "reason", "Safe again"));
+    var lift = post("/oversight/halts", Map.of("reviewer", TYLER, "control", "test-0002", "lift", true, "reason", "Safe again"));
     var liftId = lift.body().get("id").asText();
     assertEquals(409, post("/oversight/events/" + liftId + "/decision", decision(PATEL, "APPROVE", "ok")).status());
     assertEquals(200, post("/oversight/events/" + liftId + "/claim", Map.of("reviewer", PATEL)).status());
@@ -309,18 +309,18 @@ public class OversightIntegrationTest extends TestKitSupport {
     Awaitility.await().atMost(WAIT).until(() -> get("/oversight/events/" + flagId).body().at("/outcome/applied").asText()
         .equals("eval case written"));
 
-    var contest = post("/oversight/contests", Map.of("reviewer", reviewer("applicant@example.com"), "control", "pt-0007",
+    var contest = post("/oversight/contests", Map.of("reviewer", reviewer("applicant@example.com"), "control", "pt-00007",
         "ref", flagId, "grounds", "The flag was wrong"));
     assertEquals(200, contest.status(), contest.body()::toString);
     assertEquals("appeal", contest.body().at("/subject/kind").asText());
     assertEquals("l.moreau@example.com", contest.body().at("/subject/detail/original/decidedBy").asText());
 
-    var override = post("/oversight/overrides", Map.of("reviewer", PATEL, "control", "pt-0008", "ref", flagId,
+    var override = post("/oversight/overrides", Map.of("reviewer", PATEL, "control", "pt-00008", "ref", flagId,
         "action", "OVERRIDE", "rationale", "Correct amount is 38 EUR", "replacement", "You owe 38 EUR"));
     assertEquals(200, override.status(), override.body()::toString);
     assertEquals("DECIDED", override.body().get("state").asText());
     assertEquals("You owe 38 EUR", override.body().at("/outcome/replacement").asText());
-    assertEquals(403, post("/oversight/overrides", Map.of("reviewer", OSEI, "control", "pt-0008", "ref", flagId,
+    assertEquals(403, post("/oversight/overrides", Map.of("reviewer", OSEI, "control", "pt-00008", "ref", flagId,
         "action", "DISREGARD", "rationale", "no")).status());
   }
 
@@ -351,23 +351,23 @@ public class OversightIntegrationTest extends TestKitSupport {
       assertEquals(total, page.get("total").asLong());
       for (var v : page.get("verdicts")) {
         assertConforms("Verdict", v);
-        walked.add(v.get("eventId").asText());
+        walked.add(v.at("/detail/workItem/id").asText());
       }
       if (!page.get("hasMore").asBoolean()) break;
       offset = page.get("nextOffset").asInt();
     }
     var listed = new java.util.ArrayList<String>();
-    for (var v : whole.get("verdicts")) listed.add(v.get("eventId").asText());
+    for (var v : whole.get("verdicts")) listed.add(v.at("/detail/workItem/id").asText());
     assertEquals(listed, walked);
     assertTrue(walked.containsAll(ids));
 
     // until keeps the verdicts at or before it, and since the ones at or after it.
-    var oldest = get("/oversight/verdicts?eventId=" + ids.get(0)).body().at("/verdicts/0/at").asText();
+    var oldest = get("/oversight/verdicts?eventId=" + ids.get(0)).body().at("/verdicts/0/observedAt").asText();
     var upTo = get("/oversight/verdicts?until=" + oldest + "&limit=200").body();
-    assertTrue(has(upTo.get("verdicts"), "eventId", ids.get(0)));
-    assertTrue(!has(upTo.get("verdicts"), "eventId", ids.get(2)));
+    assertTrue(has(upTo.get("verdicts"), "verdictId", "vd-" + ids.get(0)));
+    assertTrue(!has(upTo.get("verdicts"), "verdictId", "vd-" + ids.get(2)));
     var from = get("/oversight/verdicts?since=" + oldest + "&limit=200").body();
-    assertTrue(has(from.get("verdicts"), "eventId", ids.get(0)) && has(from.get("verdicts"), "eventId", ids.get(2)));
+    assertTrue(has(from.get("verdicts"), "verdictId", "vd-" + ids.get(0)) && has(from.get("verdicts"), "verdictId", "vd-" + ids.get(2)));
     assertEquals(422, get("/oversight/verdicts?until=yesterday").status());
   }
 
@@ -408,12 +408,12 @@ public class OversightIntegrationTest extends TestKitSupport {
 
     var pendingOnly = get("/oversight/events?state=pending&pattern=action-approval&limit=200").body();
     assertTrue(has(pendingOnly.get("events"), "id", ids.get(1)) && !has(pendingOnly.get("events"), "id", withdrawn));
-    var resolvedOnly = get("/oversight/events?state=resolved&control=pt-0001&limit=200").body();
+    var resolvedOnly = get("/oversight/events?state=resolved&control=pt-00001&limit=200").body();
     assertTrue(has(resolvedOnly.get("events"), "id", withdrawn) && !has(resolvedOnly.get("events"), "id", ids.get(1)));
     assertEquals(0, get("/oversight/events?control=no-such-control").body().get("total").asInt());
     // A filter on the service's clock reads the same events through the in-memory path.
-    var routable = get("/oversight/events?state=pending&control=pt-0001&sla=running&limit=200").body();
-    assertTrue(routable.get("events").size() <= get("/oversight/events?state=pending&control=pt-0001&limit=200")
+    var routable = get("/oversight/events?state=pending&control=pt-00001&sla=running&limit=200").body();
+    assertTrue(routable.get("events").size() <= get("/oversight/events?state=pending&control=pt-00001&limit=200")
         .body().get("total").asInt());
   }
 
@@ -421,7 +421,7 @@ public class OversightIntegrationTest extends TestKitSupport {
 
   private String raiseChange(String proposer) {
     var human = new HumanClient(componentClient, TestPlugins.PLUGINS);
-    var raised = human.raise(Patterns.changeAuthorization("Roll out m-5 to 10% of traffic?").control("pt-0003")
+    var raised = human.raise(Patterns.changeAuthorization("Roll out m-5 to 10% of traffic?").control("pt-00003")
         .subject(Subject.change("Roll out m-5", "model-registry", "rollout", "rollout-" + UUID.randomUUID(),
             Map.of("model", "m-4"), Map.of("model", "m-5")))
         .proposedBy(proposer).builtBy("trainer").build()).toCompletableFuture().join();
@@ -430,22 +430,22 @@ public class OversightIntegrationTest extends TestKitSupport {
   }
 
   /**
-   * pt-0014 judges pt-0004 here, not pt-0001 as the patterns sample does, so the block stays away from
+   * pt-00014 judges pt-00004 here, not pt-00001 as the patterns sample does, so the block stays away from
    * the payments the other tests decide.
    */
   @Test
   public void anOversightQualityEventBlocksDecisionsUntilItIsReset() {
     var chen = reviewer("r.chen@example.com", "compliance-lead");
     var waiver = new HumanClient(componentClient, TestPlugins.PLUGINS).raise(Patterns.exception("Waive rule R-9?")
-        .control("pt-0004").subject(Subject.exception("Waive rule R-9", "R-9", "No payments to new suppliers",
+        .control("pt-00004").subject(Subject.exception("Waive rule R-9", "R-9", "No payments to new suppliers",
             "supplier S-" + UUID.randomUUID(), java.time.Instant.parse("2099-01-01T00:00:00Z")))
         .build()).toCompletableFuture().join().eventId();
 
     var finding = MAPPER.createObjectNode();
-    finding.put("control", "pt-0014");
-    finding.putObject("ask").put("question", "Reset, retrain or reassign the reviewers of pt-0004?");
+    finding.put("control", "pt-00014");
+    finding.putObject("ask").put("question", "Reset, retrain or reassign the reviewers of pt-00004?");
     var subject = finding.putObject("subject");
-    subject.put("kind", "behaviour").put("summary", "below-minimum-share on pt-0004 is 0.4").put("ref", "pt-0004");
+    subject.put("kind", "behaviour").put("summary", "below-minimum-share on pt-00004 is 0.4").put("ref", "pt-00004");
     subject.putObject("detail").put("metric", "below-minimum-share").put("value", 0.4).put("threshold", 0.2)
         .put("comparison", ">");
     var raised = post("/oversight/dev/events", finding);
@@ -454,11 +454,11 @@ public class OversightIntegrationTest extends TestKitSupport {
 
     Awaitility.await().atMost(WAIT).until(() -> qualityId.equals(get("/oversight/events/" + waiver).body()
         .path("blockedBy").asText(null)));
-    var listed = get("/oversight/events?state=pending&control=pt-0004&limit=200").body();
+    var listed = get("/oversight/events?state=pending&control=pt-00004&limit=200").body();
     assertConforms("EventsPage", listed);
     for (var e : listed.get("events")) assertEquals(qualityId, e.get("blockedBy").asText());
     for (var c : get("/oversight/controls").body().get("controls")) {
-      assertEquals(c.at("/control/rowId").asText().equals("pt-0014"), c.get("blockDecisions").asBoolean());
+      assertEquals(c.at("/control/rowId").asText().equals("pt-00014"), c.get("blockDecisions").asBoolean());
     }
 
     var claimed = post("/oversight/events/" + waiver + "/claim", Map.of("reviewer", chen));
@@ -480,7 +480,7 @@ public class OversightIntegrationTest extends TestKitSupport {
   }
 
   private static io.akka.human.api.RaiseRequest.Builder payment(String question) {
-    return Patterns.actionApproval(question).control("pt-0001").proposedBy("agent:payments")
+    return Patterns.actionApproval(question).control("pt-00001").proposedBy("agent:payments")
         .subject(Subject.action("Pay a supplier", "pay", Map.of("supplier", "S-55", "amount", 900)));
   }
 

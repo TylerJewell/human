@@ -12,7 +12,7 @@ import io.akka.human.samples.patterns.PatternsSetup;
 import java.time.Instant;
 
 /**
- * The eligibility-assessment capability that halt-restart (pt-0012) stops. While a halt stops it,
+ * The eligibility-assessment capability that halt-restart (pt-00012) stops. While a halt stops it,
  * every assessment is refused with 503 and the halt's details; a restart approved by two safety
  * officers, once the backlog is drained, lets assessments run again.
  */
